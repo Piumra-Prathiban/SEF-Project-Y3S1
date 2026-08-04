@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Projects\\SEF Project Y3S1\\SEF-Project-Y3S1\\backend\\SEF_Project.Api\\SEF_Project.Api.csproj": {}
+    "c:\\Projects\\SEF Project Y3S1\\SEF-Project-Y3S1\\backend\\SEF_Project.Api\\SEF_Project.Api.csproj": {}
   },
   "projects": {
-    "C:\\Projects\\SEF Project Y3S1\\SEF-Project-Y3S1\\backend\\SEF_Project.Api\\SEF_Project.Api.csproj": {
+    "c:\\Projects\\SEF Project Y3S1\\SEF-Project-Y3S1\\backend\\SEF_Project.Api\\SEF_Project.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Projects\\SEF Project Y3S1\\SEF-Project-Y3S1\\backend\\SEF_Project.Api\\SEF_Project.Api.csproj",
+        "projectUniqueName": "c:\\Projects\\SEF Project Y3S1\\SEF-Project-Y3S1\\backend\\SEF_Project.Api\\SEF_Project.Api.csproj",
         "projectName": "SEF_Project.Api",
-        "projectPath": "C:\\Projects\\SEF Project Y3S1\\SEF-Project-Y3S1\\backend\\SEF_Project.Api\\SEF_Project.Api.csproj",
+        "projectPath": "c:\\Projects\\SEF Project Y3S1\\SEF-Project-Y3S1\\backend\\SEF_Project.Api\\SEF_Project.Api.csproj",
         "packagesPath": "C:\\Users\\Sandive\\.nuget\\packages\\",
-        "outputPath": "C:\\Projects\\SEF Project Y3S1\\SEF-Project-Y3S1\\backend\\SEF_Project.Api\\obj\\",
+        "outputPath": "c:\\Projects\\SEF Project Y3S1\\SEF-Project-Y3S1\\backend\\SEF_Project.Api\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Sandive\\AppData\\Roaming\\NuGet\\NuGet.Config"
