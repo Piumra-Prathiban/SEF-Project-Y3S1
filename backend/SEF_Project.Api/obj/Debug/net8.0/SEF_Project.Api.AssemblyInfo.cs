@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SEF_Project.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2b2567e994ceebc81c6ae0bec3a0b6a6cc091396")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+89904f08963117c0460986dff9adaa4800edc9e6")]
 [assembly: System.Reflection.AssemblyProductAttribute("SEF_Project.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SEF_Project.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
