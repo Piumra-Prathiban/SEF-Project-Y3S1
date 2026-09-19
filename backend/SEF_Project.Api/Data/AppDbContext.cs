@@ -22,6 +22,24 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<Role>().HasData(
+    new Role
+    {
+        Id = 1,
+        Name = "Customer"
+    },
+    new Role
+    {
+        Id = 2,
+        Name = "Staff"
+    },
+    new Role
+    {
+        Id = 3,
+        Name = "Administrator"
+    }
+);
+
         modelBuilder.Entity<Role>()
             .HasIndex(r => r.Name)
             .IsUnique();
