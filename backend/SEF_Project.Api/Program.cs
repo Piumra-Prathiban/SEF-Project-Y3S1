@@ -4,6 +4,8 @@ using Microsoft.IdentityModel.Tokens;
 using SEF_Project.Api.Configuration;
 using SEF_Project.Api.Data;
 using System.Text;
+using SEF_Project.Api.Services.Auth;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +42,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 
 // Add services to the container.
+builder.Services.AddScoped<IPasswordService, PasswordService>();
+builder.Services.AddScoped<IPasswordService, PasswordService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
