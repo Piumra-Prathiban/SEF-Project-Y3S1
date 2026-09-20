@@ -11,11 +11,8 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<User> Users => Set<User>();
-
     public DbSet<Role> Roles => Set<Role>();
-
     public DbSet<Customer> Customers => Set<Customer>();
-
     public DbSet<Address> Addresses => Set<Address>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -23,22 +20,22 @@ public class AppDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<Role>().HasData(
-    new Role
-    {
-        Id = 1,
-        Name = "Customer"
-    },
-    new Role
-    {
-        Id = 2,
-        Name = "Staff"
-    },
-    new Role
-    {
-        Id = 3,
-        Name = "Administrator"
-    }
-);
+            new Role
+            {
+                Id = 1,
+                Name = "Customer"
+            },
+            new Role
+            {
+                Id = 2,
+                Name = "Staff"
+            },
+            new Role
+            {
+                Id = 3,
+                Name = "Administrator"
+            }
+        );
 
         modelBuilder.Entity<Role>()
             .HasIndex(r => r.Name)
@@ -65,5 +62,29 @@ public class AppDbContext : DbContext
             .WithOne(a => a.Customer)
             .HasForeignKey(a => a.CustomerId)
             .OnDelete(DeleteBehavior.Cascade);
+    }
+
+    public override async Task<int> SaveChangesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var entries = ChangeTracker
+            .Entries<BaseEntity>();
+
+        var now = DateTime.UtcNow;
+
+        foreach (var entry in entries)
+        {
+            if (entry.State == EntityState.Added)
+            {
+                entry.Entity.CreatedAt = now;
+                entry.Entity.UpdatedAt = now;
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                entry.Entity.UpdatedAt = now;
+            }
+        }
+
+        return await base.SaveChangesAsync(cancellationToken);
     }
 }
