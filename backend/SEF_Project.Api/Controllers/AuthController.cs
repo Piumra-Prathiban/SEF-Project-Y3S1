@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SEF_Project.Api.DTOs.Auth;
 using SEF_Project.Api.Services.Auth;
@@ -49,5 +50,31 @@ public class AuthController : ControllerBase
                 message = ex.Message
             });
         }
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult Me()
+    {
+        return Ok(new
+        {
+            message = "You are authenticated.",
+            userId = User.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+            email = User.FindFirst(
+                System.Security.Claims.ClaimTypes.Email)?.Value,
+            role = User.FindFirst(
+                System.Security.Claims.ClaimTypes.Role)?.Value
+        });
+    }
+
+    [Authorize(Roles = "Administrator")]
+    [HttpGet("admin-test")]
+    public IActionResult AdminTest()
+    {
+        return Ok(new
+        {
+            message = "You have Administrator access."
+        });
     }
 }
