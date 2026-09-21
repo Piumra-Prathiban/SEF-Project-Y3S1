@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SEF_Project.Api.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c54ccb136a7cee864a3926ef6f2004562f7b4732")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6b79aea3a095061141db09df702506ee0c3a0b2b")]
 [assembly: System.Reflection.AssemblyProductAttribute("SEF_Project.Api.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SEF_Project.Api.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
