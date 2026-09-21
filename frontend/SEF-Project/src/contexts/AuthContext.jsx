@@ -1,5 +1,8 @@
 import { createContext, useContext, useState } from 'react';
-import { login as loginRequest } from '../services/authService';
+import {
+  login as loginRequest,
+  getMe,
+} from '../services/authService';
 
 const AuthContext = createContext(null);
 
@@ -18,6 +21,22 @@ export function AuthProvider({ children }) {
     return response;
   }
 
+  async function fetchCurrentUser() {
+    if (!token) {
+      return null;
+    }
+
+    const response = await getMe(token);
+
+    setUser({
+      id: Number(response.userId),
+      email: response.email,
+      role: response.role,
+    });
+
+    return response;
+  }
+
   function logout() {
     setToken(null);
     setExpiresAt(null);
@@ -31,6 +50,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: token !== null,
     login,
     logout,
+    fetchCurrentUser,
   };
 
   return (

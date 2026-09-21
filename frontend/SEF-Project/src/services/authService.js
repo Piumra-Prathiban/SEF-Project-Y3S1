@@ -16,3 +16,10 @@ export async function register(userData) {
     body: JSON.stringify(userData),
   });
 }
+
+export async function getMe(token) {
+  return apiRequest('/Auth/me', {
+    method: 'GET',
+    token,
+  });
+}
