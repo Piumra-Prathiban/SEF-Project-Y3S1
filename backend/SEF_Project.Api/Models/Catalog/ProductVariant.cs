@@ -10,6 +10,10 @@ public class ProductVariant : GuidEntity
 
     public string Name { get; set; } = string.Empty;
 
+    public string? Size { get; set; }
+
+    public string? Colour { get; set; }
+
     public decimal Price { get; set; }
 
     public bool IsActive { get; set; } = true;

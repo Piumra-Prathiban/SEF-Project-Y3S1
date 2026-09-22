@@ -17,4 +17,7 @@ public class Product : GuidEntity
 
     public ICollection<ProductCategory> ProductCategories { get; set; } =
         new List<ProductCategory>();
+
+    public ICollection<ProductImage> Images { get; set; } =
+        new List<ProductImage>();
 }

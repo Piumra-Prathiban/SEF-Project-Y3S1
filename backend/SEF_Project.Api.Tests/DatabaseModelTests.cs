@@ -149,4 +149,31 @@ public class DatabaseModelTests
 
         Assert.Equal(typeof(Product), fk.PrincipalEntityType.ClrType);
     }
+
+    [Fact]
+    public void Product_ShouldHave_ManyImages()
+    {
+        var model = BuildModel();
+
+        var image = model.FindEntityType(typeof(ProductImage))!;
+        var fk = image.GetForeignKeys()
+            .Single(f => f.Properties.Any(p => p.Name == nameof(ProductImage.ProductId)));
+
+        Assert.Equal(typeof(Product), fk.PrincipalEntityType.ClrType);
+    }
+
+    [Fact]
+    public void ProductVariant_ShouldHave_SizeAndColourProperties()
+    {
+        var model = BuildModel();
+
+        var variant = model.FindEntityType(typeof(ProductVariant))!;
+        var sizeProp = variant.FindProperty(nameof(ProductVariant.Size));
+        var colourProp = variant.FindProperty(nameof(ProductVariant.Colour));
+
+        Assert.NotNull(sizeProp);
+        Assert.NotNull(colourProp);
+        Assert.Equal(50, sizeProp.GetMaxLength());
+        Assert.Equal(50, colourProp.GetMaxLength());
+    }
 }

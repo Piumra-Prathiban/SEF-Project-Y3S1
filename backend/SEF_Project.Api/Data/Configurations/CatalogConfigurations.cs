@@ -120,6 +120,8 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
 
         builder.Property(e => e.Sku).IsRequired().HasMaxLength(100);
         builder.Property(e => e.Name).IsRequired().HasMaxLength(200);
+        builder.Property(e => e.Size).HasMaxLength(50);
+        builder.Property(e => e.Colour).HasMaxLength(50);
         builder.Property(e => e.Price).HasPrecision(18, 2);
 
         builder.HasIndex(e => e.Sku).IsUnique();
@@ -136,6 +138,7 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
                 ProductId = SeedData.ProductMargherita,
                 Sku = "PIZ-MARG-S",
                 Name = "Small",
+                Size = "Small",
                 Price = 1200m,
                 IsActive = true
             },
@@ -145,6 +148,7 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
                 ProductId = SeedData.ProductMargherita,
                 Sku = "PIZ-MARG-L",
                 Name = "Large",
+                Size = "Large",
                 Price = 2200m,
                 IsActive = true
             },
@@ -154,6 +158,7 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
                 ProductId = SeedData.ProductPepperoni,
                 Sku = "PIZ-PEP-M",
                 Name = "Medium",
+                Size = "Medium",
                 Price = 1600m,
                 IsActive = true
             },
@@ -163,6 +168,7 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
                 ProductId = SeedData.ProductPepperoni,
                 Sku = "PIZ-PEP-L",
                 Name = "Large",
+                Size = "Large",
                 Price = 2600m,
                 IsActive = true
             },
@@ -172,6 +178,7 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
                 ProductId = SeedData.ProductCarbonara,
                 Sku = "PST-CARB-R",
                 Name = "Regular",
+                Size = "Regular",
                 Price = 1800m,
                 IsActive = true
             },
@@ -181,6 +188,7 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
                 ProductId = SeedData.ProductCola,
                 Sku = "BEV-COLA-330",
                 Name = "330ml",
+                Size = "330ml",
                 Price = 300m,
                 IsActive = true
             },
@@ -190,6 +198,7 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
                 ProductId = SeedData.ProductTiramisu,
                 Sku = "DES-TIRA-S",
                 Name = "Single",
+                Size = "Single",
                 Price = 900m,
                 IsActive = true
             });
@@ -377,5 +386,25 @@ public class SupplierConfiguration : IEntityTypeConfiguration<Supplier>
                 Phone = "+94 11 876 5432",
                 IsActive = true
             });
+    }
+}
+
+public class ProductImageConfiguration : IEntityTypeConfiguration<ProductImage>
+{
+    public void Configure(EntityTypeBuilder<ProductImage> builder)
+    {
+        builder.ToTable("ProductImages");
+
+        builder.HasKey(e => e.Id);
+
+        builder.Property(e => e.ImageUrl).IsRequired().HasMaxLength(1000);
+        builder.Property(e => e.AltText).HasMaxLength(200);
+
+        builder.HasIndex(e => e.ProductId);
+
+        builder.HasOne(e => e.Product)
+            .WithMany(e => e.Images)
+            .HasForeignKey(e => e.ProductId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
