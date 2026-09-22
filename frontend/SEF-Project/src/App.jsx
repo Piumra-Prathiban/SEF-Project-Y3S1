@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from './contexts/AuthContext';
 
 const heroSlides = [
-  {
+  { 
     eyebrow: 'THE NEW SEASON',
     title: 'Everyday,\nElevated.',
     description:
