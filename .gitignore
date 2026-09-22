@@ -1,3 +1,26 @@
+cat > .gitignore <<'EOF'
+# .NET build output
+**/bin/
+**/obj/
+
+# Local development configuration
 backend/SEF_Project.Api/appsettings.Development.json
-backend/SEF_Project.Api/appsettings.Development.json
-backend/SEF_Project.Api/appsettings.Development.json
+
+# Node
+node_modules/
+dist/
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+EOF
