@@ -75,4 +75,11 @@ public interface IOrderService
         Guid shipmentId,
         UpdateShipmentRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<OrderResponse?> CancelOrderAsync(
+        int userId,
+        bool canAccessAllOrders,
+        Guid orderId,
+        CancelOrderRequest request,
+        CancellationToken cancellationToken = default);
 }

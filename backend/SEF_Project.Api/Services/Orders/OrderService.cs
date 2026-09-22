@@ -672,6 +672,99 @@ public class OrderService : IOrderService
         }
     }
 
+    public async Task<OrderResponse?> CancelOrderAsync(
+        int userId,
+        bool canAccessAllOrders,
+        Guid orderId,
+        CancelOrderRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            var order = await _context.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.Items)
+                    .ThenInclude(i => i.ProductVariant)
+                    .ThenInclude(v => v.Product)
+                .Include(o => o.Payments)
+                .Include(o => o.Shipments)
+                .Include(o => o.StatusHistory)
+                .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
+
+            if (order is null || !CanView(order, userId, canAccessAllOrders))
+            {
+                return null;
+            }
+
+            if (!IsTransitionAllowed(order.Status, OrderStatus.Cancelled))
+            {
+                throw new InvalidOperationException(
+                    $"Order cannot be cancelled from '{order.Status}'.");
+            }
+
+            var shippedShipment = order.Shipments.FirstOrDefault(
+                s => s.Status == ShipmentStatus.Shipped);
+
+            if (shippedShipment is not null)
+            {
+                throw new InvalidOperationException(
+                    "Order cannot be cancelled because it has already been shipped.");
+            }
+
+            var now = DateTime.UtcNow;
+
+            order.Status = OrderStatus.Cancelled;
+
+            var history = new OrderStatusHistory
+            {
+                Status = OrderStatus.Cancelled,
+                ChangedAt = now,
+                ChangedByUserId = userId,
+                Note = NullIfWhitespace(request.Reason) ?? "Order cancelled."
+            };
+
+            order.StatusHistory.Add(history);
+            _context.OrderStatusHistory.Add(history);
+
+            foreach (var shipment in order.Shipments
+                         .Where(s => s.Status == ShipmentStatus.Pending))
+            {
+                shipment.Status = ShipmentStatus.Cancelled;
+            }
+
+            foreach (var payment in order.Payments)
+            {
+                if (payment.Status == PaymentStatus.Completed)
+                {
+                    payment.Status = PaymentStatus.Refunded;
+                }
+                else if (payment.Status == PaymentStatus.Pending)
+                {
+                    payment.Status = PaymentStatus.Failed;
+                }
+            }
+
+            await ReleaseReservedInventoryAsync(order, cancellationToken);
+
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            _logger.LogInformation(
+                "Order {OrderNumber} cancelled.",
+                order.OrderNumber);
+
+            return BuildResponse(order);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
     private async Task<Customer> ResolveCustomerAsync(
         int userId,
         CancellationToken cancellationToken)
@@ -693,6 +786,55 @@ public class OrderService : IOrderService
         }
 
         return customer;
+    }
+
+    private async Task ReleaseReservedInventoryAsync(
+        Order order,
+        CancellationToken cancellationToken)
+    {
+        if (order.Items.Count == 0)
+        {
+            return;
+        }
+
+        var variantIds = order.Items
+            .Select(i => i.ProductVariantId)
+            .Distinct()
+            .ToList();
+
+        var inventory = await _context.Inventory
+            .Where(i => variantIds.Contains(i.ProductVariantId))
+            .ToDictionaryAsync(i => i.ProductVariantId, cancellationToken);
+
+        foreach (var group in order.Items.GroupBy(i => i.ProductVariantId))
+        {
+            var quantity = group.Sum(i => i.Quantity);
+
+            if (!inventory.TryGetValue(group.Key, out var stock))
+            {
+                throw new InvalidOperationException(
+                    "Inventory record missing for a reserved variant.");
+            }
+
+            if (stock.ReservedQuantity < quantity)
+            {
+                throw new InvalidOperationException(
+                    "Reserved inventory is inconsistent for this order.");
+            }
+
+            stock.ReservedQuantity -= quantity;
+
+            _context.InventoryTransactions.Add(new InventoryTransaction
+            {
+                ProductVariantId = group.Key,
+                Type = InventoryTransactionType.ReservationRelease,
+                // QuantityChange reflects the change in available stock;
+                // QuantityOnHandAfter snapshots the physical on-hand quantity.
+                QuantityChange = quantity,
+                QuantityOnHandAfter = stock.QuantityOnHand,
+                Reference = order.OrderNumber
+            });
+        }
     }
 
     private async Task<Order?> LoadFullOrderAsync(

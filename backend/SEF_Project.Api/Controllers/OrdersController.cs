@@ -267,6 +267,29 @@ public class OrdersController : ControllerBase
         return response is null ? NotFound() : Ok(response);
     }
 
+    [HttpPost("{id:guid}/cancel")]
+    public async Task<ActionResult<OrderResponse>> CancelOrder(
+        Guid id,
+        CancelOrderRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var response = await _orderService.CancelOrderAsync(
+            userId.Value,
+            CanAccessAllOrders(),
+            id,
+            request,
+            cancellationToken);
+
+        return response is null ? NotFound() : Ok(response);
+    }
+
     private int? GetCurrentUserId()
     {
         var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
