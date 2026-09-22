@@ -54,4 +54,25 @@ public interface IOrderService
         Guid paymentId,
         UpdatePaymentStatusRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<ShipmentResponse?> CreateShipmentAsync(
+        int userId,
+        bool canManageOrders,
+        Guid orderId,
+        CreateShipmentRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<List<ShipmentResponse>?> GetShipmentsAsync(
+        int userId,
+        bool canAccessAllOrders,
+        Guid orderId,
+        CancellationToken cancellationToken = default);
+
+    Task<ShipmentResponse?> UpdateShipmentStatusAsync(
+        int userId,
+        bool canManageOrders,
+        Guid orderId,
+        Guid shipmentId,
+        UpdateShipmentRequest request,
+        CancellationToken cancellationToken = default);
 }

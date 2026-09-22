@@ -196,6 +196,77 @@ public class OrdersController : ControllerBase
         return response is null ? NotFound() : Ok(response);
     }
 
+    [HttpPost("{id:guid}/shipments")]
+    [Authorize(Roles = "Staff,Administrator")]
+    public async Task<ActionResult<ShipmentResponse>> CreateShipment(
+        Guid id,
+        CreateShipmentRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var response = await _orderService.CreateShipmentAsync(
+            userId.Value,
+            CanAccessAllOrders(),
+            id,
+            request,
+            cancellationToken);
+
+        return response is null ? NotFound() : Ok(response);
+    }
+
+    [HttpGet("{id:guid}/shipments")]
+    public async Task<ActionResult<List<ShipmentResponse>>> GetShipments(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var shipments = await _orderService.GetShipmentsAsync(
+            userId.Value,
+            CanAccessAllOrders(),
+            id,
+            cancellationToken);
+
+        return shipments is null ? NotFound() : Ok(shipments);
+    }
+
+    [HttpPatch("{id:guid}/shipments/{shipmentId:guid}/status")]
+    [Authorize(Roles = "Staff,Administrator")]
+    public async Task<ActionResult<ShipmentResponse>> UpdateShipmentStatus(
+        Guid id,
+        Guid shipmentId,
+        UpdateShipmentRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var response = await _orderService.UpdateShipmentStatusAsync(
+            userId.Value,
+            CanAccessAllOrders(),
+            id,
+            shipmentId,
+            request,
+            cancellationToken);
+
+        return response is null ? NotFound() : Ok(response);
+    }
+
     private int? GetCurrentUserId()
     {
         var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

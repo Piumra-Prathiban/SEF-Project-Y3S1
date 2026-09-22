@@ -36,6 +36,16 @@ public class OrderService : IOrderService
             [PaymentStatus.Refunded] = Array.Empty<PaymentStatus>()
         };
 
+    private static readonly Dictionary<ShipmentStatus, ShipmentStatus[]>
+        AllowedShipmentTransitions = new()
+        {
+            [ShipmentStatus.Pending] = new[]
+                { ShipmentStatus.Shipped, ShipmentStatus.Cancelled },
+            [ShipmentStatus.Shipped] = new[] { ShipmentStatus.Delivered },
+            [ShipmentStatus.Delivered] = Array.Empty<ShipmentStatus>(),
+            [ShipmentStatus.Cancelled] = Array.Empty<ShipmentStatus>()
+        };
+
     private readonly AppDbContext _context;
     private readonly ILogger<OrderService> _logger;
 
@@ -485,6 +495,183 @@ public class OrderService : IOrderService
         }
     }
 
+    public async Task<ShipmentResponse?> CreateShipmentAsync(
+        int userId,
+        bool canManageOrders,
+        Guid orderId,
+        CreateShipmentRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (!canManageOrders)
+        {
+            throw new UnauthorizedAccessException(
+                "Only staff can manage shipments.");
+        }
+
+        var order = await _context.Orders
+            .Include(o => o.Shipments)
+            .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
+
+        if (order is null)
+        {
+            return null;
+        }
+
+        if (order.Status == OrderStatus.Cancelled
+            || order.Status == OrderStatus.Refunded
+            || order.Status == OrderStatus.Completed)
+        {
+            throw new InvalidOperationException(
+                "A shipment cannot be created for this order.");
+        }
+
+        if (order.Shipments.Count > 0)
+        {
+            throw new InvalidOperationException(
+                "A shipment already exists for this order.");
+        }
+
+        var shipment = new Shipment
+        {
+            OrderId = order.Id,
+            Status = ShipmentStatus.Pending,
+            Carrier = NullIfWhitespace(request.Carrier),
+            TrackingNumber = NullIfWhitespace(request.TrackingNumber)
+        };
+
+        _context.Shipments.Add(shipment);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return BuildShipmentResponse(shipment);
+    }
+
+    public async Task<List<ShipmentResponse>?> GetShipmentsAsync(
+        int userId,
+        bool canAccessAllOrders,
+        Guid orderId,
+        CancellationToken cancellationToken = default)
+    {
+        var order = await _context.Orders
+            .AsNoTracking()
+            .Include(o => o.Customer)
+            .Include(o => o.Shipments)
+            .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
+
+        if (order is null || !CanView(order, userId, canAccessAllOrders))
+        {
+            return null;
+        }
+
+        return order.Shipments
+            .OrderByDescending(s => s.CreatedAt)
+            .Select(BuildShipmentResponse)
+            .ToList();
+    }
+
+    public async Task<ShipmentResponse?> UpdateShipmentStatusAsync(
+        int userId,
+        bool canManageOrders,
+        Guid orderId,
+        Guid shipmentId,
+        UpdateShipmentRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (!canManageOrders)
+        {
+            throw new UnauthorizedAccessException(
+                "Only staff can manage shipments.");
+        }
+
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            var order = await _context.Orders
+                .Include(o => o.Shipments)
+                .Include(o => o.StatusHistory)
+                .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
+
+            if (order is null)
+            {
+                return null;
+            }
+
+            var shipment = order.Shipments
+                .FirstOrDefault(s => s.Id == shipmentId);
+
+            if (shipment is null)
+            {
+                return null;
+            }
+
+            if (!IsShipmentTransitionAllowed(shipment.Status, request.Status))
+            {
+                throw new InvalidOperationException(
+                    $"Transition from '{shipment.Status}' to '{request.Status}' is not allowed.");
+            }
+
+            if (request.Status == ShipmentStatus.Shipped
+                && order.Status != OrderStatus.Ready)
+            {
+                throw new InvalidOperationException(
+                    "Order must be ready before it can be shipped.");
+            }
+
+            if (request.Status == ShipmentStatus.Delivered
+                && order.Status != OrderStatus.Ready
+                && order.Status != OrderStatus.Completed)
+            {
+                throw new InvalidOperationException(
+                    "Order must be ready before it can be delivered.");
+            }
+
+            var now = DateTime.UtcNow;
+
+            shipment.Status = request.Status;
+            shipment.Carrier =
+                NullIfWhitespace(request.Carrier) ?? shipment.Carrier;
+            shipment.TrackingNumber =
+                NullIfWhitespace(request.TrackingNumber)
+                ?? shipment.TrackingNumber;
+
+            if (request.Status == ShipmentStatus.Shipped)
+            {
+                shipment.ShippedAt = now;
+            }
+            else if (request.Status == ShipmentStatus.Delivered)
+            {
+                shipment.DeliveredAt = now;
+
+                if (order.Status == OrderStatus.Ready)
+                {
+                    order.Status = OrderStatus.Completed;
+
+                    var history = new OrderStatusHistory
+                    {
+                        Status = OrderStatus.Completed,
+                        ChangedAt = now,
+                        ChangedByUserId = userId,
+                        Note = "Marked delivered."
+                    };
+
+                    order.StatusHistory.Add(history);
+                    _context.OrderStatusHistory.Add(history);
+                }
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return BuildShipmentResponse(shipment);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
     private async Task<Customer> ResolveCustomerAsync(
         int userId,
         CancellationToken cancellationToken)
@@ -565,6 +752,19 @@ public class OrderService : IOrderService
             && targets.Contains(target);
     }
 
+    private static bool IsShipmentTransitionAllowed(
+        ShipmentStatus current,
+        ShipmentStatus target)
+    {
+        if (current == target)
+        {
+            return false;
+        }
+
+        return AllowedShipmentTransitions.TryGetValue(current, out var targets)
+            && targets.Contains(target);
+    }
+
     private static decimal CalculateOutstandingBalance(Order order)
     {
         var completed = order.Payments
@@ -591,6 +791,18 @@ public class OrderService : IOrderService
             Status = payment.Status,
             TransactionReference = payment.TransactionReference,
             PaidAt = payment.PaidAt
+        };
+
+    private static ShipmentResponse BuildShipmentResponse(
+        Shipment shipment) =>
+        new()
+        {
+            Id = shipment.Id,
+            Status = shipment.Status,
+            TrackingNumber = shipment.TrackingNumber,
+            Carrier = shipment.Carrier,
+            ShippedAt = shipment.ShippedAt,
+            DeliveredAt = shipment.DeliveredAt
         };
 
     private static void ValidateAvailability(
