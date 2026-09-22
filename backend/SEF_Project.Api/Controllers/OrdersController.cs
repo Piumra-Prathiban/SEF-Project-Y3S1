@@ -38,6 +38,70 @@ public class OrdersController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet]
+    public async Task<ActionResult<OrderListResponse>> GetOrders(
+        [FromQuery] OrderQuery query,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var response = await _orderService.GetOrdersAsync(
+            userId.Value,
+            CanAccessAllOrders(),
+            query,
+            cancellationToken);
+
+        return Ok(response);
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<OrderResponse>> GetOrderById(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var response = await _orderService.GetOrderByIdAsync(
+            userId.Value,
+            CanAccessAllOrders(),
+            id,
+            cancellationToken);
+
+        return response is null ? NotFound() : Ok(response);
+    }
+
+    [HttpGet("{id:guid}/status-history")]
+    public async Task<ActionResult<List<OrderStatusHistoryResponse>>>
+        GetOrderStatusHistory(
+            Guid id,
+            CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var history = await _orderService.GetOrderStatusHistoryAsync(
+            userId.Value,
+            CanAccessAllOrders(),
+            id,
+            cancellationToken);
+
+        return history is null ? NotFound() : Ok(history);
+    }
+
     private int? GetCurrentUserId()
     {
         var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -46,4 +110,7 @@ public class OrdersController : ControllerBase
             ? userId
             : null;
     }
+
+    private bool CanAccessAllOrders() =>
+        User.IsInRole("Staff") || User.IsInRole("Administrator");
 }

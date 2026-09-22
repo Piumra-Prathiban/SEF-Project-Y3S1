@@ -80,7 +80,7 @@ public class OrderService : IOrderService
 
                 order.Items.Add(new OrderItem
                 {
-                    ProductVariantId = item.ProductVariantId,
+                    ProductVariant = variant,
                     Quantity = item.Quantity,
                     UnitPrice = variant.Price,
                     LineTotal = lineTotal
@@ -127,13 +127,126 @@ public class OrderService : IOrderService
                 order.OrderNumber,
                 customer.Id);
 
-            return BuildResponse(order, variants);
+            return BuildResponse(order);
         }
         catch
         {
             await transaction.RollbackAsync(cancellationToken);
             throw;
         }
+    }
+
+    public async Task<OrderListResponse> GetOrdersAsync(
+        int userId,
+        bool canAccessAllOrders,
+        OrderQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var page = Math.Max(query.Page, 1);
+        var pageSize = Math.Clamp(query.PageSize, 1, 100);
+
+        var orders = _context.Orders.AsNoTracking();
+
+        if (!canAccessAllOrders)
+        {
+            orders = orders.Where(o => o.Customer.UserId == userId);
+        }
+        else if (query.CustomerId is not null)
+        {
+            orders = orders.Where(o => o.CustomerId == query.CustomerId.Value);
+        }
+
+        if (query.Status is not null)
+        {
+            orders = orders.Where(o => o.Status == query.Status.Value);
+        }
+
+        if (query.From is not null)
+        {
+            orders = orders.Where(o => o.PlacedAt >= query.From.Value);
+        }
+
+        if (query.To is not null)
+        {
+            orders = orders.Where(o => o.PlacedAt <= query.To.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.OrderNumber))
+        {
+            var search = query.OrderNumber.Trim();
+            orders = orders.Where(o => o.OrderNumber.Contains(search));
+        }
+
+        orders = ApplySorting(orders, query);
+
+        var totalCount = await orders.CountAsync(cancellationToken);
+
+        var items = await orders
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(o => new OrderSummaryResponse
+            {
+                Id = o.Id,
+                OrderNumber = o.OrderNumber,
+                Status = o.Status,
+                PlacedAt = o.PlacedAt,
+                Total = o.Total,
+                Currency = o.Currency
+            })
+            .ToListAsync(cancellationToken);
+
+        return new OrderListResponse
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
+    }
+
+    public async Task<OrderResponse?> GetOrderByIdAsync(
+        int userId,
+        bool canAccessAllOrders,
+        Guid orderId,
+        CancellationToken cancellationToken = default)
+    {
+        var order = await LoadFullOrderAsync(orderId, cancellationToken);
+
+        if (order is null || !CanView(order, userId, canAccessAllOrders))
+        {
+            return null;
+        }
+
+        return BuildResponse(order);
+    }
+
+    public async Task<List<OrderStatusHistoryResponse>?> GetOrderStatusHistoryAsync(
+        int userId,
+        bool canAccessAllOrders,
+        Guid orderId,
+        CancellationToken cancellationToken = default)
+    {
+        var order = await _context.Orders
+            .AsNoTracking()
+            .Include(o => o.Customer)
+            .Include(o => o.StatusHistory)
+            .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
+
+        if (order is null || !CanView(order, userId, canAccessAllOrders))
+        {
+            return null;
+        }
+
+        return order.StatusHistory
+            .OrderBy(h => h.ChangedAt)
+            .Select(h => new OrderStatusHistoryResponse
+            {
+                Id = h.Id,
+                Status = h.Status,
+                ChangedAt = h.ChangedAt,
+                Note = h.Note
+            })
+            .ToList();
     }
 
     private async Task<Customer> ResolveCustomerAsync(
@@ -158,6 +271,29 @@ public class OrderService : IOrderService
 
         return customer;
     }
+
+    private async Task<Order?> LoadFullOrderAsync(
+        Guid orderId,
+        CancellationToken cancellationToken)
+    {
+        return await _context.Orders
+            .AsNoTracking()
+            .Include(o => o.Customer)
+            .Include(o => o.Items)
+                .ThenInclude(i => i.ProductVariant)
+                .ThenInclude(v => v.Product)
+            .Include(o => o.DeliveryAddress)
+            .Include(o => o.Payments)
+            .Include(o => o.Shipments)
+            .Include(o => o.StatusHistory)
+            .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
+    }
+
+    private static bool CanView(
+        Order order,
+        int userId,
+        bool canAccessAllOrders) =>
+        canAccessAllOrders || order.Customer.UserId == userId;
 
     private static void ValidateAvailability(
         List<CreateOrderItemRequest> items,
@@ -185,6 +321,35 @@ public class OrderService : IOrderService
                     $"Insufficient stock for '{variant.Sku}'.");
             }
         }
+    }
+
+    private static IQueryable<Order> ApplySorting(
+        IQueryable<Order> orders,
+        OrderQuery query)
+    {
+        var descending = !string.Equals(
+            query.SortDirection,
+            "asc",
+            StringComparison.OrdinalIgnoreCase);
+
+        return query.SortBy?.ToLowerInvariant() switch
+        {
+            "total" => descending
+                ? orders.OrderByDescending(o => (double)o.Total)
+                : orders.OrderBy(o => (double)o.Total),
+            "ordernumber" => descending
+                ? orders.OrderByDescending(o => o.OrderNumber)
+                : orders.OrderBy(o => o.OrderNumber),
+            "status" => descending
+                ? orders.OrderByDescending(o => o.Status)
+                : orders.OrderBy(o => o.Status),
+            "createdat" => descending
+                ? orders.OrderByDescending(o => o.CreatedAt)
+                : orders.OrderBy(o => o.CreatedAt),
+            _ => descending
+                ? orders.OrderByDescending(o => o.PlacedAt)
+                : orders.OrderBy(o => o.PlacedAt)
+        };
     }
 
     private static List<CreateOrderItemRequest> MergeItems(
@@ -227,9 +392,7 @@ public class OrderService : IOrderService
     private static string? NullIfWhitespace(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    private static OrderResponse BuildResponse(
-        Order order,
-        Dictionary<Guid, ProductVariant> variants)
+    private static OrderResponse BuildResponse(Order order)
     {
         return new OrderResponse
         {
@@ -243,19 +406,15 @@ public class OrderService : IOrderService
             ShippingFee = order.ShippingFee,
             Total = order.Total,
             Currency = order.Currency,
-            Items = order.Items.Select(item =>
+            Items = order.Items.Select(item => new OrderItemResponse
             {
-                variants.TryGetValue(item.ProductVariantId, out var variant);
-                return new OrderItemResponse
-                {
-                    Id = item.Id,
-                    ProductVariantId = item.ProductVariantId,
-                    Sku = variant?.Sku ?? string.Empty,
-                    Name = variant?.Product.Name ?? string.Empty,
-                    Quantity = item.Quantity,
-                    UnitPrice = item.UnitPrice,
-                    LineTotal = item.LineTotal
-                };
+                Id = item.Id,
+                ProductVariantId = item.ProductVariantId,
+                Sku = item.ProductVariant?.Sku ?? string.Empty,
+                Name = item.ProductVariant?.Product?.Name ?? string.Empty,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
+                LineTotal = item.LineTotal
             }).ToList(),
             DeliveryAddress = order.DeliveryAddress is null
                 ? null
@@ -270,16 +429,34 @@ public class OrderService : IOrderService
                     Country = order.DeliveryAddress.Country,
                     Phone = order.DeliveryAddress.Phone
                 },
-            Payments = new List<PaymentResponse>(),
-            Shipments = new List<ShipmentResponse>(),
-            StatusHistory = order.StatusHistory.Select(h =>
-                new OrderStatusHistoryResponse
+            Payments = order.Payments.Select(p => new PaymentResponse
+            {
+                Id = p.Id,
+                Amount = p.Amount,
+                Method = p.Method,
+                Status = p.Status,
+                TransactionReference = p.TransactionReference,
+                PaidAt = p.PaidAt
+            }).ToList(),
+            Shipments = order.Shipments.Select(s => new ShipmentResponse
+            {
+                Id = s.Id,
+                Status = s.Status,
+                TrackingNumber = s.TrackingNumber,
+                Carrier = s.Carrier,
+                ShippedAt = s.ShippedAt,
+                DeliveredAt = s.DeliveredAt
+            }).ToList(),
+            StatusHistory = order.StatusHistory
+                .OrderBy(h => h.ChangedAt)
+                .Select(h => new OrderStatusHistoryResponse
                 {
                     Id = h.Id,
                     Status = h.Status,
                     ChangedAt = h.ChangedAt,
                     Note = h.Note
-                }).ToList()
+                })
+                .ToList()
         };
     }
 }
