@@ -16,7 +16,7 @@ const heroSlides = [
     title: 'Own Your\nEveryday.',
     description:
       'Modern tailoring, soft textures and timeless pieces made to move with you.',
-    button: 'Shop Women',
+    button: 'Shop Women', 
     image:
       'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=2200&q=90',
   },
