@@ -102,6 +102,100 @@ public class OrdersController : ControllerBase
         return history is null ? NotFound() : Ok(history);
     }
 
+    [HttpPatch("{id:guid}/status")]
+    [Authorize(Roles = "Staff,Administrator")]
+    public async Task<ActionResult<OrderResponse>> UpdateOrderStatus(
+        Guid id,
+        UpdateOrderStatusRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var response = await _orderService.UpdateOrderStatusAsync(
+            userId.Value,
+            CanAccessAllOrders(),
+            id,
+            request,
+            cancellationToken);
+
+        return response is null ? NotFound() : Ok(response);
+    }
+
+    [HttpPost("{id:guid}/payments")]
+    public async Task<ActionResult<PaymentResponse>> CreatePayment(
+        Guid id,
+        CreatePaymentRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var response = await _orderService.CreatePaymentAsync(
+            userId.Value,
+            CanAccessAllOrders(),
+            id,
+            request,
+            cancellationToken);
+
+        return response is null ? NotFound() : Ok(response);
+    }
+
+    [HttpGet("{id:guid}/payments")]
+    public async Task<ActionResult<List<PaymentResponse>>> GetPayments(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var payments = await _orderService.GetPaymentsAsync(
+            userId.Value,
+            CanAccessAllOrders(),
+            id,
+            cancellationToken);
+
+        return payments is null ? NotFound() : Ok(payments);
+    }
+
+    [HttpPatch("{id:guid}/payments/{paymentId:guid}/status")]
+    [Authorize(Roles = "Staff,Administrator")]
+    public async Task<ActionResult<PaymentResponse>> UpdatePaymentStatus(
+        Guid id,
+        Guid paymentId,
+        UpdatePaymentStatusRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var response = await _orderService.UpdatePaymentStatusAsync(
+            userId.Value,
+            CanAccessAllOrders(),
+            id,
+            paymentId,
+            request,
+            cancellationToken);
+
+        return response is null ? NotFound() : Ok(response);
+    }
+
     private int? GetCurrentUserId()
     {
         var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

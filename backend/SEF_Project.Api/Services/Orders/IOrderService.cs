@@ -26,4 +26,32 @@ public interface IOrderService
         bool canAccessAllOrders,
         Guid orderId,
         CancellationToken cancellationToken = default);
+
+    Task<OrderResponse?> UpdateOrderStatusAsync(
+        int userId,
+        bool canManageOrders,
+        Guid orderId,
+        UpdateOrderStatusRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<PaymentResponse?> CreatePaymentAsync(
+        int userId,
+        bool canAccessAllOrders,
+        Guid orderId,
+        CreatePaymentRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<List<PaymentResponse>?> GetPaymentsAsync(
+        int userId,
+        bool canAccessAllOrders,
+        Guid orderId,
+        CancellationToken cancellationToken = default);
+
+    Task<PaymentResponse?> UpdatePaymentStatusAsync(
+        int userId,
+        bool canManageOrders,
+        Guid orderId,
+        Guid paymentId,
+        UpdatePaymentStatusRequest request,
+        CancellationToken cancellationToken = default);
 }

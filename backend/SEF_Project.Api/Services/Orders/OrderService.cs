@@ -10,6 +10,32 @@ namespace SEF_Project.Api.Services.Orders;
 
 public class OrderService : IOrderService
 {
+    private static readonly Dictionary<OrderStatus, OrderStatus[]>
+        AllowedTransitions = new()
+        {
+            [OrderStatus.Pending] = new[]
+                { OrderStatus.Confirmed, OrderStatus.Cancelled },
+            [OrderStatus.Confirmed] = new[]
+                { OrderStatus.Preparing, OrderStatus.Cancelled },
+            [OrderStatus.Preparing] = new[]
+                { OrderStatus.Ready, OrderStatus.Cancelled },
+            [OrderStatus.Ready] = new[]
+                { OrderStatus.Completed, OrderStatus.Cancelled },
+            [OrderStatus.Completed] = new[] { OrderStatus.Refunded },
+            [OrderStatus.Cancelled] = Array.Empty<OrderStatus>(),
+            [OrderStatus.Refunded] = Array.Empty<OrderStatus>()
+        };
+
+    private static readonly Dictionary<PaymentStatus, PaymentStatus[]>
+        AllowedPaymentTransitions = new()
+        {
+            [PaymentStatus.Pending] = new[]
+                { PaymentStatus.Completed, PaymentStatus.Failed },
+            [PaymentStatus.Completed] = new[] { PaymentStatus.Refunded },
+            [PaymentStatus.Failed] = Array.Empty<PaymentStatus>(),
+            [PaymentStatus.Refunded] = Array.Empty<PaymentStatus>()
+        };
+
     private readonly AppDbContext _context;
     private readonly ILogger<OrderService> _logger;
 
@@ -210,7 +236,10 @@ public class OrderService : IOrderService
         Guid orderId,
         CancellationToken cancellationToken = default)
     {
-        var order = await LoadFullOrderAsync(orderId, cancellationToken);
+        var order = await LoadFullOrderAsync(
+            orderId,
+            asNoTracking: true,
+            cancellationToken);
 
         if (order is null || !CanView(order, userId, canAccessAllOrders))
         {
@@ -249,6 +278,213 @@ public class OrderService : IOrderService
             .ToList();
     }
 
+    public async Task<OrderResponse?> UpdateOrderStatusAsync(
+        int userId,
+        bool canManageOrders,
+        Guid orderId,
+        UpdateOrderStatusRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (!canManageOrders)
+        {
+            throw new UnauthorizedAccessException(
+                "Only staff can change order status.");
+        }
+
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            var order = await LoadFullOrderAsync(
+                orderId,
+                asNoTracking: false,
+                cancellationToken);
+
+            if (order is null)
+            {
+                return null;
+            }
+
+            if (!IsTransitionAllowed(order.Status, request.Status))
+            {
+                throw new InvalidOperationException(
+                    $"Transition from '{order.Status}' to '{request.Status}' is not allowed.");
+            }
+
+            order.Status = request.Status;
+            order.StatusHistory.Add(new OrderStatusHistory
+            {
+                Status = request.Status,
+                ChangedAt = DateTime.UtcNow,
+                ChangedByUserId = userId,
+                Note = NullIfWhitespace(request.Note)
+            });
+
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return BuildResponse(order);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    public async Task<PaymentResponse?> CreatePaymentAsync(
+        int userId,
+        bool canAccessAllOrders,
+        Guid orderId,
+        CreatePaymentRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var order = await _context.Orders
+            .Include(o => o.Customer)
+            .Include(o => o.Payments)
+            .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
+
+        if (order is null || !CanView(order, userId, canAccessAllOrders))
+        {
+            return null;
+        }
+
+        var amount = Math.Round(request.Amount, 2);
+
+        if (amount <= 0)
+        {
+            throw new ArgumentException(
+                "Payment amount must be greater than zero.");
+        }
+
+        if (order.Status == OrderStatus.Cancelled
+            || order.Status == OrderStatus.Refunded)
+        {
+            throw new InvalidOperationException(
+                "Payments are not allowed for this order.");
+        }
+
+        var outstanding = CalculateOutstandingBalance(order);
+
+        if (outstanding <= 0)
+        {
+            throw new InvalidOperationException(
+                "Order is already fully paid.");
+        }
+
+        if (amount > outstanding)
+        {
+            throw new InvalidOperationException(
+                "Payment amount exceeds the outstanding balance.");
+        }
+
+        var payment = new Payment
+        {
+            OrderId = order.Id,
+            Method = request.Method,
+            Amount = amount,
+            Status = PaymentStatus.Pending
+        };
+
+        _context.Payments.Add(payment);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Payment recorded for order {OrderNumber} (amount {Amount}).",
+            order.OrderNumber,
+            amount);
+
+        return BuildPaymentResponse(payment);
+    }
+
+    public async Task<List<PaymentResponse>?> GetPaymentsAsync(
+        int userId,
+        bool canAccessAllOrders,
+        Guid orderId,
+        CancellationToken cancellationToken = default)
+    {
+        var order = await _context.Orders
+            .AsNoTracking()
+            .Include(o => o.Customer)
+            .Include(o => o.Payments)
+            .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
+
+        if (order is null || !CanView(order, userId, canAccessAllOrders))
+        {
+            return null;
+        }
+
+        return order.Payments
+            .OrderByDescending(p => p.CreatedAt)
+            .Select(BuildPaymentResponse)
+            .ToList();
+    }
+
+    public async Task<PaymentResponse?> UpdatePaymentStatusAsync(
+        int userId,
+        bool canManageOrders,
+        Guid orderId,
+        Guid paymentId,
+        UpdatePaymentStatusRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (!canManageOrders)
+        {
+            throw new UnauthorizedAccessException(
+                "Only staff can update payments.");
+        }
+
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            var order = await _context.Orders
+                .Include(o => o.Payments)
+                .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
+
+            if (order is null)
+            {
+                return null;
+            }
+
+            var payment = order.Payments
+                .FirstOrDefault(p => p.Id == paymentId);
+
+            if (payment is null)
+            {
+                return null;
+            }
+
+            if (!IsPaymentTransitionAllowed(payment.Status, request.Status))
+            {
+                throw new InvalidOperationException(
+                    $"Transition from '{payment.Status}' to '{request.Status}' is not allowed.");
+            }
+
+            payment.Status = request.Status;
+
+            if (request.Status == PaymentStatus.Completed)
+            {
+                payment.PaidAt = DateTime.UtcNow;
+                payment.TransactionReference =
+                    NullIfWhitespace(request.TransactionReference)
+                    ?? $"MOCK-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}";
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return BuildPaymentResponse(payment);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
     private async Task<Customer> ResolveCustomerAsync(
         int userId,
         CancellationToken cancellationToken)
@@ -274,10 +510,10 @@ public class OrderService : IOrderService
 
     private async Task<Order?> LoadFullOrderAsync(
         Guid orderId,
+        bool asNoTracking,
         CancellationToken cancellationToken)
     {
-        return await _context.Orders
-            .AsNoTracking()
+        IQueryable<Order> query = _context.Orders
             .Include(o => o.Customer)
             .Include(o => o.Items)
                 .ThenInclude(i => i.ProductVariant)
@@ -285,8 +521,16 @@ public class OrderService : IOrderService
             .Include(o => o.DeliveryAddress)
             .Include(o => o.Payments)
             .Include(o => o.Shipments)
-            .Include(o => o.StatusHistory)
-            .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
+            .Include(o => o.StatusHistory);
+
+        if (asNoTracking)
+        {
+            query = query.AsNoTracking();
+        }
+
+        return await query.FirstOrDefaultAsync(
+            o => o.Id == orderId,
+            cancellationToken);
     }
 
     private static bool CanView(
@@ -294,6 +538,60 @@ public class OrderService : IOrderService
         int userId,
         bool canAccessAllOrders) =>
         canAccessAllOrders || order.Customer.UserId == userId;
+
+    private static bool IsTransitionAllowed(
+        OrderStatus current,
+        OrderStatus target)
+    {
+        if (current == target)
+        {
+            return false;
+        }
+
+        return AllowedTransitions.TryGetValue(current, out var targets)
+            && targets.Contains(target);
+    }
+
+    private static bool IsPaymentTransitionAllowed(
+        PaymentStatus current,
+        PaymentStatus target)
+    {
+        if (current == target)
+        {
+            return false;
+        }
+
+        return AllowedPaymentTransitions.TryGetValue(current, out var targets)
+            && targets.Contains(target);
+    }
+
+    private static decimal CalculateOutstandingBalance(Order order)
+    {
+        var completed = order.Payments
+            .Where(p => p.Status == PaymentStatus.Completed)
+            .Select(p => p.Amount)
+            .DefaultIfEmpty(0m)
+            .Sum();
+
+        var pending = order.Payments
+            .Where(p => p.Status == PaymentStatus.Pending)
+            .Select(p => p.Amount)
+            .DefaultIfEmpty(0m)
+            .Sum();
+
+        return order.Total - completed - pending;
+    }
+
+    private static PaymentResponse BuildPaymentResponse(Payment payment) =>
+        new()
+        {
+            Id = payment.Id,
+            Amount = payment.Amount,
+            Method = payment.Method,
+            Status = payment.Status,
+            TransactionReference = payment.TransactionReference,
+            PaidAt = payment.PaidAt
+        };
 
     private static void ValidateAvailability(
         List<CreateOrderItemRequest> items,
