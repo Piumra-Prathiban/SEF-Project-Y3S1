@@ -1,8 +1,8 @@
 namespace SEF_Project.Api.Models;
 
-public abstract class BaseEntity : IAuditableEntity
+public abstract class GuidEntity : IAuditableEntity
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();
 
     public DateTime CreatedAt { get; set; }
 
