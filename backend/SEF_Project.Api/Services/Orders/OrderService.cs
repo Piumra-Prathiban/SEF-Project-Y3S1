@@ -147,8 +147,9 @@ public class OrderService : IOrderService
                 {
                     ProductVariantId = item.ProductVariantId,
                     Type = InventoryTransactionType.Reservation,
-                    // QuantityChange reflects the change in available stock;
-                    // QuantityOnHandAfter snapshots the physical on-hand quantity.
+                    // QuantityChange is the signed quantity moving (negative =
+                    // leaving stock, positive = returned); QuantityOnHandAfter
+                    // snapshots on-hand.
                     QuantityChange = -item.Quantity,
                     QuantityOnHandAfter = inventory.QuantityOnHand,
                     Reference = order.OrderNumber
@@ -330,6 +331,13 @@ public class OrderService : IOrderService
                 ChangedByUserId = userId,
                 Note = NullIfWhitespace(request.Note)
             });
+
+            if (request.Status == OrderStatus.Completed)
+            {
+                await ConsumeReservedInventoryAsync(
+                    order,
+                    cancellationToken);
+            }
 
             await _context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -588,6 +596,7 @@ public class OrderService : IOrderService
         try
         {
             var order = await _context.Orders
+                .Include(o => o.Items)
                 .Include(o => o.Shipments)
                 .Include(o => o.StatusHistory)
                 .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
@@ -657,6 +666,10 @@ public class OrderService : IOrderService
 
                     order.StatusHistory.Add(history);
                     _context.OrderStatusHistory.Add(history);
+
+                    await ConsumeReservedInventoryAsync(
+                        order,
+                        cancellationToken);
                 }
             }
 
@@ -828,9 +841,58 @@ public class OrderService : IOrderService
             {
                 ProductVariantId = group.Key,
                 Type = InventoryTransactionType.ReservationRelease,
-                // QuantityChange reflects the change in available stock;
-                // QuantityOnHandAfter snapshots the physical on-hand quantity.
+                // QuantityChange is the signed quantity moving (negative =
+                // leaving stock, positive = returned); QuantityOnHandAfter
+                // snapshots on-hand.
                 QuantityChange = quantity,
+                QuantityOnHandAfter = stock.QuantityOnHand,
+                Reference = order.OrderNumber
+            });
+        }
+    }
+
+    private async Task ConsumeReservedInventoryAsync(
+        Order order,
+        CancellationToken cancellationToken)
+    {
+        if (order.Items.Count == 0)
+        {
+            return;
+        }
+
+        var variantIds = order.Items
+            .Select(i => i.ProductVariantId)
+            .Distinct()
+            .ToList();
+
+        var inventory = await _context.Inventory
+            .Where(i => variantIds.Contains(i.ProductVariantId))
+            .ToDictionaryAsync(i => i.ProductVariantId, cancellationToken);
+
+        foreach (var group in order.Items.GroupBy(i => i.ProductVariantId))
+        {
+            var quantity = group.Sum(i => i.Quantity);
+
+            if (!inventory.TryGetValue(group.Key, out var stock))
+            {
+                throw new InvalidOperationException(
+                    "Inventory record missing for a reserved variant.");
+            }
+
+            if (stock.ReservedQuantity < quantity)
+            {
+                throw new InvalidOperationException(
+                    "Reserved inventory is inconsistent for this order.");
+            }
+
+            stock.ReservedQuantity -= quantity;
+            stock.QuantityOnHand -= quantity;
+
+            _context.InventoryTransactions.Add(new InventoryTransaction
+            {
+                ProductVariantId = group.Key,
+                Type = InventoryTransactionType.Sale,
+                QuantityChange = -quantity,
                 QuantityOnHandAfter = stock.QuantityOnHand,
                 Reference = order.OrderNumber
             });
