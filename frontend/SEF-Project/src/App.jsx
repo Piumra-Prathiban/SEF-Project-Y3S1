@@ -33,7 +33,7 @@ const heroSlides = [
 
 const products = [
   {
-    name: 'Relaxed Linen Shirt',
+    name: 'Relaxed Linen Shirt', 
     category: 'Women · Shirts',
     price: '$49.90',
     image:
