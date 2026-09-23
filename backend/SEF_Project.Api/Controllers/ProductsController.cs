@@ -9,6 +9,7 @@ namespace SEF_Project.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 public class ProductsController : ControllerBase
 {
     private readonly ICatalogService _catalogService;
@@ -78,6 +79,7 @@ public class ProductsController : ControllerBase
     [HttpPost("{productId:guid}/variants")]
     [ProducesResponseType(typeof(ProductVariantResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ProductVariantResponseDto>> CreateProductVariant(
         Guid productId,
@@ -101,6 +103,7 @@ public class ProductsController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(ProductResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ProductResponseDto>> CreateProduct(
         ProductCreateDto request,
@@ -121,6 +124,7 @@ public class ProductsController : ControllerBase
     [ProducesResponseType(typeof(ProductResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ProductResponseDto>> UpdateProduct(
         Guid id,
@@ -143,6 +147,7 @@ public class ProductsController : ControllerBase
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteProduct(
         Guid id,
         CancellationToken cancellationToken)

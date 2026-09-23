@@ -8,6 +8,7 @@ namespace SEF_Project.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 public class CategoriesController : ControllerBase
 {
     private readonly ICatalogService _catalogService;
@@ -48,6 +49,7 @@ public class CategoriesController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(CategoryResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<CategoryResponseDto>> CreateCategory(
         CategoryCreateDto request,
@@ -68,6 +70,7 @@ public class CategoriesController : ControllerBase
     [ProducesResponseType(typeof(CategoryResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<CategoryResponseDto>> UpdateCategory(
         Guid id,
@@ -90,6 +93,7 @@ public class CategoriesController : ControllerBase
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteCategory(
         Guid id,
         CancellationToken cancellationToken)

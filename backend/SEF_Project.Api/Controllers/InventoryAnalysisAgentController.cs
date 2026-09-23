@@ -8,6 +8,8 @@ namespace SEF_Project.Api.Controllers;
 [ApiController]
 [Route("api/agents/inventory-analysis")]
 [Authorize(Roles = "Staff,Administrator")]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(StatusCodes.Status403Forbidden)]
 public class InventoryAnalysisAgentController : ControllerBase
 {
     private readonly IInventoryAnalysisAgentService _agentService;
@@ -21,8 +23,6 @@ public class InventoryAnalysisAgentController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(InventoryAnalysisResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<InventoryAnalysisResponseDto>> AnalyzeInventory(
         InventoryAnalysisRequestDto request,

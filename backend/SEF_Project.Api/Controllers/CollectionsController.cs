@@ -8,6 +8,7 @@ namespace SEF_Project.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 public class CollectionsController : ControllerBase
 {
     private readonly ICatalogService _catalogService;
@@ -48,6 +49,7 @@ public class CollectionsController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(CollectionResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<CollectionResponseDto>> CreateCollection(
         CollectionCreateDto request,
@@ -68,6 +70,7 @@ public class CollectionsController : ControllerBase
     [ProducesResponseType(typeof(CollectionResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<CollectionResponseDto>> UpdateCollection(
         Guid id,
@@ -90,6 +93,7 @@ public class CollectionsController : ControllerBase
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteCollection(
         Guid id,
         CancellationToken cancellationToken)

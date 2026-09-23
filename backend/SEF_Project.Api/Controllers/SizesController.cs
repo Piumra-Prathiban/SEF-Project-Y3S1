@@ -8,6 +8,7 @@ namespace SEF_Project.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 public class SizesController : ControllerBase
 {
     private readonly ICatalogService _catalogService;
@@ -46,6 +47,7 @@ public class SizesController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(SizeResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<SizeResponseDto>> CreateSize(
         SizeCreateDto request,
@@ -63,6 +65,7 @@ public class SizesController : ControllerBase
     [ProducesResponseType(typeof(SizeResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<SizeResponseDto>> UpdateSize(
         Guid id,
@@ -85,6 +88,7 @@ public class SizesController : ControllerBase
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteSize(
         Guid id,
         CancellationToken cancellationToken)

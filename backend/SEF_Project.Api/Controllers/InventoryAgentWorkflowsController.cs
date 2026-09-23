@@ -9,6 +9,8 @@ namespace SEF_Project.Api.Controllers;
 [ApiController]
 [Route("api/inventory/agent/workflows")]
 [Authorize(Roles = "Staff,Administrator")]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(StatusCodes.Status403Forbidden)]
 public class InventoryAgentWorkflowsController : ControllerBase
 {
     private readonly IInventoryAgentWorkflowService _workflowService;
@@ -22,8 +24,6 @@ public class InventoryAgentWorkflowsController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(InventoryAgentWorkflowResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<InventoryAgentWorkflowResponseDto>> CreateWorkflow(
         InventoryAnalysisRequestDto request,

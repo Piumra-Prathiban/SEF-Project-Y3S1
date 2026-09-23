@@ -8,6 +8,7 @@ namespace SEF_Project.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 public class ColoursController : ControllerBase
 {
     private readonly ICatalogService _catalogService;
@@ -48,6 +49,7 @@ public class ColoursController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(ColourResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ColourResponseDto>> CreateColour(
         ColourCreateDto request,
@@ -68,6 +70,7 @@ public class ColoursController : ControllerBase
     [ProducesResponseType(typeof(ColourResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ColourResponseDto>> UpdateColour(
         Guid id,
@@ -90,6 +93,7 @@ public class ColoursController : ControllerBase
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteColour(
         Guid id,
         CancellationToken cancellationToken)

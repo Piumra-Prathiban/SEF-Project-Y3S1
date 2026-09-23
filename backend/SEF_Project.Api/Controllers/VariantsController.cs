@@ -8,6 +8,7 @@ namespace SEF_Project.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 public class VariantsController : ControllerBase
 {
     private readonly ICatalogService _catalogService;
@@ -40,6 +41,7 @@ public class VariantsController : ControllerBase
     [ProducesResponseType(typeof(ProductVariantResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ProductVariantResponseDto>> UpdateVariant(
         Guid id,
@@ -62,6 +64,7 @@ public class VariantsController : ControllerBase
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteVariant(
         Guid id,
         CancellationToken cancellationToken)

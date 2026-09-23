@@ -9,6 +9,7 @@ namespace SEF_Project.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 public class InventoryController : ControllerBase
 {
     private readonly IInventoryService _inventoryService;
@@ -88,6 +89,7 @@ public class InventoryController : ControllerBase
     [ProducesResponseType(typeof(InventoryResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<InventoryResponseDto>> AdjustStock(
         Guid variantId,
