@@ -27,6 +27,61 @@ public class InventoryServiceTests
     }
 
     [Fact]
+    public async Task GetInventoryAsync_ShouldReturnCurrentStockForSeededVariants()
+    {
+        var (connection, context) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        var service = new InventoryService(context);
+
+        var response = await service.GetInventoryAsync();
+
+        Assert.Equal(
+            await context.Inventory.CountAsync(),
+            response.Count);
+        Assert.Contains(response, item =>
+            item.Sku == "BEV-COLA-330"
+            && item.QuantityOnHand == 200
+            && item.AvailableQuantity == 200);
+    }
+
+    [Fact]
+    public async Task GetInventoryByVariantIdAsync_ShouldReturnCurrentStock()
+    {
+        var (connection, context) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        var inventory = await context.Inventory
+            .Include(i => i.ProductVariant)
+            .FirstAsync();
+        var service = new InventoryService(context);
+
+        var response = await service.GetInventoryByVariantIdAsync(
+            inventory.ProductVariantId);
+
+        Assert.NotNull(response);
+        Assert.Equal(inventory.ProductVariantId, response.ProductVariantId);
+        Assert.Equal(inventory.ProductVariant.Sku, response.Sku);
+        Assert.Equal(inventory.QuantityOnHand, response.QuantityOnHand);
+    }
+
+    [Fact]
+    public async Task GetInventoryByVariantIdAsync_ShouldReturnNull_WhenVariantMissing()
+    {
+        var (connection, context) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        var service = new InventoryService(context);
+
+        var response = await service.GetInventoryByVariantIdAsync(Guid.NewGuid());
+
+        Assert.Null(response);
+    }
+
+    [Fact]
     public async Task GetLowStockAsync_ShouldReturnInventoryAtOrBelowReorderLevel()
     {
         var (connection, context) = await CreateContextAsync();
@@ -121,6 +176,35 @@ public class InventoryServiceTests
         Assert.Equal(-4, transaction.QuantityChange);
         Assert.Equal(previousQuantity, transaction.QuantityOnHandBefore);
         Assert.Equal(previousQuantity - 4, transaction.QuantityOnHandAfter);
+    }
+
+    [Fact]
+    public async Task AdjustStockAsync_ShouldApplyPositiveAdjustment()
+    {
+        var (connection, context) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        var inventory = await context.Inventory.FirstAsync();
+        var previousQuantity = inventory.QuantityOnHand;
+        var service = new InventoryService(context);
+
+        var response = await service.AdjustStockAsync(new StockAdjustmentDto
+        {
+            ProductVariantId = inventory.ProductVariantId,
+            Type = InventoryTransactionType.Adjustment,
+            Quantity = 2,
+            Reason = "Cycle count correction"
+        });
+
+        var transaction = await context.InventoryTransactions
+            .AsNoTracking()
+            .SingleAsync(t => t.ProductVariantId == inventory.ProductVariantId);
+
+        Assert.NotNull(response);
+        Assert.Equal(previousQuantity + 2, response.QuantityOnHand);
+        Assert.Equal(InventoryTransactionType.Adjustment, transaction.Type);
+        Assert.Equal(2, transaction.QuantityChange);
     }
 
     [Fact]
@@ -241,5 +325,69 @@ public class InventoryServiceTests
         Assert.Equal(
             "Only StockIn, StockOut and Adjustment transactions can be created through manual stock adjustment.",
             exception.Message);
+    }
+
+    [Fact]
+    public async Task AdjustStockAsync_ShouldRejectZeroQuantity()
+    {
+        var (connection, context) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        var inventory = await context.Inventory.FirstAsync();
+        var service = new InventoryService(context);
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.AdjustStockAsync(new StockAdjustmentDto
+            {
+                ProductVariantId = inventory.ProductVariantId,
+                Type = InventoryTransactionType.StockIn,
+                Quantity = 0,
+                Reason = "Invalid quantity"
+            }));
+
+        Assert.Equal("Quantity must be greater than zero.", exception.Message);
+    }
+
+    [Fact]
+    public async Task AdjustStockAsync_ShouldRejectMissingReason()
+    {
+        var (connection, context) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        var inventory = await context.Inventory.FirstAsync();
+        var service = new InventoryService(context);
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.AdjustStockAsync(new StockAdjustmentDto
+            {
+                ProductVariantId = inventory.ProductVariantId,
+                Type = InventoryTransactionType.StockIn,
+                Quantity = 1,
+                Reason = " "
+            }));
+
+        Assert.Equal("Reason is required.", exception.Message);
+    }
+
+    [Fact]
+    public async Task AdjustStockAsync_ShouldReturnNull_WhenInventoryMissing()
+    {
+        var (connection, context) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        var service = new InventoryService(context);
+
+        var response = await service.AdjustStockAsync(new StockAdjustmentDto
+        {
+            ProductVariantId = Guid.NewGuid(),
+            Type = InventoryTransactionType.StockIn,
+            Quantity = 1,
+            Reason = "Missing variant"
+        });
+
+        Assert.Null(response);
     }
 }

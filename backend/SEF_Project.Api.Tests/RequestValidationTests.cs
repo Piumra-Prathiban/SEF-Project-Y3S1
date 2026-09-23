@@ -182,6 +182,58 @@ public class RequestValidationTests
     }
 
     [Fact]
+    public void CategoryAndCollectionDtos_ShouldRejectMissingNames()
+    {
+        var categoryResults = Validate(new CategoryCreateDto { Name = "" });
+        var collectionResults = Validate(new CollectionCreateDto { Name = "" });
+
+        Assert.Contains(
+            categoryResults,
+            result => result.MemberNames.Contains(nameof(CategoryCreateDto.Name)));
+        Assert.Contains(
+            collectionResults,
+            result => result.MemberNames.Contains(nameof(CollectionCreateDto.Name)));
+    }
+
+    [Fact]
+    public void SizeCreateDto_ShouldRejectMissingNameAndNegativeDisplayOrder()
+    {
+        var request = new SizeCreateDto
+        {
+            Name = "",
+            DisplayOrder = -1
+        };
+
+        var results = Validate(request);
+
+        Assert.Contains(
+            results,
+            result => result.MemberNames.Contains(nameof(SizeCreateDto.Name)));
+        Assert.Contains(
+            results,
+            result => result.MemberNames.Contains(nameof(SizeCreateDto.DisplayOrder)));
+    }
+
+    [Fact]
+    public void ColourCreateDto_ShouldRejectMissingNameAndInvalidHexCode()
+    {
+        var request = new ColourCreateDto
+        {
+            Name = "",
+            HexCode = "red"
+        };
+
+        var results = Validate(request);
+
+        Assert.Contains(
+            results,
+            result => result.MemberNames.Contains(nameof(ColourCreateDto.Name)));
+        Assert.Contains(
+            results,
+            result => result.MemberNames.Contains(nameof(ColourCreateDto.HexCode)));
+    }
+
+    [Fact]
     public void ProductVariantCreateDto_ShouldAllowZeroPrice()
     {
         var request = new ProductVariantCreateDto
