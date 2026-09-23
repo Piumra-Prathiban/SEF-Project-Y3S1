@@ -2,7 +2,7 @@ using SEF_Project.Api.Models.Enums;
 
 namespace SEF_Project.Api.Models.Catalog;
 
-public class InventoryTransaction : GuidEntity
+public class StockTransaction : GuidEntity
 {
     public Guid ProductVariantId { get; set; }
 
