@@ -52,6 +52,16 @@ public enum PromotionType
     FreeShipping
 }
 
+public enum CampaignStatus
+{
+    Draft,
+    Scheduled,
+    Active,
+    Paused,
+    Completed,
+    Cancelled
+}
+
 public enum AgentWorkflowStatus
 {
     Pending,

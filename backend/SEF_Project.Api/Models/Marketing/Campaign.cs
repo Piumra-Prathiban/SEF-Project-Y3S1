@@ -1,3 +1,5 @@
+using SEF_Project.Api.Models.Enums;
+
 namespace SEF_Project.Api.Models.Marketing;
 
 public class Campaign : GuidEntity
@@ -10,7 +12,7 @@ public class Campaign : GuidEntity
 
     public DateTime EndDate { get; set; }
 
-    public bool IsActive { get; set; } = true;
+    public CampaignStatus Status { get; set; } = CampaignStatus.Draft;
 
     public ICollection<Promotion> Promotions { get; set; } = new List<Promotion>();
 }
