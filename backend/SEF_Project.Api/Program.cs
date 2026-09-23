@@ -7,6 +7,7 @@ using System.Text;
 using SEF_Project.Api.Services.Auth;
 using SEF_Project.Api.Services.Orders;
 using SEF_Project.Api.Services.Shopping;
+using SEF_Project.Api.Services.Profile;
 using SEF_Project.Api.Middleware;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
@@ -54,6 +55,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IProductSearchService, ProductSearchService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
 
 builder.Services.AddCors(options =>
 {
