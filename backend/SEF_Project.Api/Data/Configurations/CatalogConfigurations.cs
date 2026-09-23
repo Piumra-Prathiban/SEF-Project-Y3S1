@@ -90,7 +90,12 @@ public class ColourConfiguration : IEntityTypeConfiguration<Colour>
 {
     public void Configure(EntityTypeBuilder<Colour> builder)
     {
-        builder.ToTable("Colours");
+        builder.ToTable("Colours", table =>
+        {
+            table.HasCheckConstraint(
+                "CK_Colours_HexCode_Format",
+                "\"HexCode\" IS NULL OR (length(\"HexCode\") = 7 AND substr(\"HexCode\", 1, 1) = '#')");
+        });
 
         builder.HasKey(e => e.Id);
 
@@ -203,6 +208,7 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
         builder.Property(e => e.Name).IsRequired().HasMaxLength(200);
         builder.Property(e => e.Price).HasPrecision(18, 2);
 
+        builder.HasIndex(e => e.ProductId);
         builder.HasIndex(e => e.Sku).IsUnique();
         builder.HasIndex(e => new { e.ProductId, e.SizeId, e.ColourId }).IsUnique();
 
@@ -311,6 +317,7 @@ public class InventoryStockConfiguration : IEntityTypeConfiguration<InventorySto
             table.HasCheckConstraint("CK_InventoryStocks_QuantityOnHand", "\"QuantityOnHand\" >= 0");
             table.HasCheckConstraint("CK_InventoryStocks_ReservedQuantity", "\"ReservedQuantity\" >= 0");
             table.HasCheckConstraint("CK_InventoryStocks_ReorderLevel", "\"ReorderLevel\" >= 0");
+            table.HasCheckConstraint("CK_InventoryStocks_AvailableQuantity", "\"QuantityOnHand\" >= \"ReservedQuantity\"");
         });
 
         builder.HasKey(e => e.Id);
@@ -386,7 +393,11 @@ public class StockTransactionConfiguration : IEntityTypeConfiguration<StockTrans
 {
     public void Configure(EntityTypeBuilder<StockTransaction> builder)
     {
-        builder.ToTable("StockTransactions");
+        builder.ToTable("StockTransactions", table =>
+        {
+            table.HasCheckConstraint("CK_StockTransactions_QuantityChange", "\"QuantityChange\" <> 0");
+            table.HasCheckConstraint("CK_StockTransactions_QuantityOnHandAfter", "\"QuantityOnHandAfter\" >= 0");
+        });
 
         builder.HasKey(e => e.Id);
 

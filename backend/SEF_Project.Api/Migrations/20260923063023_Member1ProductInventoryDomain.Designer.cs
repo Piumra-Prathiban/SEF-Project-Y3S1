@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SEF_Project.Api.Data;
@@ -11,9 +12,11 @@ using SEF_Project.Api.Data;
 namespace SEF_Project.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260923063023_Member1ProductInventoryDomain")]
+    partial class Member1ProductInventoryDomain
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -503,7 +506,7 @@ namespace SEF_Project.Api.Migrations
 
                     b.ToTable("Colours", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Colours_HexCode_Format", "\"HexCode\" IS NULL OR (length(\"HexCode\") = 7 AND substr(\"HexCode\", 1, 1) = '#')");
+                            t.HasCheckConstraint("CK_Colours_HexCode_Format", "\"HexCode\" IS NULL OR \"HexCode\" ~ '^#[0-9A-Fa-f]{6}$'");
                         });
 
                     b.HasData(
