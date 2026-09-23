@@ -17,7 +17,6 @@ public class ColoursController : ControllerBase
         _catalogService = catalogService;
     }
 
-    [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(typeof(List<ColourResponseDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<List<ColourResponseDto>>> GetColours(
@@ -27,7 +26,6 @@ public class ColoursController : ControllerBase
         return Ok(colours);
     }
 
-    [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ColourResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

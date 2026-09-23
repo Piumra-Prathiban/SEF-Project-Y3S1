@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using SEF_Project.Api.DTOs.Auth;
+using SEF_Project.Api.DTOs.Catalog;
+using SEF_Project.Api.Models.Enums;
 
 namespace SEF_Project.Api.Tests;
 
@@ -154,5 +156,100 @@ public class RequestValidationTests
         Assert.Contains(
             results,
             result => result.MemberNames.Contains(nameof(LoginRequest.Password)));
+    }
+
+    [Fact]
+    public void ProductCreateDto_ShouldBeInvalid_WhenRequiredFieldsAreMissing()
+    {
+        var request = new ProductCreateDto
+        {
+            Name = "",
+            CategoryId = Guid.Empty,
+            CollectionId = Guid.Empty
+        };
+
+        var results = Validate(request);
+
+        Assert.Contains(
+            results,
+            result => result.MemberNames.Contains(nameof(ProductCreateDto.Name)));
+        Assert.Contains(
+            results,
+            result => result.MemberNames.Contains(nameof(ProductCreateDto.CategoryId)));
+        Assert.Contains(
+            results,
+            result => result.MemberNames.Contains(nameof(ProductCreateDto.CollectionId)));
+    }
+
+    [Fact]
+    public void ProductVariantCreateDto_ShouldAllowZeroPrice()
+    {
+        var request = new ProductVariantCreateDto
+        {
+            ProductId = Guid.NewGuid(),
+            SizeId = Guid.NewGuid(),
+            ColourId = Guid.NewGuid(),
+            Sku = "ZERO-PRICE",
+            Name = "Zero Price Variant",
+            Price = 0m
+        };
+
+        var results = Validate(request);
+
+        Assert.DoesNotContain(
+            results,
+            result => result.MemberNames.Contains(nameof(ProductVariantCreateDto.Price)));
+    }
+
+    [Fact]
+    public void ProductVariantCreateDto_ShouldRejectNegativePriceAndStock()
+    {
+        var request = new ProductVariantCreateDto
+        {
+            ProductId = Guid.NewGuid(),
+            SizeId = Guid.NewGuid(),
+            ColourId = Guid.NewGuid(),
+            Sku = "NEGATIVE-PRICE",
+            Name = "Negative Price Variant",
+            Price = -1m,
+            InitialQuantityOnHand = -1,
+            ReorderLevel = -1
+        };
+
+        var results = Validate(request);
+
+        Assert.Contains(
+            results,
+            result => result.MemberNames.Contains(nameof(ProductVariantCreateDto.Price)));
+        Assert.Contains(
+            results,
+            result => result.MemberNames.Contains(nameof(ProductVariantCreateDto.InitialQuantityOnHand)));
+        Assert.Contains(
+            results,
+            result => result.MemberNames.Contains(nameof(ProductVariantCreateDto.ReorderLevel)));
+    }
+
+    [Fact]
+    public void StockAdjustmentDto_ShouldRejectInvalidQuantityAndTransactionType()
+    {
+        var request = new StockAdjustmentDto
+        {
+            ProductVariantId = Guid.NewGuid(),
+            Type = (InventoryTransactionType)999,
+            Quantity = 0,
+            Reason = ""
+        };
+
+        var results = Validate(request);
+
+        Assert.Contains(
+            results,
+            result => result.MemberNames.Contains(nameof(StockAdjustmentDto.Type)));
+        Assert.Contains(
+            results,
+            result => result.MemberNames.Contains(nameof(StockAdjustmentDto.Quantity)));
+        Assert.Contains(
+            results,
+            result => result.MemberNames.Contains(nameof(StockAdjustmentDto.Reason)));
     }
 }

@@ -21,7 +21,7 @@ public class ProductVariantCreateDto
     [StringLength(200)]
     public string Name { get; set; } = string.Empty;
 
-    [Range(0.01, double.MaxValue)]
+    [Range(0, double.MaxValue)]
     public decimal Price { get; set; }
 
     public bool IsActive { get; set; } = true;
@@ -49,7 +49,7 @@ public class ProductVariantUpdateDto
     [StringLength(200)]
     public string Name { get; set; } = string.Empty;
 
-    [Range(0.01, double.MaxValue)]
+    [Range(0, double.MaxValue)]
     public decimal Price { get; set; }
 
     public bool IsActive { get; set; } = true;

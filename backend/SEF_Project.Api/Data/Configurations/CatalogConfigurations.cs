@@ -200,7 +200,7 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
     {
         builder.ToTable("ProductVariants", table =>
         {
-            table.HasCheckConstraint("CK_ProductVariants_Price", "\"Price\" > 0");
+            table.HasCheckConstraint("CK_ProductVariants_Price", "\"Price\" >= 0");
         });
 
         builder.HasKey(e => e.Id);

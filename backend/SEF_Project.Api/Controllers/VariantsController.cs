@@ -17,7 +17,6 @@ public class VariantsController : ControllerBase
         _catalogService = catalogService;
     }
 
-    [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ProductVariantResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

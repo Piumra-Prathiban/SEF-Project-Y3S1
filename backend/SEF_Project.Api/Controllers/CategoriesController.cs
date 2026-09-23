@@ -17,7 +17,6 @@ public class CategoriesController : ControllerBase
         _catalogService = catalogService;
     }
 
-    [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(typeof(List<CategoryResponseDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<List<CategoryResponseDto>>> GetCategories(
@@ -27,7 +26,6 @@ public class CategoriesController : ControllerBase
         return Ok(categories);
     }
 
-    [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(CategoryResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

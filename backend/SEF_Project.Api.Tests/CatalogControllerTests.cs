@@ -67,14 +67,63 @@ public class CatalogControllerTests
     [InlineData(typeof(ColoursController), nameof(ColoursController.GetColours))]
     [InlineData(typeof(ColoursController), nameof(ColoursController.GetColourById))]
     [InlineData(typeof(VariantsController), nameof(VariantsController.GetVariantById))]
-    public void ReadActions_ShouldAllowAnonymous(
+    public void ReadActions_ShouldRequireAuthenticatedUserWithoutSpecificRole(
         Type controllerType,
         string methodName)
     {
         var method = controllerType.GetMethod(methodName);
-        var attribute = method!.GetCustomAttribute<AllowAnonymousAttribute>();
+        Assert.NotNull(method);
+
+        var allowAnonymous = method.GetCustomAttribute<AllowAnonymousAttribute>();
+        var methodAuthorize = method.GetCustomAttribute<AuthorizeAttribute>();
+        var controllerAuthorize =
+            controllerType.GetCustomAttribute<AuthorizeAttribute>();
+
+        Assert.Null(allowAnonymous);
+        Assert.True(methodAuthorize is not null || controllerAuthorize is not null);
+        Assert.True(methodAuthorize is null || methodAuthorize.Roles is null);
+    }
+
+    [Theory]
+    [InlineData(typeof(ProductsController), nameof(ProductsController.CreateProduct))]
+    [InlineData(typeof(ProductsController), nameof(ProductsController.UpdateProduct))]
+    [InlineData(typeof(ProductsController), nameof(ProductsController.DeleteProduct))]
+    [InlineData(typeof(ProductsController), nameof(ProductsController.CreateProductVariant))]
+    [InlineData(typeof(CategoriesController), nameof(CategoriesController.CreateCategory))]
+    [InlineData(typeof(CollectionsController), nameof(CollectionsController.CreateCollection))]
+    [InlineData(typeof(SizesController), nameof(SizesController.CreateSize))]
+    [InlineData(typeof(ColoursController), nameof(ColoursController.CreateColour))]
+    [InlineData(typeof(VariantsController), nameof(VariantsController.UpdateVariant))]
+    public void WriteActions_ShouldNotAllowCustomerRole(
+        Type controllerType,
+        string methodName)
+    {
+        var method = controllerType.GetMethod(methodName);
+        var attribute = method!.GetCustomAttribute<AuthorizeAttribute>();
 
         Assert.NotNull(attribute);
+        Assert.DoesNotContain("Customer", attribute!.Roles ?? string.Empty);
+    }
+
+    [Fact]
+    public void InventoryController_ShouldRequireAuthenticationForReads()
+    {
+        var controllerAuthorize = typeof(InventoryController)
+            .GetCustomAttribute<AuthorizeAttribute>();
+        var adjustMethod = typeof(InventoryController)
+            .GetMethod(nameof(InventoryController.AdjustStock));
+
+        Assert.NotNull(controllerAuthorize);
+        Assert.Null(controllerAuthorize!.Roles);
+        Assert.DoesNotContain(
+            typeof(InventoryController).GetMethods(),
+            method => method.GetCustomAttribute<AllowAnonymousAttribute>() is not null);
+
+        var adjustAuthorize =
+            adjustMethod!.GetCustomAttribute<AuthorizeAttribute>();
+        Assert.NotNull(adjustAuthorize);
+        Assert.Equal("Staff,Administrator", adjustAuthorize!.Roles);
+        Assert.DoesNotContain("Customer", adjustAuthorize.Roles);
     }
 
     [Fact]

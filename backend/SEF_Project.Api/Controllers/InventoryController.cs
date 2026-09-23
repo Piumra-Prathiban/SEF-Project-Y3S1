@@ -8,7 +8,7 @@ namespace SEF_Project.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Staff,Administrator")]
+[Authorize]
 public class InventoryController : ControllerBase
 {
     private readonly IInventoryService _inventoryService;
@@ -78,6 +78,7 @@ public class InventoryController : ControllerBase
     }
 
     [HttpPost("{variantId:guid}/adjust")]
+    [Authorize(Roles = "Staff,Administrator")]
     [ProducesResponseType(typeof(InventoryResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

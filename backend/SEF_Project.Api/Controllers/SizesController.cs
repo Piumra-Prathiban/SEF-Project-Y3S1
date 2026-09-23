@@ -17,7 +17,6 @@ public class SizesController : ControllerBase
         _catalogService = catalogService;
     }
 
-    [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(typeof(List<SizeResponseDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<List<SizeResponseDto>>> GetSizes(
@@ -27,7 +26,6 @@ public class SizesController : ControllerBase
         return Ok(sizes);
     }
 
-    [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(SizeResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

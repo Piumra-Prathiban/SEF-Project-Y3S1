@@ -17,7 +17,6 @@ public class CollectionsController : ControllerBase
         _catalogService = catalogService;
     }
 
-    [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(typeof(List<CollectionResponseDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<List<CollectionResponseDto>>> GetCollections(
@@ -27,7 +26,6 @@ public class CollectionsController : ControllerBase
         return Ok(collections);
     }
 
-    [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(CollectionResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

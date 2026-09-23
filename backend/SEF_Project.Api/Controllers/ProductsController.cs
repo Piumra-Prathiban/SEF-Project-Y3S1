@@ -18,7 +18,6 @@ public class ProductsController : ControllerBase
         _catalogService = catalogService;
     }
 
-    [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(typeof(PagedResponse<ProductResponseDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResponse<ProductResponseDto>>> GetProducts(
@@ -32,7 +31,6 @@ public class ProductsController : ControllerBase
         return Ok(products);
     }
 
-    [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ProductResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -47,7 +45,6 @@ public class ProductsController : ControllerBase
         return product is null ? NotFound() : Ok(product);
     }
 
-    [AllowAnonymous]
     [HttpGet("{id:guid}/variants")]
     [ProducesResponseType(typeof(List<ProductVariantResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
