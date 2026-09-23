@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using SEF_Project.Api.Data;
 using SEF_Project.Api.DTOs.Catalog;
@@ -71,7 +72,9 @@ public class InventoryService : IInventoryService
         var quantityChange = CalculateQuantityChange(request.Type, request.Quantity);
 
         await using var transaction =
-            await _context.Database.BeginTransactionAsync(cancellationToken);
+            await _context.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
 
         try
         {
