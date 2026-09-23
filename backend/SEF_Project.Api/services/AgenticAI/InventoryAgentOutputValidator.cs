@@ -52,6 +52,19 @@ public static class InventoryAgentOutputValidator
                     "Recommendation recommendedAction must be RESTOCK, MONITOR or NO_ACTION.");
             }
 
+            if (recommendation.RecommendedQuantity < 0)
+            {
+                errors.Add("Recommendation recommendedQuantity cannot be negative.");
+            }
+
+            if (recommendation.RecommendedAction.Equals(
+                    "RESTOCK",
+                    StringComparison.OrdinalIgnoreCase)
+                && recommendation.RecommendedQuantity <= 0)
+            {
+                errors.Add("RESTOCK recommendations must include a positive recommendedQuantity.");
+            }
+
             if (string.IsNullOrWhiteSpace(recommendation.Reason))
             {
                 errors.Add("Recommendation reason is required.");

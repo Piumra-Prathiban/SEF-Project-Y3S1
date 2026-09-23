@@ -18,6 +18,8 @@ public class AgentWorkflowStep : GuidEntity
 
     public string? Summary { get; set; }
 
+    public string? ResultJson { get; set; }
+
     public DateTime? StartedAt { get; set; }
 
     public DateTime? CompletedAt { get; set; }

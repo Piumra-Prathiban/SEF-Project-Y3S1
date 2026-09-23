@@ -73,11 +73,19 @@ public class InventoryAnalysisAgentService : IInventoryAnalysisAgentService
             step.CompletedAt = DateTime.UtcNow;
             step.Summary =
                 $"Produced {output.Recommendations.Count} inventory recommendation(s).";
+            step.ResultJson = JsonSerializer.Serialize(output);
 
-            workflow.Status = AgentWorkflowStatus.Completed;
-            workflow.CompletedAt = step.CompletedAt;
+            workflow.Status = AgentWorkflowStatus.AwaitingApproval;
             workflow.FinalOutcome =
-                $"Inventory Analysis Agent completed with {output.Recommendations.Count} structured recommendation(s).";
+                "Inventory Analysis Agent completed analysis and is awaiting human approval before any stock operation.";
+            workflow.Approvals.Add(new AgentApproval
+            {
+                Workflow = workflow,
+                Step = step,
+                Status = ApprovalStatus.Pending,
+                RequestedAt = DateTime.UtcNow,
+                Comment = "Inventory recommendations require manager approval before execution."
+            });
 
             await _context.SaveChangesAsync(cancellationToken);
 

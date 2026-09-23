@@ -88,6 +88,7 @@ builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IInventoryAgentToolRegistry, InventoryAgentToolRegistry>();
 builder.Services.AddScoped<IInventoryAnalysisModelClient, LocalInventoryAnalysisModelClient>();
 builder.Services.AddScoped<IInventoryAnalysisAgentService, InventoryAnalysisAgentService>();
+builder.Services.AddScoped<IInventoryAgentWorkflowService, InventoryAgentWorkflowService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 
 builder.Services.AddCors(options =>

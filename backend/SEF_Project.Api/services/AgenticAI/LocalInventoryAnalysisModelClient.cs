@@ -29,6 +29,9 @@ public class LocalInventoryAnalysisModelClient : IInventoryAnalysisModelClient
                         : item.CurrentStock <= item.ReorderLevel + 5
                             ? "MONITOR"
                             : "NO_ACTION",
+                    RecommendedQuantity = item.CurrentStock <= item.ReorderLevel
+                        ? Math.Max(item.ReorderLevel - item.CurrentStock + 10, 1)
+                        : 0,
                     Reason = item.CurrentStock <= item.ReorderLevel
                         ? "Current stock is at or below reorder level."
                         : item.CurrentStock <= item.ReorderLevel + 5

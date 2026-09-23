@@ -58,8 +58,82 @@ public class InventoryRecommendationDto
     [JsonPropertyName("recommendedAction")]
     public string RecommendedAction { get; set; } = string.Empty;
 
+    [JsonPropertyName("recommendedQuantity")]
+    public int RecommendedQuantity { get; set; }
+
     [JsonPropertyName("reason")]
     public string Reason { get; set; } = string.Empty;
+}
+
+public class InventoryAgentWorkflowResponseDto
+{
+    public Guid WorkflowId { get; set; }
+
+    public string Objective { get; set; } = string.Empty;
+
+    public string Status { get; set; } = string.Empty;
+
+    public string? Plan { get; set; }
+
+    public string? FinalOutcome { get; set; }
+
+    public DateTime? StartedAt { get; set; }
+
+    public DateTime? CompletedAt { get; set; }
+
+    public List<InventoryAgentWorkflowStepDto> Steps { get; set; } = new();
+
+    public List<InventoryAgentApprovalDto> Approvals { get; set; } = new();
+
+    public List<string> Errors { get; set; } = new();
+}
+
+public class InventoryAgentWorkflowStepDto
+{
+    public Guid Id { get; set; }
+
+    public int StepOrder { get; set; }
+
+    public string AgentName { get; set; } = string.Empty;
+
+    public string Title { get; set; } = string.Empty;
+
+    public string Status { get; set; } = string.Empty;
+
+    public string? Summary { get; set; }
+
+    public InventoryAgentOutputDto? Result { get; set; }
+
+    public List<InventoryAgentToolExecutionDto> ToolExecutions { get; set; } =
+        new();
+
+    public List<string> ValidationSummaries { get; set; } = new();
+}
+
+public class InventoryAgentApprovalDto
+{
+    public string Status { get; set; } = string.Empty;
+
+    public DateTime RequestedAt { get; set; }
+
+    public DateTime? ReviewedAt { get; set; }
+
+    public int? ReviewedByUserId { get; set; }
+
+    public string? Comment { get; set; }
+}
+
+public class InventoryAgentApprovalRequestDto
+{
+    [StringLength(1000)]
+    public string? Comment { get; set; }
+}
+
+public class InventoryAgentRevisionRequestDto
+{
+    [Required]
+    [StringLength(1000)]
+    public string Comment { get; set; } = string.Empty;
 }
 
 public class InventoryAgentOutputDto

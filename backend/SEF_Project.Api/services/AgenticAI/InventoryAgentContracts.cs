@@ -45,3 +45,32 @@ public interface IInventoryAnalysisAgentService
         InventoryAnalysisRequestDto request,
         CancellationToken cancellationToken = default);
 }
+
+public interface IInventoryAgentWorkflowService
+{
+    Task<InventoryAgentWorkflowResponseDto> CreateWorkflowAsync(
+        InventoryAnalysisRequestDto request,
+        CancellationToken cancellationToken = default);
+
+    Task<InventoryAgentWorkflowResponseDto?> GetWorkflowAsync(
+        Guid workflowId,
+        CancellationToken cancellationToken = default);
+
+    Task<InventoryAgentWorkflowResponseDto?> ApproveAsync(
+        Guid workflowId,
+        int reviewedByUserId,
+        string? comment,
+        CancellationToken cancellationToken = default);
+
+    Task<InventoryAgentWorkflowResponseDto?> RejectAsync(
+        Guid workflowId,
+        int reviewedByUserId,
+        string? comment,
+        CancellationToken cancellationToken = default);
+
+    Task<InventoryAgentWorkflowResponseDto?> RequestRevisionAsync(
+        Guid workflowId,
+        int reviewedByUserId,
+        string comment,
+        CancellationToken cancellationToken = default);
+}
