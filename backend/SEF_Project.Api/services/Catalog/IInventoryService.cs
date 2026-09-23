@@ -16,6 +16,7 @@ public interface IInventoryService
 
     Task<InventoryResponseDto?> AdjustStockAsync(
         StockAdjustmentDto request,
+        int? performedByUserId = null,
         CancellationToken cancellationToken = default);
 
     Task<List<StockTransactionResponseDto>> GetStockTransactionsAsync(

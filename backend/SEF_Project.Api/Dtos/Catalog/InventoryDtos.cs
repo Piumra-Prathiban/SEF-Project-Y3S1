@@ -6,21 +6,21 @@ namespace SEF_Project.Api.DTOs.Catalog;
 
 public class StockAdjustmentDto
 {
-    [NotEmptyGuid]
     public Guid ProductVariantId { get; set; }
 
     [Required]
     [EnumDataType(typeof(InventoryTransactionType))]
     public InventoryTransactionType Type { get; set; }
 
-    [Range(typeof(int), "-2147483648", "2147483647")]
-    public int QuantityChange { get; set; }
+    [Range(1, int.MaxValue)]
+    public int Quantity { get; set; }
 
     [StringLength(100)]
     public string? Reference { get; set; }
 
+    [Required]
     [StringLength(500)]
-    public string? Note { get; set; }
+    public string Reason { get; set; } = string.Empty;
 }
 
 public class InventoryResponseDto
@@ -60,13 +60,21 @@ public class StockTransactionResponseDto
 
     public InventoryTransactionType Type { get; set; }
 
+    public int Quantity { get; set; }
+
     public int QuantityChange { get; set; }
+
+    public int PreviousQuantityOnHand { get; set; }
 
     public int QuantityOnHandAfter { get; set; }
 
+    public int? PerformedByUserId { get; set; }
+
+    public string? PerformedByUserEmail { get; set; }
+
     public string? Reference { get; set; }
 
-    public string? Note { get; set; }
+    public string? Reason { get; set; }
 
     public DateTime CreatedAt { get; set; }
 }

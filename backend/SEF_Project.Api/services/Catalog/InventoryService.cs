@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SEF_Project.Api.Data;
 using SEF_Project.Api.DTOs.Catalog;
 using SEF_Project.Api.Models.Catalog;
+using SEF_Project.Api.Models.Enums;
 
 namespace SEF_Project.Api.Services.Catalog;
 
@@ -54,12 +55,20 @@ public class InventoryService : IInventoryService
 
     public async Task<InventoryResponseDto?> AdjustStockAsync(
         StockAdjustmentDto request,
+        int? performedByUserId = null,
         CancellationToken cancellationToken = default)
     {
-        if (request.QuantityChange == 0)
+        if (request.Quantity <= 0)
         {
-            throw new ArgumentException("Quantity change cannot be zero.");
+            throw new ArgumentException("Quantity must be greater than zero.");
         }
+
+        if (string.IsNullOrWhiteSpace(request.Reason))
+        {
+            throw new ArgumentException("Reason is required.");
+        }
+
+        var quantityChange = CalculateQuantityChange(request.Type, request.Quantity);
 
         await using var transaction =
             await _context.Database.BeginTransactionAsync(cancellationToken);
@@ -76,7 +85,8 @@ public class InventoryService : IInventoryService
                 return null;
             }
 
-            var quantityAfter = inventory.QuantityOnHand + request.QuantityChange;
+            var quantityBefore = inventory.QuantityOnHand;
+            var quantityAfter = quantityBefore + quantityChange;
 
             if (quantityAfter < 0)
             {
@@ -96,10 +106,12 @@ public class InventoryService : IInventoryService
             {
                 ProductVariantId = request.ProductVariantId,
                 Type = request.Type,
-                QuantityChange = request.QuantityChange,
+                QuantityChange = quantityChange,
+                QuantityOnHandBefore = quantityBefore,
                 QuantityOnHandAfter = quantityAfter,
+                PerformedByUserId = performedByUserId,
                 Reference = NullIfWhitespace(request.Reference),
-                Note = NullIfWhitespace(request.Note)
+                Note = request.Reason.Trim()
             });
 
             await _context.SaveChangesAsync(cancellationToken);
@@ -121,6 +133,7 @@ public class InventoryService : IInventoryService
         var query = _context.InventoryTransactions
             .AsNoTracking()
             .Include(t => t.ProductVariant)
+            .Include(t => t.PerformedByUser)
             .AsQueryable();
 
         if (productVariantId is not null)
@@ -171,11 +184,27 @@ public class InventoryService : IInventoryService
             ProductVariantId = transaction.ProductVariantId,
             Sku = transaction.ProductVariant?.Sku ?? string.Empty,
             Type = transaction.Type,
+            Quantity = Math.Abs(transaction.QuantityChange),
             QuantityChange = transaction.QuantityChange,
+            PreviousQuantityOnHand = transaction.QuantityOnHandBefore,
             QuantityOnHandAfter = transaction.QuantityOnHandAfter,
+            PerformedByUserId = transaction.PerformedByUserId,
+            PerformedByUserEmail = transaction.PerformedByUser?.Email,
             Reference = transaction.Reference,
-            Note = transaction.Note,
+            Reason = transaction.Note,
             CreatedAt = transaction.CreatedAt
+        };
+
+    private static int CalculateQuantityChange(
+        InventoryTransactionType type,
+        int quantity) =>
+        type switch
+        {
+            InventoryTransactionType.StockIn => quantity,
+            InventoryTransactionType.StockOut => -quantity,
+            InventoryTransactionType.Adjustment => quantity,
+            _ => throw new ArgumentException(
+                "Only StockIn, StockOut and Adjustment transactions can be created through manual stock adjustment.")
         };
 
     private static string? NullIfWhitespace(string? value) =>

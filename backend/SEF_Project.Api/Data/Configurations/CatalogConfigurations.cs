@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using SEF_Project.Api.Models;
 using SEF_Project.Api.Models.Catalog;
 
 namespace SEF_Project.Api.Data.Configurations;
@@ -396,6 +397,7 @@ public class StockTransactionConfiguration : IEntityTypeConfiguration<StockTrans
         builder.ToTable("StockTransactions", table =>
         {
             table.HasCheckConstraint("CK_StockTransactions_QuantityChange", "\"QuantityChange\" <> 0");
+            table.HasCheckConstraint("CK_StockTransactions_QuantityOnHandBefore", "\"QuantityOnHandBefore\" >= 0");
             table.HasCheckConstraint("CK_StockTransactions_QuantityOnHandAfter", "\"QuantityOnHandAfter\" >= 0");
         });
 
@@ -407,10 +409,16 @@ public class StockTransactionConfiguration : IEntityTypeConfiguration<StockTrans
 
         builder.HasIndex(e => e.ProductVariantId);
         builder.HasIndex(e => e.CreatedAt);
+        builder.HasIndex(e => e.PerformedByUserId);
 
         builder.HasOne(e => e.ProductVariant)
             .WithMany(e => e.StockTransactions)
             .HasForeignKey(e => e.ProductVariantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(e => e.PerformedByUser)
+            .WithMany()
+            .HasForeignKey(e => e.PerformedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -151,6 +151,7 @@ public class OrderService : IOrderService
                     // leaving stock, positive = returned); QuantityOnHandAfter
                     // snapshots on-hand.
                     QuantityChange = -item.Quantity,
+                    QuantityOnHandBefore = inventory.QuantityOnHand,
                     QuantityOnHandAfter = inventory.QuantityOnHand,
                     Reference = order.OrderNumber
                 });
@@ -845,6 +846,7 @@ public class OrderService : IOrderService
                 // leaving stock, positive = returned); QuantityOnHandAfter
                 // snapshots on-hand.
                 QuantityChange = quantity,
+                QuantityOnHandBefore = stock.QuantityOnHand,
                 QuantityOnHandAfter = stock.QuantityOnHand,
                 Reference = order.OrderNumber
             });
@@ -885,6 +887,8 @@ public class OrderService : IOrderService
                     "Reserved inventory is inconsistent for this order.");
             }
 
+            var quantityOnHandBefore = stock.QuantityOnHand;
+
             stock.ReservedQuantity -= quantity;
             stock.QuantityOnHand -= quantity;
 
@@ -893,6 +897,7 @@ public class OrderService : IOrderService
                 ProductVariantId = group.Key,
                 Type = InventoryTransactionType.Sale,
                 QuantityChange = -quantity,
+                QuantityOnHandBefore = quantityOnHandBefore,
                 QuantityOnHandAfter = stock.QuantityOnHand,
                 Reference = order.OrderNumber
             });

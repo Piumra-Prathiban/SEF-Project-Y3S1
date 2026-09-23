@@ -37,6 +37,8 @@ public enum ShipmentStatus
 public enum InventoryTransactionType
 {
     Adjustment,
+    StockIn,
+    StockOut,
     Receipt,
     Sale,
     Reservation,

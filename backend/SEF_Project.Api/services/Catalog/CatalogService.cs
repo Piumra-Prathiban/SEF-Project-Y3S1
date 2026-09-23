@@ -549,6 +549,7 @@ public class CatalogService : ICatalogService
                     ProductVariant = variant,
                     Type = InventoryTransactionType.Receipt,
                     QuantityChange = request.InitialQuantityOnHand,
+                    QuantityOnHandBefore = 0,
                     QuantityOnHandAfter = request.InitialQuantityOnHand,
                     Reference = "Initial stock"
                 });
