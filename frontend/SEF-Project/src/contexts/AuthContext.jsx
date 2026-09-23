@@ -1,22 +1,48 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
 import {
   login as loginRequest,
   getMe,
 } from '../services/authService';
 
 const AuthContext = createContext(null);
+const AUTH_STORAGE_KEY = 'sef.auth';
+
+function readStoredAuth() {
+  try {
+    const value = window.localStorage.getItem(AUTH_STORAGE_KEY);
+    return value ? JSON.parse(value) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredAuth(authState) {
+  if (!authState) {
+    window.localStorage.removeItem(AUTH_STORAGE_KEY);
+    return;
+  }
+
+  window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authState));
+}
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [expiresAt, setExpiresAt] = useState(null);
+  const [authState, setAuthState] = useState(() => readStoredAuth());
+
+  const user = authState?.user ?? null;
+  const token = authState?.token ?? null;
+  const expiresAt = authState?.expiresAt ?? null;
 
   async function login(email, password) {
     const response = await loginRequest(email, password);
 
-    setToken(response.token);
-    setExpiresAt(response.expiresAt);
-    setUser(response.user);
+    const nextState = {
+      token: response.token,
+      expiresAt: response.expiresAt,
+      user: response.user,
+    };
+
+    setAuthState(nextState);
+    writeStoredAuth(nextState);
 
     return response;
   }
@@ -28,30 +54,41 @@ export function AuthProvider({ children }) {
 
     const response = await getMe(token);
 
-    setUser({
-      id: Number(response.userId),
-      email: response.email,
-      role: response.role,
-    });
+    const nextState = {
+      token,
+      expiresAt,
+      user: {
+        id: Number(response.userId),
+        email: response.email,
+        role: response.role,
+      },
+    };
+
+    setAuthState(nextState);
+    writeStoredAuth(nextState);
 
     return response;
   }
 
   function logout() {
-    setToken(null);
-    setExpiresAt(null);
-    setUser(null);
+    setAuthState(null);
+    writeStoredAuth(null);
   }
 
-  const value = {
-    user,
-    token,
-    expiresAt,
-    isAuthenticated: token !== null,
-    login,
-    logout,
-    fetchCurrentUser,
-  };
+  const value = useMemo(
+    () => ({
+      user,
+      token,
+      expiresAt,
+      isAuthenticated: token !== null,
+      isStaffOrAdmin:
+        user?.role === 'Staff' || user?.role === 'Administrator',
+      login,
+      logout,
+      fetchCurrentUser,
+    }),
+    [user, token, expiresAt],
+  );
 
   return (
     <AuthContext.Provider value={value}>
