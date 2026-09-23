@@ -20,3 +20,17 @@
 6. Start the API:
 
    `dotnet run`
+
+## Member 1 Product & Inventory Documentation
+
+- Backend component documentation:
+  `backend/MEMBER1_PRODUCT_INVENTORY_DOCUMENTATION.md`
+- Frontend integration contract:
+  `backend/MEMBER1_FRONTEND_CONTRACT.md`
+
+The existing backend CI workflow is:
+
+- `.github/workflows/backend-ci.yml`
+
+It restores dependencies, builds the ASP.NET Core solution and runs the backend
+test suite.
