@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using SEF_Project.Api.Data;
 using SEF_Project.Api.Models;
@@ -19,7 +20,7 @@ public class DatabaseModelTests
             .Options;
 
         using var context = new AppDbContext(options);
-        return context.Model;
+        return context.GetService<IDesignTimeModel>().Model;
     }
 
     [Fact]
@@ -44,6 +45,90 @@ public class DatabaseModelTests
             .Single(f => f.Properties.Any(p => p.Name == nameof(CartItem.ProductVariantId)));
 
         Assert.Equal(typeof(ProductVariant), fk.PrincipalEntityType.ClrType);
+    }
+
+    [Fact]
+    public void WishlistItem_ShouldReference_Product()
+    {
+        var model = BuildModel();
+
+        var wishlistItem = model.FindEntityType(typeof(WishlistItem))!;
+        var productFk = wishlistItem.GetForeignKeys()
+            .Single(f => f.Properties.Any(
+                p => p.Name == nameof(WishlistItem.ProductId)));
+        var wishlistFk = wishlistItem.GetForeignKeys()
+            .Single(f => f.Properties.Any(
+                p => p.Name == nameof(WishlistItem.WishlistId)));
+
+        Assert.Equal(typeof(Product), productFk.PrincipalEntityType.ClrType);
+        Assert.Equal(DeleteBehavior.Restrict, productFk.DeleteBehavior);
+        Assert.Equal(typeof(Wishlist), wishlistFk.PrincipalEntityType.ClrType);
+        Assert.Equal(DeleteBehavior.Cascade, wishlistFk.DeleteBehavior);
+    }
+
+    [Fact]
+    public void WishlistItem_ShouldBeUnique_PerWishlistAndProduct()
+    {
+        var model = BuildModel();
+
+        var wishlistItem = model.FindEntityType(typeof(WishlistItem))!;
+        var index = wishlistItem.GetIndexes()
+            .Single(i =>
+                i.Properties.Select(p => p.Name).SequenceEqual(new[]
+                {
+                    nameof(WishlistItem.WishlistId),
+                    nameof(WishlistItem.ProductId)
+                }));
+
+        Assert.True(index.IsUnique);
+    }
+
+    [Fact]
+    public void Customer_ShouldOwnAtMostOne_CartAndWishlist()
+    {
+        var model = BuildModel();
+
+        foreach (var entityType in new[] { typeof(Cart), typeof(Wishlist) })
+        {
+            var ownedEntity = model.FindEntityType(entityType)!;
+            var customerIndex = ownedEntity
+                .GetIndexes()
+                .Single(i => i.Properties.Any(
+                    p => p.Name == nameof(Cart.CustomerId)));
+            var customerFk = ownedEntity.GetForeignKeys()
+                .Single(f => f.Properties.Any(
+                    p => p.Name == nameof(Cart.CustomerId)));
+
+            Assert.True(customerIndex.IsUnique);
+            Assert.Equal(typeof(Customer), customerFk.PrincipalEntityType.ClrType);
+            Assert.Equal(DeleteBehavior.Cascade, customerFk.DeleteBehavior);
+        }
+    }
+
+    [Fact]
+    public void Address_ShouldReuseExistingCustomerRelationship()
+    {
+        var model = BuildModel();
+
+        var address = model.FindEntityType(typeof(Address))!;
+        var customerFk = address.GetForeignKeys()
+            .Single(f => f.Properties.Any(
+                p => p.Name == nameof(Address.CustomerId)));
+
+        Assert.Equal(typeof(Customer), customerFk.PrincipalEntityType.ClrType);
+        Assert.Equal(DeleteBehavior.Cascade, customerFk.DeleteBehavior);
+    }
+
+    [Fact]
+    public void CartItem_Quantity_ShouldHavePositiveCheckConstraint()
+    {
+        var model = BuildModel();
+
+        var constraint = model.FindEntityType(typeof(CartItem))!
+            .GetCheckConstraints()
+            .Single(c => c.Name == "CK_CartItems_Quantity");
+
+        Assert.Equal("\"Quantity\" > 0", constraint.Sql);
     }
 
     [Fact]
@@ -128,6 +213,8 @@ public class DatabaseModelTests
             typeof(ProductVariant),
             typeof(Order),
             typeof(Cart),
+            typeof(Wishlist),
+            typeof(WishlistItem),
             typeof(AgentWorkflow)
         };
 
