@@ -1,10 +1,10 @@
 import { PlaceholderPage } from '../components/ui/PlaceholderPage';
-import { categoriesFeature } from '../features/categories';
-import { collectionsFeature } from '../features/collections';
+import { CategoriesPage } from '../features/categories';
+import { CollectionsPage } from '../features/collections';
 import { coloursFeature } from '../features/colours';
 import { inventoryFeature } from '../features/inventory';
 import { inventoryAgentFeature } from '../features/inventory-agent';
-import { productsFeature } from '../features/products';
+import { ProductsPage } from '../features/products';
 import { sizesFeature } from '../features/sizes';
 import { variantsFeature } from '../features/variants';
 import { STAFF_ROLES } from '../utils/roles';
@@ -22,20 +22,20 @@ export const memberOneRoutes = [
   {
     path: '/products',
     label: 'Products',
-    element: createPlaceholder(productsFeature),
+    element: <ProductsPage />,
     showInNavigation: true,
   },
   {
     path: '/categories',
     label: 'Categories',
-    element: createPlaceholder(categoriesFeature),
+    element: <CategoriesPage />,
     roles: STAFF_ROLES,
     showInNavigation: true,
   },
   {
     path: '/collections',
     label: 'Collections',
-    element: createPlaceholder(collectionsFeature),
+    element: <CollectionsPage />,
     roles: STAFF_ROLES,
     showInNavigation: true,
   },
