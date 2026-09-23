@@ -1,4 +1,10 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
 import {
   login as loginRequest,
   getMe,
@@ -32,7 +38,7 @@ export function AuthProvider({ children }) {
   const token = authState?.token ?? null;
   const expiresAt = authState?.expiresAt ?? null;
 
-  async function login(email, password) {
+  const login = useCallback(async (email, password) => {
     const response = await loginRequest(email, password);
 
     const nextState = {
@@ -45,9 +51,9 @@ export function AuthProvider({ children }) {
     writeStoredAuth(nextState);
 
     return response;
-  }
+  }, []);
 
-  async function fetchCurrentUser() {
+  const fetchCurrentUser = useCallback(async () => {
     if (!token) {
       return null;
     }
@@ -68,12 +74,12 @@ export function AuthProvider({ children }) {
     writeStoredAuth(nextState);
 
     return response;
-  }
+  }, [expiresAt, token]);
 
-  function logout() {
+  const logout = useCallback(() => {
     setAuthState(null);
     writeStoredAuth(null);
-  }
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -87,7 +93,7 @@ export function AuthProvider({ children }) {
       logout,
       fetchCurrentUser,
     }),
-    [user, token, expiresAt],
+    [user, token, expiresAt, login, logout, fetchCurrentUser],
   );
 
   return (
@@ -97,6 +103,7 @@ export function AuthProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
 
