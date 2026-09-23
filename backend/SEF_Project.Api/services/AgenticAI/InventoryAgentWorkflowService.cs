@@ -53,6 +53,8 @@ public class InventoryAgentWorkflowService : IInventoryAgentWorkflowService
         string? comment,
         CancellationToken cancellationToken = default)
     {
+        await EnsureAuthorizedReviewerAsync(reviewedByUserId, cancellationToken);
+
         var workflow = await LoadWorkflowAsync(workflowId, cancellationToken);
 
         if (workflow is null)
@@ -167,6 +169,8 @@ public class InventoryAgentWorkflowService : IInventoryAgentWorkflowService
         string? comment,
         CancellationToken cancellationToken = default)
     {
+        await EnsureAuthorizedReviewerAsync(reviewedByUserId, cancellationToken);
+
         var workflow = await LoadWorkflowAsync(workflowId, cancellationToken);
 
         if (workflow is null)
@@ -207,6 +211,8 @@ public class InventoryAgentWorkflowService : IInventoryAgentWorkflowService
         string comment,
         CancellationToken cancellationToken = default)
     {
+        await EnsureAuthorizedReviewerAsync(reviewedByUserId, cancellationToken);
+
         if (string.IsNullOrWhiteSpace(comment))
         {
             throw new ArgumentException("Revision comment is required.");
@@ -311,8 +317,30 @@ public class InventoryAgentWorkflowService : IInventoryAgentWorkflowService
         await RecordValidationAsync(
             step,
             true,
-            "Deterministic validation passed: variants exist, quantities are valid, output schema is valid and stock operations must go through InventoryService.",
+            "Deterministic validation passed: reviewer authorization exists, variants exist, quantities are valid, output schema is valid and stock operations must go through InventoryService.",
             cancellationToken);
+    }
+
+    private async Task EnsureAuthorizedReviewerAsync(
+        int reviewedByUserId,
+        CancellationToken cancellationToken)
+    {
+        var reviewer = await _context.Users
+            .AsNoTracking()
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.Id == reviewedByUserId, cancellationToken);
+
+        if (reviewer is null || !reviewer.IsActive)
+        {
+            throw new UnauthorizedAccessException(
+                "Reviewer account is not active or was not found.");
+        }
+
+        if (reviewer.Role.Name is not ("Staff" or "Administrator"))
+        {
+            throw new UnauthorizedAccessException(
+                "Only staff or administrators can review inventory agent workflows.");
+        }
     }
 
     private static AgentWorkflowStep GetAnalysisStep(AgentWorkflow workflow) =>

@@ -7,6 +7,7 @@ using SEF_Project.Api.Controllers;
 using SEF_Project.Api.Data;
 using SEF_Project.Api.DTOs.AgenticAI;
 using SEF_Project.Api.DTOs.Catalog;
+using SEF_Project.Api.Models;
 using SEF_Project.Api.Models.Enums;
 using SEF_Project.Api.Services.AgenticAI;
 using SEF_Project.Api.Services.Catalog;
@@ -170,6 +171,7 @@ public class InventoryAnalysisAgentTests
         await context.SaveChangesAsync();
 
         var service = CreateWorkflowService(context);
+        var staffUserId = await SeedUserAsync(context, "staff-approve@test.com", 2);
 
         var workflow = await service.CreateWorkflowAsync(new InventoryAnalysisRequestDto
         {
@@ -201,6 +203,7 @@ public class InventoryAnalysisAgentTests
         await context.SaveChangesAsync();
 
         var service = CreateWorkflowService(context);
+        var staffUserId = await SeedUserAsync(context, "staff-approve@test.com", 2);
 
         var workflow = await service.CreateWorkflowAsync(new InventoryAnalysisRequestDto
         {
@@ -209,7 +212,7 @@ public class InventoryAnalysisAgentTests
 
         var approved = await service.ApproveAsync(
             workflow.WorkflowId,
-            reviewedByUserId: 1,
+            reviewedByUserId: staffUserId,
             comment: "Approved for restock.");
 
         var inventoryAfterApproval = await context.Inventory
@@ -238,6 +241,7 @@ public class InventoryAnalysisAgentTests
         await context.SaveChangesAsync();
 
         var service = CreateWorkflowService(context);
+        var staffUserId = await SeedUserAsync(context, "staff-reject@test.com", 2);
         var workflow = await service.CreateWorkflowAsync(new InventoryAnalysisRequestDto
         {
             Objective = "Restock low inventory."
@@ -245,7 +249,7 @@ public class InventoryAnalysisAgentTests
 
         var rejected = await service.RejectAsync(
             workflow.WorkflowId,
-            reviewedByUserId: 1,
+            reviewedByUserId: staffUserId,
             comment: "Not needed.");
 
         var transactions = await context.InventoryTransactions
@@ -266,6 +270,7 @@ public class InventoryAnalysisAgentTests
         await using var __ = context;
 
         var service = CreateWorkflowService(context);
+        var staffUserId = await SeedUserAsync(context, "staff-revise@test.com", 2);
         var workflow = await service.CreateWorkflowAsync(new InventoryAnalysisRequestDto
         {
             Objective = "Review inventory."
@@ -273,7 +278,7 @@ public class InventoryAnalysisAgentTests
 
         var revised = await service.RequestRevisionAsync(
             workflow.WorkflowId,
-            reviewedByUserId: 1,
+            reviewedByUserId: staffUserId,
             comment: "Clarify which supplier will be used.");
 
         Assert.NotNull(revised);
@@ -289,6 +294,7 @@ public class InventoryAnalysisAgentTests
         await using var __ = context;
 
         var service = CreateWorkflowService(context);
+        var staffUserId = await SeedUserAsync(context, "staff-invalid@test.com", 2);
         var workflow = await service.CreateWorkflowAsync(new InventoryAnalysisRequestDto
         {
             Objective = "Review inventory."
@@ -303,7 +309,7 @@ public class InventoryAnalysisAgentTests
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.ApproveAsync(
                 workflow.WorkflowId,
-                reviewedByUserId: 1,
+                reviewedByUserId: staffUserId,
                 comment: "Approve invalid recommendation."));
 
         var failed = await context.AgentWorkflows
@@ -312,6 +318,30 @@ public class InventoryAnalysisAgentTests
 
         Assert.Equal(AgentWorkflowStatus.Failed, failed.Status);
         Assert.NotEmpty(failed.Errors);
+    }
+
+    [Fact]
+    public async Task ApproveAsync_ShouldRejectUnauthorizedCustomerReviewer()
+    {
+        var (connection, context) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        var service = CreateWorkflowService(context);
+        var customerUserId = await SeedUserAsync(
+            context,
+            "customer-reviewer@test.com",
+            1);
+        var workflow = await service.CreateWorkflowAsync(new InventoryAnalysisRequestDto
+        {
+            Objective = "Review inventory."
+        });
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.ApproveAsync(
+                workflow.WorkflowId,
+                customerUserId,
+                "Customer should not approve."));
     }
 
     [Fact]
@@ -370,5 +400,26 @@ public class InventoryAnalysisAgentTests
             context,
             agentService,
             new InventoryService(context));
+    }
+
+    private static async Task<int> SeedUserAsync(
+        AppDbContext context,
+        string email,
+        int roleId)
+    {
+        var user = new User
+        {
+            Email = email,
+            PasswordHash = "not-a-real-hash",
+            FirstName = "Inventory",
+            LastName = "Reviewer",
+            RoleId = roleId,
+            IsActive = true
+        };
+
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        return user.Id;
     }
 }
