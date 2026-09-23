@@ -5,6 +5,7 @@ using SEF_Project.Api.Configuration;
 using SEF_Project.Api.Data;
 using System.Text;
 using SEF_Project.Api.Services.Auth;
+using SEF_Project.Api.Services.Catalog;
 using SEF_Project.Api.Services.Orders;
 using SEF_Project.Api.Middleware;
 
@@ -47,6 +48,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICatalogService, CatalogService>();
+builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 
 builder.Services.AddCors(options =>
