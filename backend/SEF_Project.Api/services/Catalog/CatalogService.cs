@@ -83,6 +83,24 @@ public class CatalogService : ICatalogService
         return MapCategory(category);
     }
 
+    public async Task<bool> DeleteCategoryAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var category = await _context.Categories
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+        if (category is null)
+        {
+            return false;
+        }
+
+        category.IsActive = false;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
+
     public async Task<List<CollectionResponseDto>> GetCollectionsAsync(
         CancellationToken cancellationToken = default) =>
         await _context.Collections
@@ -149,6 +167,24 @@ public class CatalogService : ICatalogService
         await _context.SaveChangesAsync(cancellationToken);
 
         return MapCollection(collection);
+    }
+
+    public async Task<bool> DeleteCollectionAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var collection = await _context.Collections
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+        if (collection is null)
+        {
+            return false;
+        }
+
+        collection.IsActive = false;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return true;
     }
 
     public async Task<List<SizeResponseDto>> GetSizesAsync(
@@ -375,6 +411,24 @@ public class CatalogService : ICatalogService
             .SingleAsync(p => p.Id == id, cancellationToken);
 
         return MapProduct(updated);
+    }
+
+    public async Task<bool> DeleteProductAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var product = await _context.Products
+            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+
+        if (product is null)
+        {
+            return false;
+        }
+
+        product.IsActive = false;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return true;
     }
 
     public async Task<List<ProductVariantResponseDto>> GetVariantsAsync(

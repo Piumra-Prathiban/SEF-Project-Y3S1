@@ -20,6 +20,10 @@ public interface ICatalogService
         CategoryUpdateDto request,
         CancellationToken cancellationToken = default);
 
+    Task<bool> DeleteCategoryAsync(
+        Guid id,
+        CancellationToken cancellationToken = default);
+
     Task<List<CollectionResponseDto>> GetCollectionsAsync(
         CancellationToken cancellationToken = default);
 
@@ -34,6 +38,10 @@ public interface ICatalogService
     Task<CollectionResponseDto?> UpdateCollectionAsync(
         Guid id,
         CollectionUpdateDto request,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> DeleteCollectionAsync(
+        Guid id,
         CancellationToken cancellationToken = default);
 
     Task<List<SizeResponseDto>> GetSizesAsync(
@@ -82,6 +90,10 @@ public interface ICatalogService
     Task<ProductResponseDto?> UpdateProductAsync(
         Guid id,
         ProductUpdateDto request,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> DeleteProductAsync(
+        Guid id,
         CancellationToken cancellationToken = default);
 
     Task<List<ProductVariantResponseDto>> GetVariantsAsync(
