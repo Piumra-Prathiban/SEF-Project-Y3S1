@@ -13,6 +13,9 @@ public class CatalogControllerTests
     [InlineData(typeof(ProductsController))]
     [InlineData(typeof(CategoriesController))]
     [InlineData(typeof(CollectionsController))]
+    [InlineData(typeof(SizesController))]
+    [InlineData(typeof(ColoursController))]
+    [InlineData(typeof(VariantsController))]
     public void CatalogControllers_ShouldRequireAuthentication(Type controllerType)
     {
         var attribute = controllerType.GetCustomAttribute<AuthorizeAttribute>();
@@ -30,6 +33,15 @@ public class CatalogControllerTests
     [InlineData(typeof(CollectionsController), nameof(CollectionsController.CreateCollection))]
     [InlineData(typeof(CollectionsController), nameof(CollectionsController.UpdateCollection))]
     [InlineData(typeof(CollectionsController), nameof(CollectionsController.DeleteCollection))]
+    [InlineData(typeof(ProductsController), nameof(ProductsController.CreateProductVariant))]
+    [InlineData(typeof(SizesController), nameof(SizesController.CreateSize))]
+    [InlineData(typeof(SizesController), nameof(SizesController.UpdateSize))]
+    [InlineData(typeof(SizesController), nameof(SizesController.DeleteSize))]
+    [InlineData(typeof(ColoursController), nameof(ColoursController.CreateColour))]
+    [InlineData(typeof(ColoursController), nameof(ColoursController.UpdateColour))]
+    [InlineData(typeof(ColoursController), nameof(ColoursController.DeleteColour))]
+    [InlineData(typeof(VariantsController), nameof(VariantsController.UpdateVariant))]
+    [InlineData(typeof(VariantsController), nameof(VariantsController.DeleteVariant))]
     public void WriteActions_ShouldRequireStaffOrAdministrator(
         Type controllerType,
         string methodName)
@@ -49,6 +61,11 @@ public class CatalogControllerTests
     [InlineData(typeof(CategoriesController), nameof(CategoriesController.GetCategoryById))]
     [InlineData(typeof(CollectionsController), nameof(CollectionsController.GetCollections))]
     [InlineData(typeof(CollectionsController), nameof(CollectionsController.GetCollectionById))]
+    [InlineData(typeof(SizesController), nameof(SizesController.GetSizes))]
+    [InlineData(typeof(SizesController), nameof(SizesController.GetSizeById))]
+    [InlineData(typeof(ColoursController), nameof(ColoursController.GetColours))]
+    [InlineData(typeof(ColoursController), nameof(ColoursController.GetColourById))]
+    [InlineData(typeof(VariantsController), nameof(VariantsController.GetVariantById))]
     public void ReadActions_ShouldAllowAnonymous(
         Type controllerType,
         string methodName)
@@ -165,6 +182,59 @@ public class CatalogControllerTests
         Assert.IsType<NotFoundResult>(result);
     }
 
+    [Fact]
+    public async Task ProductsController_CreateVariant_ShouldUseRouteProductId()
+    {
+        var productId = Guid.NewGuid();
+        var variant = new ProductVariantResponseDto
+        {
+            Id = Guid.NewGuid(),
+            ProductId = productId,
+            Sku = "SKU-001",
+            Name = "Small / Red"
+        };
+        var service = new FakeCatalogService
+        {
+            CreatedVariant = variant
+        };
+        var controller = new ProductsController(service);
+        var request = new ProductVariantCreateDto
+        {
+            ProductId = Guid.NewGuid(),
+            SizeId = Guid.NewGuid(),
+            ColourId = Guid.NewGuid(),
+            Sku = "SKU-001",
+            Name = "Small / Red",
+            Price = 100m
+        };
+
+        var result = await controller.CreateProductVariant(
+            productId,
+            request,
+            CancellationToken.None);
+
+        var created = Assert.IsType<CreatedAtActionResult>(result.Result);
+        Assert.Equal(productId, service.LastVariantCreateRequest?.ProductId);
+        Assert.Equal(nameof(VariantsController.GetVariantById), created.ActionName);
+        Assert.Equal("Variants", created.ControllerName);
+    }
+
+    [Fact]
+    public async Task VariantsController_Delete_ShouldReturnNoContent_WhenDeleted()
+    {
+        var service = new FakeCatalogService
+        {
+            DeleteVariantResult = true
+        };
+        var controller = new VariantsController(service);
+
+        var result = await controller.DeleteVariant(
+            Guid.NewGuid(),
+            CancellationToken.None);
+
+        Assert.IsType<NoContentResult>(result);
+    }
+
     private static ProductResponseDto ProductResponse() =>
         new()
         {
@@ -184,6 +254,9 @@ public class CatalogControllerTests
         public bool DeleteProductResult { get; set; }
         public CategoryResponseDto? CreatedCategory { get; set; }
         public bool DeleteCollectionResult { get; set; }
+        public ProductVariantResponseDto? CreatedVariant { get; set; }
+        public ProductVariantCreateDto? LastVariantCreateRequest { get; set; }
+        public bool DeleteVariantResult { get; set; }
 
         public Task<List<CategoryResponseDto>> GetCategoriesAsync(
             CancellationToken cancellationToken = default) =>
@@ -265,6 +338,11 @@ public class CatalogControllerTests
             CancellationToken cancellationToken = default) =>
             Task.FromResult<SizeResponseDto?>(null);
 
+        public Task<bool> DeleteSizeAsync(
+            Guid id,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(false);
+
         public Task<List<ColourResponseDto>> GetColoursAsync(
             CancellationToken cancellationToken = default) =>
             Task.FromResult(new List<ColourResponseDto>());
@@ -284,6 +362,11 @@ public class CatalogControllerTests
             ColourUpdateDto request,
             CancellationToken cancellationToken = default) =>
             Task.FromResult<ColourResponseDto?>(null);
+
+        public Task<bool> DeleteColourAsync(
+            Guid id,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(false);
 
         public Task<List<ProductResponseDto>> GetProductsAsync(
             CancellationToken cancellationToken = default) =>
@@ -322,13 +405,21 @@ public class CatalogControllerTests
 
         public Task<ProductVariantResponseDto> CreateVariantAsync(
             ProductVariantCreateDto request,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(new ProductVariantResponseDto());
+            CancellationToken cancellationToken = default)
+        {
+            LastVariantCreateRequest = request;
+            return Task.FromResult(CreatedVariant ?? new ProductVariantResponseDto());
+        }
 
         public Task<ProductVariantResponseDto?> UpdateVariantAsync(
             Guid id,
             ProductVariantUpdateDto request,
             CancellationToken cancellationToken = default) =>
             Task.FromResult<ProductVariantResponseDto?>(null);
+
+        public Task<bool> DeleteVariantAsync(
+            Guid id,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(DeleteVariantResult);
     }
 }

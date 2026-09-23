@@ -5,7 +5,6 @@ namespace SEF_Project.Api.DTOs.Catalog;
 
 public class ProductVariantCreateDto
 {
-    [NotEmptyGuid]
     public Guid ProductId { get; set; }
 
     [NotEmptyGuid]

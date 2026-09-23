@@ -258,6 +258,24 @@ public class CatalogService : ICatalogService
         return MapSize(size);
     }
 
+    public async Task<bool> DeleteSizeAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var size = await _context.Sizes
+            .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+
+        if (size is null)
+        {
+            return false;
+        }
+
+        size.IsActive = false;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
+
     public async Task<List<ColourResponseDto>> GetColoursAsync(
         CancellationToken cancellationToken = default) =>
         await _context.Colours
@@ -324,6 +342,24 @@ public class CatalogService : ICatalogService
         await _context.SaveChangesAsync(cancellationToken);
 
         return MapColour(colour);
+    }
+
+    public async Task<bool> DeleteColourAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var colour = await _context.Colours
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+        if (colour is null)
+        {
+            return false;
+        }
+
+        colour.IsActive = false;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return true;
     }
 
     public async Task<List<ProductResponseDto>> GetProductsAsync(
@@ -590,6 +626,24 @@ public class CatalogService : ICatalogService
             .SingleAsync(v => v.Id == id, cancellationToken);
 
         return MapVariant(updated);
+    }
+
+    public async Task<bool> DeleteVariantAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var variant = await _context.ProductVariants
+            .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
+
+        if (variant is null)
+        {
+            return false;
+        }
+
+        variant.IsActive = false;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return true;
     }
 
     private IQueryable<Product> ProductQuery() =>

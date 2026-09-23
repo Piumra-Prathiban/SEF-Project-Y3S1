@@ -67,6 +67,29 @@ public class ProductsController : ControllerBase
     }
 
     [Authorize(Roles = "Staff,Administrator")]
+    [HttpPost("{productId:guid}/variants")]
+    [ProducesResponseType(typeof(ProductVariantResponseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ProductVariantResponseDto>> CreateProductVariant(
+        Guid productId,
+        ProductVariantCreateDto request,
+        CancellationToken cancellationToken)
+    {
+        request.ProductId = productId;
+
+        var variant = await _catalogService.CreateVariantAsync(
+            request,
+            cancellationToken);
+
+        return CreatedAtAction(
+            "GetVariantById",
+            "Variants",
+            new { id = variant.Id },
+            variant);
+    }
+
+    [Authorize(Roles = "Staff,Administrator")]
     [HttpPost]
     [ProducesResponseType(typeof(ProductResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
