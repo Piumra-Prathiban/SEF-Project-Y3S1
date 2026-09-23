@@ -42,7 +42,11 @@ public class ProductsController : ControllerBase
             id,
             cancellationToken);
 
-        return product is null ? NotFound() : Ok(product);
+        return product is null
+            ? NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Product was not found."))
+            : Ok(product);
     }
 
     [HttpGet("{id:guid}/variants")]
@@ -58,7 +62,9 @@ public class ProductsController : ControllerBase
 
         if (product is null)
         {
-            return NotFound();
+            return NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Product was not found."));
         }
 
         var variants = await _catalogService.GetVariantsAsync(
@@ -126,7 +132,11 @@ public class ProductsController : ControllerBase
             request,
             cancellationToken);
 
-        return product is null ? NotFound() : Ok(product);
+        return product is null
+            ? NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Product was not found."))
+            : Ok(product);
     }
 
     [Authorize(Roles = "Staff,Administrator")]
@@ -141,6 +151,10 @@ public class ProductsController : ControllerBase
             id,
             cancellationToken);
 
-        return deleted ? NoContent() : NotFound();
+        return deleted
+            ? NoContent()
+            : NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Product was not found."));
     }
 }

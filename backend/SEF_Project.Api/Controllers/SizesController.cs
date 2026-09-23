@@ -35,7 +35,11 @@ public class SizesController : ControllerBase
     {
         var size = await _catalogService.GetSizeByIdAsync(id, cancellationToken);
 
-        return size is null ? NotFound() : Ok(size);
+        return size is null
+            ? NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Size was not found."))
+            : Ok(size);
     }
 
     [Authorize(Roles = "Staff,Administrator")]
@@ -70,7 +74,11 @@ public class SizesController : ControllerBase
             request,
             cancellationToken);
 
-        return size is null ? NotFound() : Ok(size);
+        return size is null
+            ? NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Size was not found."))
+            : Ok(size);
     }
 
     [Authorize(Roles = "Staff,Administrator")]
@@ -85,6 +93,10 @@ public class SizesController : ControllerBase
             id,
             cancellationToken);
 
-        return deleted ? NoContent() : NotFound();
+        return deleted
+            ? NoContent()
+            : NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Size was not found."));
     }
 }

@@ -136,7 +136,10 @@ public class CatalogControllerTests
             Guid.NewGuid(),
             CancellationToken.None);
 
-        Assert.IsType<NotFoundResult>(result.Result);
+        var notFound = Assert.IsType<NotFoundObjectResult>(result.Result);
+        var problemDetails = Assert.IsType<ProblemDetails>(notFound.Value);
+        Assert.Equal(404, problemDetails.Status);
+        Assert.Equal("Product was not found.", problemDetails.Detail);
     }
 
     [Fact]
@@ -173,7 +176,10 @@ public class CatalogControllerTests
             Guid.NewGuid(),
             CancellationToken.None);
 
-        Assert.IsType<NotFoundResult>(result.Result);
+        var notFound = Assert.IsType<NotFoundObjectResult>(result.Result);
+        var problemDetails = Assert.IsType<ProblemDetails>(notFound.Value);
+        Assert.Equal(404, problemDetails.Status);
+        Assert.Equal("Product was not found.", problemDetails.Detail);
     }
 
     [Fact]
@@ -229,7 +235,10 @@ public class CatalogControllerTests
             Guid.NewGuid(),
             CancellationToken.None);
 
-        Assert.IsType<NotFoundResult>(result);
+        var notFound = Assert.IsType<NotFoundObjectResult>(result);
+        var problemDetails = Assert.IsType<ProblemDetails>(notFound.Value);
+        Assert.Equal(404, problemDetails.Status);
+        Assert.Equal("Collection was not found.", problemDetails.Detail);
     }
 
     [Fact]

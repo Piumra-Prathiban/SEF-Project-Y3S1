@@ -37,7 +37,11 @@ public class ColoursController : ControllerBase
             id,
             cancellationToken);
 
-        return colour is null ? NotFound() : Ok(colour);
+        return colour is null
+            ? NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Colour was not found."))
+            : Ok(colour);
     }
 
     [Authorize(Roles = "Staff,Administrator")]
@@ -75,7 +79,11 @@ public class ColoursController : ControllerBase
             request,
             cancellationToken);
 
-        return colour is null ? NotFound() : Ok(colour);
+        return colour is null
+            ? NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Colour was not found."))
+            : Ok(colour);
     }
 
     [Authorize(Roles = "Staff,Administrator")]
@@ -90,6 +98,10 @@ public class ColoursController : ControllerBase
             id,
             cancellationToken);
 
-        return deleted ? NoContent() : NotFound();
+        return deleted
+            ? NoContent()
+            : NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Colour was not found."));
     }
 }

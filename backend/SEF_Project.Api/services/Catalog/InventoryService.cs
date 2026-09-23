@@ -10,10 +10,14 @@ namespace SEF_Project.Api.Services.Catalog;
 public class InventoryService : IInventoryService
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<InventoryService>? _logger;
 
-    public InventoryService(AppDbContext context)
+    public InventoryService(
+        AppDbContext context,
+        ILogger<InventoryService>? logger = null)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task<List<InventoryResponseDto>> GetInventoryAsync(
@@ -85,6 +89,10 @@ public class InventoryService : IInventoryService
 
             if (inventory is null)
             {
+                _logger?.LogWarning(
+                    "Stock adjustment requested for missing product variant {ProductVariantId}.",
+                    request.ProductVariantId);
+
                 return null;
             }
 
@@ -93,12 +101,24 @@ public class InventoryService : IInventoryService
 
             if (quantityAfter < 0)
             {
+                _logger?.LogWarning(
+                    "Rejected stock adjustment for product variant {ProductVariantId}: requested change {QuantityChange} would make stock negative. Current quantity {QuantityOnHand}.",
+                    request.ProductVariantId,
+                    quantityChange,
+                    quantityBefore);
+
                 throw new InvalidOperationException(
                     "Stock adjustment cannot make quantity on hand negative.");
             }
 
             if (quantityAfter < inventory.ReservedQuantity)
             {
+                _logger?.LogWarning(
+                    "Rejected stock adjustment for product variant {ProductVariantId}: resulting quantity {QuantityAfter} is below reserved quantity {ReservedQuantity}.",
+                    request.ProductVariantId,
+                    quantityAfter,
+                    inventory.ReservedQuantity);
+
                 throw new InvalidOperationException(
                     "Stock adjustment cannot reduce stock below reserved quantity.");
             }
@@ -119,6 +139,15 @@ public class InventoryService : IInventoryService
 
             await _context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+
+            _logger?.LogInformation(
+                "Stock adjusted for product variant {ProductVariantId}. Type {TransactionType}, change {QuantityChange}, previous quantity {QuantityBefore}, new quantity {QuantityAfter}, performed by user {PerformedByUserId}.",
+                request.ProductVariantId,
+                request.Type,
+                quantityChange,
+                quantityBefore,
+                quantityAfter,
+                performedByUserId);
 
             return MapInventory(inventory);
         }

@@ -37,7 +37,11 @@ public class CollectionsController : ControllerBase
             id,
             cancellationToken);
 
-        return collection is null ? NotFound() : Ok(collection);
+        return collection is null
+            ? NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Collection was not found."))
+            : Ok(collection);
     }
 
     [Authorize(Roles = "Staff,Administrator")]
@@ -75,7 +79,11 @@ public class CollectionsController : ControllerBase
             request,
             cancellationToken);
 
-        return collection is null ? NotFound() : Ok(collection);
+        return collection is null
+            ? NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Collection was not found."))
+            : Ok(collection);
     }
 
     [Authorize(Roles = "Staff,Administrator")]
@@ -90,6 +98,10 @@ public class CollectionsController : ControllerBase
             id,
             cancellationToken);
 
-        return deleted ? NoContent() : NotFound();
+        return deleted
+            ? NoContent()
+            : NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Collection was not found."));
     }
 }

@@ -51,7 +51,11 @@ public class InventoryController : ControllerBase
             variantId,
             cancellationToken);
 
-        return inventory is null ? NotFound() : Ok(inventory);
+        return inventory is null
+            ? NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Inventory record was not found for this product variant."))
+            : Ok(inventory);
     }
 
     [HttpGet("{variantId:guid}/history")]
@@ -67,7 +71,9 @@ public class InventoryController : ControllerBase
 
         if (inventory is null)
         {
-            return NotFound();
+            return NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Inventory record was not found for this product variant."));
         }
 
         var history = await _inventoryService.GetStockTransactionsAsync(
@@ -95,7 +101,11 @@ public class InventoryController : ControllerBase
             GetCurrentUserId(),
             cancellationToken);
 
-        return updated is null ? NotFound() : Ok(updated);
+        return updated is null
+            ? NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Inventory record was not found for this product variant."))
+            : Ok(updated);
     }
 
     private int? GetCurrentUserId()

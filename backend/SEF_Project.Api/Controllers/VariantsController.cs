@@ -28,7 +28,11 @@ public class VariantsController : ControllerBase
             id,
             cancellationToken);
 
-        return variant is null ? NotFound() : Ok(variant);
+        return variant is null
+            ? NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Product variant was not found."))
+            : Ok(variant);
     }
 
     [Authorize(Roles = "Staff,Administrator")]
@@ -47,7 +51,11 @@ public class VariantsController : ControllerBase
             request,
             cancellationToken);
 
-        return variant is null ? NotFound() : Ok(variant);
+        return variant is null
+            ? NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Product variant was not found."))
+            : Ok(variant);
     }
 
     [Authorize(Roles = "Staff,Administrator")]
@@ -62,6 +70,10 @@ public class VariantsController : ControllerBase
             id,
             cancellationToken);
 
-        return deleted ? NoContent() : NotFound();
+        return deleted
+            ? NoContent()
+            : NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Product variant was not found."));
     }
 }

@@ -20,7 +20,9 @@ public class GlobalExceptionHandler : IExceptionHandler
     {
         _logger.LogError(
             exception,
-            "An unhandled exception occurred.");
+            "Unhandled exception while processing {Method} {Path}.",
+            httpContext.Request.Method,
+            httpContext.Request.Path);
 
         var statusCode = exception switch
         {

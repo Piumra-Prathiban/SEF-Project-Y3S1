@@ -37,7 +37,11 @@ public class CategoriesController : ControllerBase
             id,
             cancellationToken);
 
-        return category is null ? NotFound() : Ok(category);
+        return category is null
+            ? NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Category was not found."))
+            : Ok(category);
     }
 
     [Authorize(Roles = "Staff,Administrator")]
@@ -75,7 +79,11 @@ public class CategoriesController : ControllerBase
             request,
             cancellationToken);
 
-        return category is null ? NotFound() : Ok(category);
+        return category is null
+            ? NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Category was not found."))
+            : Ok(category);
     }
 
     [Authorize(Roles = "Staff,Administrator")]
@@ -90,6 +98,10 @@ public class CategoriesController : ControllerBase
             id,
             cancellationToken);
 
-        return deleted ? NoContent() : NotFound();
+        return deleted
+            ? NoContent()
+            : NotFound(ApiProblemDetails.NotFound(
+                this,
+                "Category was not found."));
     }
 }
