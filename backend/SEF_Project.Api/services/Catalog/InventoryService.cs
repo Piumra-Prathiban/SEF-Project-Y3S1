@@ -46,8 +46,8 @@ public class InventoryService : IInventoryService
     {
         var inventory = await InventoryQuery()
             .AsNoTracking()
-            .Where(i => i.QuantityOnHand - i.ReservedQuantity <= i.ReorderLevel)
-            .OrderBy(i => i.QuantityOnHand - i.ReservedQuantity)
+            .Where(i => i.QuantityOnHand <= i.ReorderLevel)
+            .OrderBy(i => i.QuantityOnHand)
             .ThenBy(i => i.ProductVariant.Sku)
             .ToListAsync(cancellationToken);
 
@@ -173,7 +173,7 @@ public class InventoryService : IInventoryService
             ReservedQuantity = inventory.ReservedQuantity,
             AvailableQuantity = availableQuantity,
             ReorderLevel = inventory.ReorderLevel,
-            IsLowStock = availableQuantity <= inventory.ReorderLevel,
+            IsLowStock = inventory.QuantityOnHand <= inventory.ReorderLevel,
             CreatedAt = inventory.CreatedAt,
             UpdatedAt = inventory.UpdatedAt
         };

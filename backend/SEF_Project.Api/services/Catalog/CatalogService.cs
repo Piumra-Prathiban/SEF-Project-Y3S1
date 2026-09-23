@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SEF_Project.Api.Data;
 using SEF_Project.Api.DTOs.Catalog;
+using SEF_Project.Api.DTOs.Common;
 using SEF_Project.Api.Models.Catalog;
 using SEF_Project.Api.Models.Enums;
 
@@ -362,15 +363,64 @@ public class CatalogService : ICatalogService
         return true;
     }
 
-    public async Task<List<ProductResponseDto>> GetProductsAsync(
+    public async Task<PagedResponse<ProductResponseDto>> GetProductsAsync(
+        ProductQueryDto query,
         CancellationToken cancellationToken = default)
     {
-        var products = await ProductQuery()
-            .AsNoTracking()
-            .OrderBy(p => p.Name)
+        var page = Math.Max(query.Page, 1);
+        var pageSize = Math.Clamp(query.PageSize, 1, 100);
+
+        var productsQuery = ProductQuery()
+            .AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var search = query.Search.Trim().ToLower();
+            productsQuery = productsQuery.Where(
+                p => p.Name.ToLower().Contains(search));
+        }
+
+        if (query.CategoryId is not null)
+        {
+            productsQuery = productsQuery.Where(
+                p => p.CategoryId == query.CategoryId.Value);
+        }
+
+        if (query.CollectionId is not null)
+        {
+            productsQuery = productsQuery.Where(
+                p => p.CollectionId == query.CollectionId.Value);
+        }
+
+        if (query.IsActive is not null)
+        {
+            productsQuery = productsQuery.Where(
+                p => p.IsActive == query.IsActive.Value);
+        }
+
+        if (query.MinPrice is not null || query.MaxPrice is not null)
+        {
+            productsQuery = productsQuery.Where(
+                p => p.Variants.Any(
+                    v => (query.MinPrice == null || v.Price >= query.MinPrice.Value)
+                         && (query.MaxPrice == null || v.Price <= query.MaxPrice.Value)));
+        }
+
+        var totalItems = await productsQuery.CountAsync(cancellationToken);
+
+        var products = await ApplyProductSorting(productsQuery, query)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken);
 
-        return products.Select(MapProduct).ToList();
+        return new PagedResponse<ProductResponseDto>
+        {
+            Items = products.Select(MapProduct).ToList(),
+            Page = page,
+            PageSize = pageSize,
+            TotalItems = totalItems,
+            TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize)
+        };
     }
 
     public async Task<ProductResponseDto?> GetProductByIdAsync(
@@ -665,6 +715,40 @@ public class CatalogService : ICatalogService
             .Include(v => v.Size)
             .Include(v => v.Colour)
             .Include(v => v.InventoryStock);
+
+    private static IQueryable<Product> ApplyProductSorting(
+        IQueryable<Product> products,
+        ProductQueryDto query)
+    {
+        var descending = string.Equals(
+            query.SortDirection,
+            "desc",
+            StringComparison.OrdinalIgnoreCase);
+
+        return query.SortBy?.Trim().ToLowerInvariant() switch
+        {
+            "price" => descending
+                ? products
+                    .OrderByDescending(p => p.Variants
+                        .Select(v => (double?)v.Price)
+                        .Min() ?? double.MaxValue)
+                    .ThenBy(p => p.Name)
+                : products
+                    .OrderBy(p => p.Variants
+                        .Select(v => (double?)v.Price)
+                        .Min() ?? double.MaxValue)
+                    .ThenBy(p => p.Name),
+            "createddate" or "createdat" or "created" => descending
+                ? products.OrderByDescending(p => p.CreatedAt).ThenBy(p => p.Name)
+                : products.OrderBy(p => p.CreatedAt).ThenBy(p => p.Name),
+            "name" or null or "" => descending
+                ? products.OrderByDescending(p => p.Name)
+                : products.OrderBy(p => p.Name),
+            _ => descending
+                ? products.OrderByDescending(p => p.Name)
+                : products.OrderBy(p => p.Name)
+        };
+    }
 
     private async Task ValidateProductReferencesAsync(
         Guid categoryId,

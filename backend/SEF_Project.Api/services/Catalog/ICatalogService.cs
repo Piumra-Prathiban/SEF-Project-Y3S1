@@ -1,4 +1,5 @@
 using SEF_Project.Api.DTOs.Catalog;
+using SEF_Project.Api.DTOs.Common;
 
 namespace SEF_Project.Api.Services.Catalog;
 
@@ -84,7 +85,8 @@ public interface ICatalogService
         Guid id,
         CancellationToken cancellationToken = default);
 
-    Task<List<ProductResponseDto>> GetProductsAsync(
+    Task<PagedResponse<ProductResponseDto>> GetProductsAsync(
+        ProductQueryDto query,
         CancellationToken cancellationToken = default);
 
     Task<ProductResponseDto?> GetProductByIdAsync(

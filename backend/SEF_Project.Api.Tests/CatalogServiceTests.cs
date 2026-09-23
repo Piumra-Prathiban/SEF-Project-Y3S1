@@ -25,6 +25,102 @@ public class CatalogServiceTests
     }
 
     [Fact]
+    public async Task GetProductsAsync_ShouldSearchByProductName()
+    {
+        var (connection, context) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        var service = new CatalogService(context);
+
+        var response = await service.GetProductsAsync(new ProductQueryDto
+        {
+            Search = "pepperoni"
+        });
+
+        var product = Assert.Single(response.Items);
+        Assert.Equal("Pepperoni Pizza", product.Name);
+        Assert.Equal(1, response.TotalItems);
+        Assert.Equal(1, response.TotalPages);
+    }
+
+    [Fact]
+    public async Task GetProductsAsync_ShouldFilterByCategoryCollectionStatusAndPrice()
+    {
+        var (connection, context) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        var pepperoni = await context.Products
+            .SingleAsync(p => p.Name == "Pepperoni Pizza");
+        var service = new CatalogService(context);
+
+        var response = await service.GetProductsAsync(new ProductQueryDto
+        {
+            CategoryId = pepperoni.CategoryId,
+            CollectionId = pepperoni.CollectionId,
+            IsActive = true,
+            MinPrice = 1500m,
+            MaxPrice = 1700m
+        });
+
+        var product = Assert.Single(response.Items);
+        Assert.Equal("Pepperoni Pizza", product.Name);
+    }
+
+    [Fact]
+    public async Task GetProductsAsync_ShouldSortByPrice()
+    {
+        var (connection, context) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        var service = new CatalogService(context);
+
+        var response = await service.GetProductsAsync(new ProductQueryDto
+        {
+            SortBy = "price",
+            SortDirection = "asc",
+            PageSize = 3
+        });
+
+        Assert.Equal(new[]
+        {
+            "Cola",
+            "Tiramisu",
+            "Margherita Pizza"
+        }, response.Items.Select(p => p.Name).ToArray());
+    }
+
+    [Fact]
+    public async Task GetProductsAsync_ShouldReturnRequestedPageMetadata()
+    {
+        var (connection, context) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        var service = new CatalogService(context);
+
+        var response = await service.GetProductsAsync(new ProductQueryDto
+        {
+            SortBy = "name",
+            SortDirection = "asc",
+            Page = 2,
+            PageSize = 2
+        });
+
+        Assert.Equal(2, response.Page);
+        Assert.Equal(2, response.PageSize);
+        Assert.Equal(5, response.TotalItems);
+        Assert.Equal(3, response.TotalPages);
+        Assert.Equal(new[]
+        {
+            "Pepperoni Pizza",
+            "Spaghetti Carbonara"
+        }, response.Items.Select(p => p.Name).ToArray());
+    }
+
+    [Fact]
     public async Task CreateVariantAsync_ShouldThrow_WhenProductMissing()
     {
         var (connection, context) = await CreateContextAsync();

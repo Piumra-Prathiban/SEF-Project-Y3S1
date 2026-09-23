@@ -29,6 +29,17 @@ public class InventoryController : ControllerBase
         return Ok(inventory);
     }
 
+    [HttpGet("low-stock")]
+    [ProducesResponseType(typeof(List<InventoryResponseDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<InventoryResponseDto>>> GetLowStock(
+        CancellationToken cancellationToken)
+    {
+        var inventory = await _inventoryService.GetLowStockAsync(
+            cancellationToken);
+
+        return Ok(inventory);
+    }
+
     [HttpGet("{variantId:guid}")]
     [ProducesResponseType(typeof(InventoryResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

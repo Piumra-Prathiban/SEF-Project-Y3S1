@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SEF_Project.Api.Controllers;
 using SEF_Project.Api.DTOs.Catalog;
+using SEF_Project.Api.DTOs.Common;
 using SEF_Project.Api.Services.Catalog;
 
 namespace SEF_Project.Api.Tests;
@@ -368,9 +369,10 @@ public class CatalogControllerTests
             CancellationToken cancellationToken = default) =>
             Task.FromResult(false);
 
-        public Task<List<ProductResponseDto>> GetProductsAsync(
+        public Task<PagedResponse<ProductResponseDto>> GetProductsAsync(
+            ProductQueryDto query,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult(new List<ProductResponseDto>());
+            Task.FromResult(new PagedResponse<ProductResponseDto>());
 
         public Task<ProductResponseDto?> GetProductByIdAsync(
             Guid id,

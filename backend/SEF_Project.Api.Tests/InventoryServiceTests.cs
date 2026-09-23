@@ -27,6 +27,38 @@ public class InventoryServiceTests
     }
 
     [Fact]
+    public async Task GetLowStockAsync_ShouldReturnInventoryAtOrBelowReorderLevel()
+    {
+        var (connection, context) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        var inventoryItems = await context.Inventory
+            .OrderBy(i => i.Id)
+            .ToListAsync();
+        var lowStockItem = inventoryItems[0];
+
+        foreach (var item in inventoryItems)
+        {
+            item.QuantityOnHand = item.ReorderLevel + 10;
+        }
+
+        lowStockItem.QuantityOnHand = lowStockItem.ReorderLevel;
+
+        await context.SaveChangesAsync();
+
+        var service = new InventoryService(context);
+
+        var response = await service.GetLowStockAsync();
+
+        var inventory = Assert.Single(response);
+        Assert.Equal(lowStockItem.ProductVariantId, inventory.ProductVariantId);
+        Assert.True(inventory.IsLowStock);
+        Assert.Equal(lowStockItem.QuantityOnHand, inventory.QuantityOnHand);
+        Assert.Equal(lowStockItem.ReorderLevel, inventory.ReorderLevel);
+    }
+
+    [Fact]
     public async Task AdjustStockAsync_ShouldUpdateInventoryAndCreateTransaction()
     {
         var (connection, context) = await CreateContextAsync();

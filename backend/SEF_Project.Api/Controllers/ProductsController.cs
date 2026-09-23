@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SEF_Project.Api.DTOs.Catalog;
+using SEF_Project.Api.DTOs.Common;
 using SEF_Project.Api.Services.Catalog;
 
 namespace SEF_Project.Api.Controllers;
@@ -19,11 +20,15 @@ public class ProductsController : ControllerBase
 
     [AllowAnonymous]
     [HttpGet]
-    [ProducesResponseType(typeof(List<ProductResponseDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<List<ProductResponseDto>>> GetProducts(
+    [ProducesResponseType(typeof(PagedResponse<ProductResponseDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResponse<ProductResponseDto>>> GetProducts(
+        [FromQuery] ProductQueryDto query,
         CancellationToken cancellationToken)
     {
-        var products = await _catalogService.GetProductsAsync(cancellationToken);
+        var products = await _catalogService.GetProductsAsync(
+            query,
+            cancellationToken);
+
         return Ok(products);
     }
 
