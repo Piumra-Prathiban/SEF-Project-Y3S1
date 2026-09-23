@@ -6,7 +6,10 @@ using SEF_Project.Api.Data;
 using System.Text;
 using SEF_Project.Api.Services.Auth;
 using SEF_Project.Api.Services.Orders;
+using SEF_Project.Api.Services.Shopping;
 using SEF_Project.Api.Middleware;
+using Microsoft.OpenApi.Models;
+using System.Reflection;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -48,6 +51,7 @@ builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IProductSearchService, ProductSearchService>();
 
 builder.Services.AddCors(options =>
 {
@@ -67,7 +71,18 @@ builder.Services.AddProblemDetails();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "SEF Project API",
+        Version = "v1",
+        Description = "Includes the advanced product discovery endpoint."
+    });
+
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFile));
+});
 
 var app = builder.Build();
 app.UseExceptionHandler();
