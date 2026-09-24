@@ -266,6 +266,9 @@ export function VariantsPage() {
       ) : (
         <div className="table-card">
           <table className="data-table">
+            <caption className="table-caption">
+              Variants for the selected product with SKU, size, colour, price, stock and actions
+            </caption>
             <thead>
               <tr>
                 <th>SKU</th>

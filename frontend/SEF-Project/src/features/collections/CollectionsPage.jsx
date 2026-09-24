@@ -188,6 +188,9 @@ export function CollectionsPage() {
       ) : (
         <div className="table-card">
           <table className="data-table">
+            <caption className="table-caption">
+              Product collections with status, product count and management actions
+            </caption>
             <thead>
               <tr>
                 <th>Name</th>

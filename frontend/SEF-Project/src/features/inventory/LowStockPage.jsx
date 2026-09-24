@@ -162,6 +162,9 @@ export function LowStockPage() {
         <>
           <div className="table-card">
             <table className="data-table">
+              <caption className="table-caption">
+                Low-stock and out-of-stock variants returned by the backend
+              </caption>
               <thead>
                 <tr>
                   <th>Product</th>
@@ -209,7 +212,7 @@ export function LowStockPage() {
             </table>
           </div>
 
-          <div className="pagination-bar">
+          <nav className="pagination-bar" aria-label="Low-stock pagination">
             <button
               className="button-secondary"
               disabled={paginationMeta.page <= 1}
@@ -230,7 +233,7 @@ export function LowStockPage() {
             >
               Next
             </button>
-          </div>
+          </nav>
         </>
       )}
     </PageShell>

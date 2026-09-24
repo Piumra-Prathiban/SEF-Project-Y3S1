@@ -19,6 +19,7 @@ export function MainNavigation({ currentPath, routes }) {
         return (
           <a
             aria-current={currentPath === route.path ? 'page' : undefined}
+            aria-disabled={!isAllowed}
             className={!isAllowed ? 'main-navigation__link is-disabled' : undefined}
             href={route.path}
             key={route.path}
@@ -30,6 +31,7 @@ export function MainNavigation({ currentPath, routes }) {
 
               handleNavigate(event, route.path);
             }}
+            tabIndex={isAllowed ? undefined : -1}
           >
             {route.label}
           </a>

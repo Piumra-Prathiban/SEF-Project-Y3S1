@@ -322,6 +322,9 @@ export function ProductsPage() {
       ) : (
         <div className="table-card">
           <table className="data-table">
+            <caption className="table-caption">
+              Product search results with category, collection, price, status and actions
+            </caption>
             <thead>
               <tr>
                 <th>Name</th>
@@ -391,7 +394,7 @@ export function ProductsPage() {
         </div>
       )}
 
-      <div className="pagination-bar">
+      <nav className="pagination-bar" aria-label="Product pagination">
         <button
           className="button-secondary"
           disabled={query.page <= 1}
@@ -412,7 +415,7 @@ export function ProductsPage() {
         >
           Next
         </button>
-      </div>
+      </nav>
 
       {selectedProduct && (
         <section className="panel detail-panel">

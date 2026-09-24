@@ -174,6 +174,9 @@ export function SizesPage() {
       ) : (
         <div className="table-card">
           <table className="data-table">
+            <caption className="table-caption">
+              Product sizes with code, status and management actions
+            </caption>
             <thead>
               <tr>
                 <th>Name</th>

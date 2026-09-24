@@ -194,6 +194,9 @@ export function ColoursPage() {
       ) : (
         <div className="table-card">
           <table className="data-table">
+            <caption className="table-caption">
+              Product colours with hex code, status and management actions
+            </caption>
             <thead>
               <tr>
                 <th>Name</th>

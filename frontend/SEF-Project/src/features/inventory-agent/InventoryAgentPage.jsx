@@ -424,6 +424,9 @@ export function InventoryAgentPage() {
               ) : (
                 <div className="table-card">
                   <table className="data-table">
+                    <caption className="table-caption">
+                      Inventory agent recommendations awaiting human approval
+                    </caption>
                     <thead>
                       <tr>
                         <th>Product</th>

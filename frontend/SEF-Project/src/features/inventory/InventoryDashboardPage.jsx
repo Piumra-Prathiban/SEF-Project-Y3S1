@@ -372,6 +372,9 @@ export function InventoryDashboardPage() {
           ) : (
             <div className="table-card">
               <table className="data-table">
+                <caption className="table-caption">
+                  Inventory records with current stock, reorder level, status and stock-management action
+                </caption>
                 <thead>
                   <tr>
                     <th>Product</th>
@@ -423,7 +426,7 @@ export function InventoryDashboardPage() {
             </div>
           )}
 
-          <div className="pagination-bar">
+          <nav className="pagination-bar" aria-label="Inventory pagination">
             <button
               className="button-secondary"
               disabled={paginationMeta.page <= 1}
@@ -444,7 +447,7 @@ export function InventoryDashboardPage() {
             >
               Next
             </button>
-          </div>
+          </nav>
 
           {selectedInventoryItem && (
             <section className="panel stock-management-panel">
@@ -556,6 +559,9 @@ export function InventoryDashboardPage() {
                 ) : (
                   <div className="table-card">
                     <table className="data-table">
+                      <caption className="table-caption">
+                        Stock transaction history for the selected product variant
+                      </caption>
                       <thead>
                         <tr>
                           <th>Date</th>

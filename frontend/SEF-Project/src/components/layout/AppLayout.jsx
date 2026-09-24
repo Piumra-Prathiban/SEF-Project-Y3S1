@@ -6,6 +6,10 @@ export function AppLayout({ children, currentPath, routes }) {
 
   return (
     <div className="app-layout">
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
+
       <header className="app-header">
         <div>
           <p className="app-header__eyebrow">SE3090 Group Project</p>
@@ -26,7 +30,9 @@ export function AppLayout({ children, currentPath, routes }) {
           <MainNavigation currentPath={currentPath} routes={routes} />
         </aside>
 
-        <main className="app-layout__content">{children}</main>
+        <main className="app-layout__content" id="main-content" tabIndex={-1}>
+          {children}
+        </main>
       </div>
     </div>
   );
