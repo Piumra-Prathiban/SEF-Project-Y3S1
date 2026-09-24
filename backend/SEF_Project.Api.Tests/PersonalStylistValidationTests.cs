@@ -7,6 +7,7 @@ public class PersonalStylistValidationTests
     private readonly PersonalStylistOutputValidator _validator = new();
 
     [Fact]
+    [Trait("TestSuite", "PersonalStylistGolden")]
     public void ValidRecommendation_PassesEveryDeterministicCheck()
     {
         var fixture = ValidationFixture.Create();
@@ -24,6 +25,20 @@ public class PersonalStylistValidationTests
     }
 
     [Fact]
+    [Trait("TestSuite", "PersonalStylistGolden")]
+    public void BudgetCompliantRecommendation_PassesAuthoritativeBudgetCheck()
+    {
+        var fixture = ValidationFixture.Create();
+        var result = Validate(fixture, fixture.Draft with { Quantity = 2 });
+
+        Assert.True(result.IsValid);
+        Assert.Contains(result.Checks, check =>
+            check.Rule == "Budget" && check.IsValid);
+        Assert.Equal(2, Assert.Single(result.Recommendations).Quantity);
+    }
+
+    [Fact]
+    [Trait("TestSuite", "PersonalStylistGolden")]
     public void NonexistentProduct_IsRejected()
     {
         var fixture = ValidationFixture.Create();
@@ -37,6 +52,7 @@ public class PersonalStylistValidationTests
     }
 
     [Fact]
+    [Trait("TestSuite", "PersonalStylistGolden")]
     public void NonexistentVariant_IsRejected()
     {
         var fixture = ValidationFixture.Create();
@@ -47,6 +63,28 @@ public class PersonalStylistValidationTests
         });
 
         AssertInvalid(result, "VariantExists");
+    }
+
+    [Fact]
+    [Trait("TestSuite", "PersonalStylistGolden")]
+    public void OutOfStockRecommendation_IsRejected()
+    {
+        var fixture = ValidationFixture.Create();
+        var input = fixture.Input with
+        {
+            AvailableVariants = new[]
+            {
+                fixture.Availability with { AvailableQuantity = 0 }
+            }
+        };
+
+        var result = _validator.Validate(
+            new PersonalStylistModelOutput(new[] { fixture.Draft }),
+            input);
+
+        AssertInvalid(result, "Availability");
+        Assert.Contains(result.Checks, check =>
+            check.Rule == "Stock" && !check.IsValid);
     }
 
     [Fact]
@@ -124,6 +162,7 @@ public class PersonalStylistValidationTests
     }
 
     [Fact]
+    [Trait("TestSuite", "PersonalStylistGolden")]
     public void IncorrectPrice_IsRejectedWithoutRepairingOutput()
     {
         var fixture = ValidationFixture.Create();

@@ -78,6 +78,59 @@ describe('shopping and customer experience', () => {
     });
   });
 
+  it('shows the catalogue loading state while the API request is pending', async () => {
+    let resolveRequest;
+    const request = new Promise((resolve) => { resolveRequest = resolve; });
+    vi.stubGlobal('fetch', vi.fn(() => request));
+
+    renderApp('/products');
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Finding products');
+    resolveRequest(jsonResponse({ ...productResult, items: [], totalCount: 0, totalPages: 0 }));
+    expect(await screen.findByRole('heading', { name: 'No products found' })).toBeInTheDocument();
+  });
+
+  it('shows safe API errors and supports the product error state', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('Catalogue unavailable'))));
+
+    renderApp('/products');
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Something went wrong');
+    expect(alert).toHaveTextContent('Catalogue unavailable');
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+  });
+
+  it('shows the product empty state for an empty API result', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(jsonResponse({
+      ...productResult,
+      items: [],
+      totalCount: 0,
+      totalPages: 0,
+    }))));
+
+    renderApp('/products');
+
+    expect(await screen.findByRole('heading', { name: 'No products found' })).toBeInTheDocument();
+  });
+
+  it('validates product price filters before making another API request', async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(jsonResponse(productResult)));
+    vi.stubGlobal('fetch', fetchMock);
+    const user = userEvent.setup();
+    renderApp('/products');
+    await screen.findByRole('heading', { name: 'Cola' });
+
+    await user.type(screen.getByLabelText('Minimum price'), '500');
+    await user.type(screen.getByLabelText('Maximum price'), '100');
+    await user.click(screen.getByRole('button', { name: 'Apply filters' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Minimum price cannot exceed maximum price.',
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('redirects unauthenticated customers away from protected routes', async () => {
     vi.stubGlobal('fetch', vi.fn());
     renderApp('/cart');
@@ -163,5 +216,31 @@ describe('shopping and customer experience', () => {
     expect(await screen.findByText('Default')).toBeInTheDocument();
     const postCall = fetchMock.mock.calls.find(([, options]) => options?.method === 'POST');
     expect(JSON.parse(postCall[1].body)).toEqual(expect.objectContaining({ label: 'Home', isDefault: true }));
+  });
+
+  it('updates the customer profile through the authenticated API', async () => {
+    authenticate();
+    const profile = { customerId: 4, email: 'customer@test.com', firstName: 'Test', lastName: 'Customer', memberSince: '2026-01-01T00:00:00Z' };
+    const fetchMock = vi.fn((url, options = {}) => {
+      if (url.endsWith('/profile/addresses')) return Promise.resolve(jsonResponse([]));
+      if (options.method === 'PUT') {
+        return Promise.resolve(jsonResponse({ ...profile, ...JSON.parse(options.body) }));
+      }
+      return Promise.resolve(jsonResponse(profile));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const user = userEvent.setup();
+    renderApp('/profile');
+
+    const firstName = await screen.findByLabelText('First name');
+    await user.clear(firstName);
+    await user.type(firstName, 'Updated');
+    await user.click(screen.getByRole('button', { name: 'Save profile' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Profile updated.');
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/profile'),
+      expect.objectContaining({ method: 'PUT' }),
+    );
   });
 });

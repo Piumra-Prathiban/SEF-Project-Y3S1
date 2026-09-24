@@ -7,6 +7,7 @@ import 'package:sef_project/screens/products_screen.dart';
 import 'package:sef_project/screens/profile_screen.dart';
 import 'package:sef_project/screens/recommendations_screen.dart';
 import 'package:sef_project/screens/wishlist_screen.dart';
+import 'package:sef_project/services/customer_api.dart';
 import 'package:sef_project/state/customer_store.dart';
 
 import 'fake_customer_repository.dart';
@@ -47,6 +48,37 @@ void main() {
     expect(find.text('Available variants'), findsOneWidget);
     expect(find.textContaining('Blue / Medium'), findsOneWidget);
     expect(find.text('Add to cart'), findsOneWidget);
+  });
+
+  testWidgets('product browsing exposes safe API errors and retry', (
+    tester,
+  ) async {
+    final repository = FakeCustomerRepository()
+      ..productError = const ApiException('Catalogue is unavailable.');
+    final store = CustomerStore(repository);
+
+    await tester.pumpWidget(_screen(store, const ProductsScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Catalogue is unavailable.'), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
+  });
+
+  testWidgets('authenticated bottom navigation opens the stylist experience', (
+    tester,
+  ) async {
+    final store = CustomerStore(FakeCustomerRepository());
+    await store.initialize();
+
+    await tester.pumpWidget(CustomerShoppingApp(store: store));
+    await tester.pumpAndSettle();
+    expect(find.text('Discover'), findsOneWidget);
+
+    await tester.tap(find.text('Stylist'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Personal Stylist'), findsOneWidget);
+    expect(find.byKey(const Key('recommendation-submit')), findsOneWidget);
   });
 
   testWidgets('wishlist removes a saved product', (tester) async {

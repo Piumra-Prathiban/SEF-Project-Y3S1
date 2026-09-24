@@ -45,6 +45,7 @@ public class PersonalStylistAgentTests
     }
 
     [Fact]
+    [Trait("TestSuite", "PersonalStylistGolden")]
     public async Task Agent_RejectsMalformedModelOutputAndFailsSafely()
     {
         var fixture = AgentFixture.Create();
@@ -93,6 +94,7 @@ public class PersonalStylistAgentTests
     }
 
     [Fact]
+    [Trait("TestSuite", "PersonalStylistGolden")]
     public async Task Agent_DoesNotRetryPermanentToolFailureAndReturnsNoProducts()
     {
         var fixture = AgentFixture.Create();
@@ -109,6 +111,7 @@ public class PersonalStylistAgentTests
     }
 
     [Fact]
+    [Trait("TestSuite", "PersonalStylistGolden")]
     public async Task Agent_ToolTimeoutReturnsStructuredSafeFailure()
     {
         var fixture = AgentFixture.Create();
@@ -296,6 +299,7 @@ public class PersonalStylistAgentTests
     }
 
     [Fact]
+    [Trait("TestSuite", "PersonalStylistGolden")]
     public async Task WorkflowRecorder_RejectsNonAllowListedTool()
     {
         await using var connection = new SqliteConnection("DataSource=:memory:");

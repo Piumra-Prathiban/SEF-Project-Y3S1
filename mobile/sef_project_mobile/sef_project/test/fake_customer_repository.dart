@@ -12,6 +12,7 @@ class FakeCustomerRepository implements CustomerRepository {
   String? lastSortDirection;
   int lastPage = 1;
   RecommendationPreferences? lastRecommendationPreferences;
+  Object? productError;
   Object? recommendationError;
   Duration recommendationDelay = Duration.zero;
 
@@ -125,6 +126,7 @@ class FakeCustomerRepository implements CustomerRepository {
     String sortDirection = 'asc',
     int page = 1,
   }) async {
+    if (productError != null) throw productError!;
     lastSearch = search;
     lastCategoryId = categoryId;
     lastMinPrice = minPrice;

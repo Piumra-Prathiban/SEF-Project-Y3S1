@@ -32,6 +32,9 @@ public class ShoppingDatabaseIntegrationTests
 
         await Assert.ThrowsAsync<DbUpdateException>(
             () => context.SaveChangesAsync());
+
+        context.ChangeTracker.Clear();
+        Assert.Single(await context.WishlistItems.ToListAsync());
     }
 
     [Fact]
@@ -51,6 +54,29 @@ public class ShoppingDatabaseIntegrationTests
 
         await Assert.ThrowsAsync<DbUpdateException>(
             () => context.SaveChangesAsync());
+    }
+
+    [Fact]
+    public async Task CartItem_ShouldRejectUnknownProductVariantRelationship()
+    {
+        await using var connection = new SqliteConnection("DataSource=:memory:");
+        await using var context = await CreateContextAsync(connection);
+        var customer = await AddCustomerAsync(context, "cart-variant@example.com");
+        var cart = new Cart { CustomerId = customer.Id };
+        context.Carts.Add(cart);
+        await context.SaveChangesAsync();
+
+        context.CartItems.Add(new CartItem
+        {
+            CartId = cart.Id,
+            ProductVariantId = Guid.NewGuid(),
+            Quantity = 1
+        });
+
+        await Assert.ThrowsAsync<DbUpdateException>(
+            () => context.SaveChangesAsync());
+        context.ChangeTracker.Clear();
+        Assert.Empty(await context.CartItems.ToListAsync());
     }
 
     [Fact]
@@ -91,6 +117,24 @@ public class ShoppingDatabaseIntegrationTests
         Assert.Equal(cart.CreatedAt, cart.UpdatedAt);
         Assert.NotEqual(default, wishlist.CreatedAt);
         Assert.Equal(wishlist.CreatedAt, wishlist.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task ShoppingMigration_IsDiscoverableAndSchemaCanBeGenerated()
+    {
+        await using var connection = new SqliteConnection("DataSource=:memory:");
+        await using var context = await CreateContextAsync(connection);
+
+        Assert.Contains(
+            "20260923070015_AddShoppingDatabaseFoundation",
+            context.Database.GetMigrations());
+
+        var createScript = context.Database.GenerateCreateScript();
+        Assert.Contains("Wishlists", createScript, StringComparison.Ordinal);
+        Assert.Contains("WishlistItems", createScript, StringComparison.Ordinal);
+        Assert.Contains("Carts", createScript, StringComparison.Ordinal);
+        Assert.Contains("CartItems", createScript, StringComparison.Ordinal);
+        Assert.Contains("Addresses", createScript, StringComparison.Ordinal);
     }
 
     private static async Task<AppDbContext> CreateContextAsync(
