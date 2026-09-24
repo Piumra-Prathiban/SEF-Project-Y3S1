@@ -134,9 +134,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
               ),
               const SizedBox(height: 12),
               Row(children: [
-                Expanded(child: TextField(controller: minimum, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Minimum price'))),
+                Expanded(child: TextField(key: const Key('product-min-price'), controller: minimum, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Minimum price'))),
                 const SizedBox(width: 12),
-                Expanded(child: TextField(controller: maximum, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Maximum price'))),
+                Expanded(child: TextField(key: const Key('product-max-price'), controller: maximum, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Maximum price'))),
               ]),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
@@ -155,13 +155,29 @@ class _ProductsScreenState extends State<ProductsScreen> {
               const SizedBox(height: 12),
               FilledButton(
                 onPressed: () async {
+                  final minimumText = minimum.text.trim();
+                  final maximumText = maximum.text.trim();
+                  final minimumValue = minimumText.isEmpty ? null : double.tryParse(minimumText);
+                  final maximumValue = maximumText.isEmpty ? null : double.tryParse(maximumText);
+                  if (minimumText.isNotEmpty && minimumValue == null) {
+                    ScaffoldMessenger.of(this.context).showSnackBar(
+                      const SnackBar(content: Text('Enter a valid minimum price.')),
+                    );
+                    return;
+                  }
+                  if (maximumText.isNotEmpty && maximumValue == null) {
+                    ScaffoldMessenger.of(this.context).showSnackBar(
+                      const SnackBar(content: Text('Enter a valid maximum price.')),
+                    );
+                    return;
+                  }
                   final parts = sort.split(':');
                   Navigator.pop(sheetContext);
                   await runAction(this.context, () => store.applyFilters(
                     searchText: _search.text,
                     category: category.isEmpty ? null : category,
-                    minimum: double.tryParse(minimum.text),
-                    maximum: double.tryParse(maximum.text),
+                    minimum: minimumValue,
+                    maximum: maximumValue,
                     availableOnly: inStock,
                     orderBy: parts[0],
                     direction: parts[1],

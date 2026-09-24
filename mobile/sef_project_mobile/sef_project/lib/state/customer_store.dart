@@ -94,6 +94,10 @@ class CustomerStore extends ChangeNotifier {
     required String orderBy,
     required String direction,
   }) async {
+    if ((minimum != null && (!minimum.isFinite || minimum < 0)) ||
+        (maximum != null && (!maximum.isFinite || maximum < 0))) {
+      throw const ApiException('Prices must be valid non-negative numbers.');
+    }
     if (minimum != null && maximum != null && minimum > maximum) {
       throw const ApiException('Minimum price cannot exceed maximum price.');
     }

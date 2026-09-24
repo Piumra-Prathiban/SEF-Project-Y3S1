@@ -48,6 +48,23 @@ void main() {
     );
   });
 
+  test('negative discovery prices are rejected before an API call', () async {
+    final repository = FakeCustomerRepository();
+    final store = CustomerStore(repository);
+
+    await expectLater(
+      store.applyFilters(
+        searchText: '',
+        minimum: -1,
+        maximum: null,
+        availableOnly: false,
+        orderBy: 'name',
+        direction: 'asc',
+      ),
+      throwsA(isA<ApiException>()),
+    );
+  });
+
   test('cart state always uses repository-calculated totals', () async {
     final repository = FakeCustomerRepository();
     final store = CustomerStore(repository);

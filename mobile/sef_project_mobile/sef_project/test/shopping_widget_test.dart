@@ -64,6 +64,25 @@ void main() {
     expect(find.text('Try again'), findsOneWidget);
   });
 
+  testWidgets('product filters reject malformed price text', (tester) async {
+    final repository = FakeCustomerRepository();
+    final store = CustomerStore(repository);
+
+    await tester.pumpWidget(_screen(store, const ProductsScreen()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Filters and sorting'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('product-min-price')),
+      'not-a-number',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Apply'));
+    await tester.pump();
+
+    expect(find.text('Enter a valid minimum price.'), findsOneWidget);
+    expect(repository.lastMinPrice, isNull);
+  });
+
   testWidgets('authenticated bottom navigation opens the stylist experience', (
     tester,
   ) async {
