@@ -23,6 +23,11 @@ public interface IPromotionService
         PromotionRequest request,
         CancellationToken cancellationToken = default);
 
+    /// <summary>Creates several promotions atomically (all or none).</summary>
+    Task<List<PromotionResponse>> CreatePromotionsAsync(
+        IReadOnlyList<PromotionRequest> requests,
+        CancellationToken cancellationToken = default);
+
     Task<PromotionResponse?> UpdatePromotionAsync(
         Guid promotionId,
         PromotionRequest request,

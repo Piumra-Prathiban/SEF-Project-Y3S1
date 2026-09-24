@@ -98,24 +98,52 @@ public class PromotionService : IPromotionService
         PromotionRequest request,
         CancellationToken cancellationToken = default)
     {
+        var created = await CreatePromotionsAsync(new[] { request }, cancellationToken);
+        return created[0];
+    }
+
+    public async Task<List<PromotionResponse>> CreatePromotionsAsync(
+        IReadOnlyList<PromotionRequest> requests,
+        CancellationToken cancellationToken = default)
+    {
+        if (requests.Count == 0)
+        {
+            return new List<PromotionResponse>();
+        }
+
         await using var transaction =
             await _context.Database.BeginTransactionAsync(cancellationToken);
 
         try
         {
-            var promotion = new Promotion();
-            await ApplyRequestAsync(promotion, request, cancellationToken);
+            var promotions = new List<Promotion>();
 
-            _context.Promotions.Add(promotion);
+            foreach (var request in requests)
+            {
+                var promotion = new Promotion();
+                await ApplyRequestAsync(promotion, request, cancellationToken);
+                _context.Promotions.Add(promotion);
+                promotions.Add(promotion);
+            }
+
             await _context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            _logger.LogInformation(
-                "Promotion {PromotionId} '{PromotionName}' created.",
-                promotion.Id,
-                promotion.Name);
+            foreach (var promotion in promotions)
+            {
+                _logger.LogInformation(
+                    "Promotion {PromotionId} '{PromotionName}' created.",
+                    promotion.Id,
+                    promotion.Name);
+            }
 
-            return (await GetPromotionByIdAsync(true, promotion.Id, cancellationToken))!;
+            var responses = new List<PromotionResponse>();
+            foreach (var promotion in promotions)
+            {
+                responses.Add((await GetPromotionByIdAsync(true, promotion.Id, cancellationToken))!);
+            }
+
+            return responses;
         }
         catch
         {

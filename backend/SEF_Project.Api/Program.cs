@@ -9,6 +9,7 @@ using SEF_Project.Api.Services.Auth;
 using SEF_Project.Api.Services.Orders;
 using SEF_Project.Api.Services.Marketing;
 using SEF_Project.Api.Services.Analytics;
+using SEF_Project.Api.AI.InventoryPromotion;
 using SEF_Project.Api.Middleware;
 
 
@@ -55,6 +56,20 @@ builder.Services.AddScoped<IPromotionPricingService, PromotionPricingService>();
 builder.Services.AddScoped<IPromotionService, PromotionService>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
 builder.Services.AddScoped<IPromotionOfferService, PromotionOfferService>();
+
+// Inventory & Promotion Agent: allow-listed read-only tools, replaceable
+// proposal model (deterministic local policy by default), orchestrator.
+builder.Services.Configure<InventoryPromotionAgentOptions>(
+    builder.Configuration.GetSection(InventoryPromotionAgentOptions.SectionName));
+builder.Services.AddScoped<IPromotionAgentTool, GetSalesVelocityTool>();
+builder.Services.AddScoped<IPromotionAgentTool, GetInventoryTool>();
+builder.Services.AddScoped<IPromotionAgentTool, GetActivePromotionsTool>();
+builder.Services.AddScoped<IPromotionAgentTool, GetProductDetailsTool>();
+builder.Services.AddScoped<IPromotionAgentTool, GetProductPricingTool>();
+builder.Services.AddScoped<IPromotionAgentTool, CalculatePromotionTool>();
+builder.Services.AddScoped<PromotionAgentToolRegistry>();
+builder.Services.AddScoped<IPromotionProposalModel, LocalPromotionProposalModel>();
+builder.Services.AddScoped<IInventoryPromotionAgent, InventoryPromotionAgentService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddSingleton(TimeProvider.System);
 
