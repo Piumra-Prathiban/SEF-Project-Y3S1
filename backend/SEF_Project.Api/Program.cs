@@ -8,6 +8,7 @@ using SEF_Project.Api.Services.Auth;
 using SEF_Project.Api.Services.Orders;
 using SEF_Project.Api.Services.Shopping;
 using SEF_Project.Api.Services.Profile;
+using SEF_Project.Api.Services.Recommendations;
 using SEF_Project.Api.Middleware;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
@@ -56,6 +57,10 @@ builder.Services.AddScoped<IProductSearchService, ProductSearchService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<IRecommendationCustomerTool, RecommendationCustomerTool>();
+builder.Services.AddScoped<IRecommendationCatalogTool, RecommendationCatalogTool>();
+builder.Services.AddScoped<IRecommendationOrchestrator, CatalogRecommendationOrchestrator>();
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 
 builder.Services.AddCors(options =>
 {
@@ -81,7 +86,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "SEF Project API",
         Version = "v1",
-        Description = "Includes the advanced product discovery endpoint."
+        Description = "Shopping discovery, customer experience, and controlled product recommendation APIs."
     });
 
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
