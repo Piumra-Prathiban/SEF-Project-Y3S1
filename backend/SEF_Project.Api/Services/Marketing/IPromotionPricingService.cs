@@ -1,4 +1,4 @@
-using SEF_Project.Api.DTOs.Marketing;
+﻿using SEF_Project.Api.DTOs.Marketing;
 
 namespace SEF_Project.Api.Services.Marketing;
 
@@ -10,6 +10,7 @@ public interface IPromotionPricingService
     /// cannot be applied to the variant.
     /// </summary>
     Task<PromotionDiscountResponse?> CalculatePromotionDiscountAsync(
+        Guid promotionId,
         CalculatePromotionDiscountRequest request,
         CancellationToken cancellationToken = default);
 }

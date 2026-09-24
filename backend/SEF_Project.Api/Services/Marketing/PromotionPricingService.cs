@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SEF_Project.Api.Data;
 using SEF_Project.Api.DTOs.Marketing;
 using SEF_Project.Api.Models.Enums;
@@ -24,6 +24,7 @@ public class PromotionPricingService : IPromotionPricingService
     }
 
     public async Task<PromotionDiscountResponse?> CalculatePromotionDiscountAsync(
+        Guid promotionId,
         CalculatePromotionDiscountRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -32,7 +33,7 @@ public class PromotionPricingService : IPromotionPricingService
             .Include(p => p.Campaign)
             .Include(p => p.PromotionProducts)
             .Include(p => p.PromotionCategories)
-            .FirstOrDefaultAsync(p => p.Id == request.PromotionId, cancellationToken);
+            .FirstOrDefaultAsync(p => p.Id == promotionId, cancellationToken);
 
         var variant = await _context.ProductVariants
             .AsNoTracking()
