@@ -1,3 +1,5 @@
+export { InventoryDashboardPage } from './InventoryDashboardPage';
+
 export const inventoryFeature = {
   area: 'Inventory',
   description:

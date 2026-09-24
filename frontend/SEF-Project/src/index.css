@@ -428,6 +428,43 @@ button:disabled {
   color: var(--text-muted);
 }
 
+.summary-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  margin: 18px 0;
+}
+
+.summary-card {
+  background: var(--social-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+}
+
+.summary-card span {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.summary-card strong {
+  color: var(--text-h);
+  font-size: 30px;
+  line-height: 1;
+}
+
+.status-pill.is-warning {
+  background: rgba(245, 158, 11, 0.16);
+  color: #b45309;
+}
+
+.status-pill.is-danger {
+  background: rgba(239, 68, 68, 0.14);
+  color: #dc2626;
+}
+
 .pagination-bar {
   justify-content: center;
   margin-top: 18px;

@@ -2,7 +2,7 @@ import { PlaceholderPage } from '../components/ui/PlaceholderPage';
 import { CategoriesPage } from '../features/categories';
 import { CollectionsPage } from '../features/collections';
 import { ColoursPage } from '../features/colours';
-import { inventoryFeature } from '../features/inventory';
+import { InventoryDashboardPage } from '../features/inventory';
 import { inventoryAgentFeature } from '../features/inventory-agent';
 import { ProductsPage } from '../features/products';
 import { SizesPage } from '../features/sizes';
@@ -63,7 +63,8 @@ export const memberOneRoutes = [
   {
     path: '/inventory',
     label: 'Inventory',
-    element: createPlaceholder(inventoryFeature),
+    element: <InventoryDashboardPage />,
+    roles: STAFF_ROLES,
     showInNavigation: true,
   },
   {
