@@ -2,14 +2,32 @@ import { useCallback, useState } from 'react';
 import { Alert } from '../../components/ui/Alert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
+import { useAuth } from '../../contexts/AuthContext';
 import { useMemberOneApi } from '../../hooks/useMemberOneApi';
+import { STAFF_ROLES } from '../../utils/roles';
 import {
+  buildApprovalPayload,
+  buildRejectionPayload,
+  buildRevisionPayload,
   buildWorkflowRequest,
+  canReviewWorkflow,
   formatStructuredValue,
+  getAffectedVariantIds,
   getApprovalStatus,
   getCompletedSteps,
   getFinalOutcome,
   getRecommendations,
+  getRecommendationAction,
+  getRecommendationColour,
+  getRecommendationCurrentStock,
+  getRecommendationProduct,
+  getRecommendationProposedQuantity,
+  getRecommendationReason,
+  getRecommendationReorderLevel,
+  getRecommendationSize,
+  getRecommendationSku,
+  getReviewSuccessMessage,
+  normalizeAgentApiError,
   getToolSummaries,
   getValidationResult,
   getWorkflowErrors,
@@ -25,14 +43,6 @@ const initialForm = {
   objective: 'Analyze the current inventory and identify variants that should be restocked.',
   variantIds: '',
 };
-
-function normalizeError(error) {
-  if (error?.errors) {
-    return Object.values(error.errors).flat().join(' ');
-  }
-
-  return error?.detail || error?.message || 'Something went wrong.';
-}
 
 function getStatusClass(status) {
   if (['Failed', 'Rejected'].includes(status)) {
@@ -67,9 +77,11 @@ function StructuredSection({ title, value }) {
 
 export function InventoryAgentPage() {
   const api = useMemberOneApi();
+  const { user } = useAuth();
   const [form, setForm] = useState(initialForm);
   const [workflowIdInput, setWorkflowIdInput] = useState('');
   const [workflow, setWorkflow] = useState(null);
+  const [postApprovalRefresh, setPostApprovalRefresh] = useState(null);
   const [validationErrors, setValidationErrors] = useState([]);
   const [approvalNote, setApprovalNote] = useState('');
   const [revisionRequest, setRevisionRequest] = useState('');
@@ -81,6 +93,12 @@ export function InventoryAgentPage() {
 
   const workflowId = getWorkflowId(workflow);
   const status = getWorkflowStatus(workflow);
+  const canApproveWorkflow = canReviewWorkflow(user, STAFF_ROLES);
+  const recommendations = getRecommendations(workflow);
+  const validationResult = getValidationResult(workflow);
+  const finalOutcome = getFinalOutcome(workflow);
+  const toolSummaries = getToolSummaries(workflow);
+  const completedSteps = getCompletedSteps(workflow);
 
   const loadWorkflow = useCallback(async (id) => {
     if (!id) {
@@ -94,8 +112,9 @@ export function InventoryAgentPage() {
       const response = await api.getInventoryWorkflow(id);
       setWorkflow(response);
       setWorkflowIdInput(getWorkflowId(response));
+      setPostApprovalRefresh(null);
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeAgentApiError(err));
     } finally {
       setIsRefreshing(false);
     }
@@ -128,7 +147,7 @@ export function InventoryAgentPage() {
       setWorkflowIdInput(getWorkflowId(response));
       setMessage('Inventory analysis workflow started.');
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeAgentApiError(err));
     } finally {
       setIsStarting(false);
     }
@@ -137,6 +156,33 @@ export function InventoryAgentPage() {
   async function handleLoadWorkflow(event) {
     event.preventDefault();
     await loadWorkflow(workflowIdInput.trim());
+  }
+
+  async function refreshInventoryAfterApproval(reviewedWorkflow) {
+    const affectedVariantIds = getAffectedVariantIds(reviewedWorkflow);
+
+    try {
+      const [inventoryResponse, historyResults] = await Promise.all([
+        api.getInventory(),
+        Promise.all(
+          affectedVariantIds.map(async (variantId) => [
+            variantId,
+            await api.getStockHistory(variantId),
+          ]),
+        ),
+      ]);
+
+      setPostApprovalRefresh({
+        refreshedAt: new Date().toISOString(),
+        inventory: inventoryResponse,
+        stockHistoryByVariant: Object.fromEntries(historyResults),
+      });
+    } catch (err) {
+      setPostApprovalRefresh({
+        refreshedAt: new Date().toISOString(),
+        refreshError: normalizeAgentApiError(err),
+      });
+    }
   }
 
   async function handleReview(action) {
@@ -153,28 +199,32 @@ export function InventoryAgentPage() {
       let response;
 
       if (action === 'approve') {
-        response = await api.approveInventoryWorkflow(workflowId, {
-          note: approvalNote.trim() || null,
-        });
-        setMessage('Workflow approved.');
+        response = await api.approveInventoryWorkflow(
+          workflowId,
+          buildApprovalPayload(approvalNote),
+        );
+        await refreshInventoryAfterApproval(response);
       } else if (action === 'reject') {
-        response = await api.rejectInventoryWorkflow(workflowId, {
-          reason: approvalNote.trim() || 'Rejected from frontend review.',
-        });
-        setMessage('Workflow rejected.');
+        response = await api.rejectInventoryWorkflow(
+          workflowId,
+          buildRejectionPayload(approvalNote),
+        );
+        setPostApprovalRefresh(null);
       } else {
-        response = await api.reviseInventoryWorkflow(workflowId, {
-          revisionRequest: revisionRequest.trim(),
-        });
-        setMessage('Workflow revision requested.');
+        response = await api.reviseInventoryWorkflow(
+          workflowId,
+          buildRevisionPayload(revisionRequest),
+        );
+        setPostApprovalRefresh(null);
       }
 
       setWorkflow(response);
       setWorkflowIdInput(getWorkflowId(response));
+      setMessage(getReviewSuccessMessage(action));
       setApprovalNote('');
       setRevisionRequest('');
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeAgentApiError(err));
     } finally {
       setIsReviewing(false);
     }
@@ -306,78 +356,164 @@ export function InventoryAgentPage() {
             </article>
             <article className="summary-card">
               <span>Recommendations</span>
-              <strong>{getRecommendations(workflow).length}</strong>
+              <strong>{recommendations.length}</strong>
             </article>
             <article className="summary-card">
               <span>Completed steps</span>
-              <strong>{getCompletedSteps(workflow).length}</strong>
+              <strong>{completedSteps.length}</strong>
             </article>
             <article className="summary-card">
               <span>Tool summaries</span>
-              <strong>{getToolSummaries(workflow).length}</strong>
+              <strong>{toolSummaries.length}</strong>
             </article>
           </section>
 
           <StructuredSection title="Plan" value={getWorkflowPlan(workflow)} />
-          <StructuredSection title="Completed Steps" value={getCompletedSteps(workflow)} />
-          <StructuredSection title="Tool Execution Summaries" value={getToolSummaries(workflow)} />
-          <StructuredSection title="Validation Result" value={getValidationResult(workflow)} />
-          <StructuredSection title="Recommendations" value={getRecommendations(workflow)} />
-          <StructuredSection title="Final Outcome" value={getFinalOutcome(workflow)} />
+          <StructuredSection title="Completed Steps" value={completedSteps} />
+          <StructuredSection title="Tool Execution Summaries" value={toolSummaries} />
+          <StructuredSection title="Validation Result" value={validationResult} />
+          <StructuredSection title="Final Outcome" value={finalOutcome} />
           <StructuredSection title="Errors / Safe Failure" value={getWorkflowErrors(workflow)} />
 
           {status === 'PendingApproval' && (
-            <section className="panel">
-              <h2>Human approval</h2>
-              <p>
-                Approve, reject or request revision only after reviewing the structured recommendation and validation result.
-              </p>
-
-              <label className="entity-form">
-                Approval/rejection note
-                <textarea
-                  onChange={(event) => setApprovalNote(event.target.value)}
-                  rows={3}
-                  value={approvalNote}
-                />
-              </label>
-
-              <label className="entity-form">
-                Revision request
-                <textarea
-                  onChange={(event) => setRevisionRequest(event.target.value)}
-                  placeholder="Required when requesting a revision"
-                  rows={3}
-                  value={revisionRequest}
-                />
-              </label>
-
-              <div className="form-actions">
-                <button
-                  disabled={isReviewing}
-                  onClick={() => handleReview('approve')}
-                  type="button"
-                >
-                  Approve
-                </button>
-                <button
-                  className="button-danger"
-                  disabled={isReviewing}
-                  onClick={() => handleReview('reject')}
-                  type="button"
-                >
-                  Reject
-                </button>
-                <button
-                  className="button-secondary"
-                  disabled={isReviewing || !revisionRequest.trim()}
-                  onClick={() => handleReview('revise')}
-                  type="button"
-                >
-                  Request revision
-                </button>
+            <section className="panel approval-review-panel">
+              <div className="panel__header">
+                <div>
+                  <h2>Human approval review</h2>
+                  <p>
+                    Review deterministic validation and recommendations before calling the backend approval endpoint.
+                  </p>
+                </div>
+                <span className={`status-pill ${getStatusClass(status)}`}>
+                  {status}
+                </span>
               </div>
+
+              <dl className="detail-grid">
+                <div>
+                  <dt>Objective</dt>
+                  <dd>{getWorkflowObjective(workflow)}</dd>
+                </div>
+                <div>
+                  <dt>Workflow status</dt>
+                  <dd>{status}</dd>
+                </div>
+                <div>
+                  <dt>Approval status</dt>
+                  <dd>{getApprovalStatus(workflow)}</dd>
+                </div>
+                <div>
+                  <dt>Execution summary</dt>
+                  <dd>{formatStructuredValue(finalOutcome)}</dd>
+                </div>
+              </dl>
+
+              <StructuredSection
+                title="Deterministic Validation Result"
+                value={validationResult}
+              />
+
+              {recommendations.length === 0 ? (
+                <div className="empty-state">
+                  No structured recommendations were returned for review.
+                </div>
+              ) : (
+                <div className="table-card">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Size</th>
+                        <th>Colour</th>
+                        <th>Current stock</th>
+                        <th>Reorder level</th>
+                        <th>Recommended action</th>
+                        <th>Proposed quantity</th>
+                        <th>Reason</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recommendations.map((recommendation, index) => (
+                        <tr key={`${getRecommendationSku(recommendation)}-${index}`}>
+                          <td>{getRecommendationProduct(recommendation)}</td>
+                          <td>{getRecommendationSku(recommendation)}</td>
+                          <td>{getRecommendationSize(recommendation)}</td>
+                          <td>{getRecommendationColour(recommendation)}</td>
+                          <td>{getRecommendationCurrentStock(recommendation)}</td>
+                          <td>{getRecommendationReorderLevel(recommendation)}</td>
+                          <td>{getRecommendationAction(recommendation)}</td>
+                          <td>{getRecommendationProposedQuantity(recommendation)}</td>
+                          <td>{getRecommendationReason(recommendation)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {!canApproveWorkflow && (
+                <Alert tone="danger">
+                  You can view this workflow, but your current role cannot approve, reject or request revisions.
+                </Alert>
+              )}
+
+              {canApproveWorkflow && (
+                <>
+                  <label className="entity-form">
+                    Approval/rejection note
+                    <textarea
+                      onChange={(event) => setApprovalNote(event.target.value)}
+                      rows={3}
+                      value={approvalNote}
+                    />
+                  </label>
+
+                  <label className="entity-form">
+                    Revision request
+                    <textarea
+                      onChange={(event) => setRevisionRequest(event.target.value)}
+                      placeholder="Required when requesting a revision"
+                      rows={3}
+                      value={revisionRequest}
+                    />
+                  </label>
+
+                  <div className="form-actions">
+                    <button
+                      disabled={isReviewing}
+                      onClick={() => handleReview('approve')}
+                      type="button"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      className="button-danger"
+                      disabled={isReviewing}
+                      onClick={() => handleReview('reject')}
+                      type="button"
+                    >
+                      Reject
+                    </button>
+                    <button
+                      className="button-secondary"
+                      disabled={isReviewing || !revisionRequest.trim()}
+                      onClick={() => handleReview('revise')}
+                      type="button"
+                    >
+                      Request revision
+                    </button>
+                  </div>
+                </>
+              )}
             </section>
+          )}
+
+          {postApprovalRefresh && (
+            <StructuredSection
+              title="Post-approval Inventory / Stock History Refresh"
+              value={postApprovalRefresh}
+            />
           )}
         </>
       ) : (

@@ -89,12 +89,123 @@ export function getRecommendations(workflow) {
     ?? [];
 }
 
+export function getRecommendationVariantId(recommendation) {
+  return recommendation?.variantId
+    ?? recommendation?.productVariantId
+    ?? recommendation?.variant?.id
+    ?? '-';
+}
+
+export function getRecommendationProduct(recommendation) {
+  return recommendation?.productName
+    ?? recommendation?.product?.name
+    ?? recommendation?.variant?.productName
+    ?? '-';
+}
+
+export function getRecommendationSku(recommendation) {
+  return recommendation?.sku ?? recommendation?.variant?.sku ?? '-';
+}
+
+export function getRecommendationSize(recommendation) {
+  return recommendation?.sizeName
+    ?? recommendation?.size?.name
+    ?? recommendation?.variant?.sizeName
+    ?? '-';
+}
+
+export function getRecommendationColour(recommendation) {
+  return recommendation?.colourName
+    ?? recommendation?.colorName
+    ?? recommendation?.colour?.name
+    ?? recommendation?.variant?.colourName
+    ?? '-';
+}
+
+export function getRecommendationCurrentStock(recommendation) {
+  return recommendation?.currentStock
+    ?? recommendation?.quantityOnHand
+    ?? recommendation?.currentQuantity
+    ?? '-';
+}
+
+export function getRecommendationReorderLevel(recommendation) {
+  return recommendation?.reorderLevel ?? recommendation?.minimumStockLevel ?? '-';
+}
+
+export function getRecommendationAction(recommendation) {
+  return recommendation?.recommendedAction ?? recommendation?.action ?? '-';
+}
+
+export function getRecommendationProposedQuantity(recommendation) {
+  return recommendation?.proposedQuantity
+    ?? recommendation?.recommendedQuantity
+    ?? recommendation?.quantity
+    ?? '-';
+}
+
+export function getRecommendationReason(recommendation) {
+  return recommendation?.reason ?? recommendation?.recommendationReason ?? '-';
+}
+
+export function getAffectedVariantIds(workflow) {
+  return [
+    ...new Set(
+      getRecommendations(workflow)
+        .map((recommendation) => getRecommendationVariantId(recommendation))
+        .filter((variantId) => variantId && variantId !== '-'),
+    ),
+  ];
+}
+
 export function getFinalOutcome(workflow) {
   return workflow?.finalOutcome ?? workflow?.outcome ?? workflow?.executionSummary ?? null;
 }
 
 export function getWorkflowErrors(workflow) {
   return workflow?.errors ?? workflow?.errorSummary ?? workflow?.error ?? null;
+}
+
+export function canReviewWorkflow(user, approverRoles) {
+  return approverRoles.includes(user?.role);
+}
+
+export function buildApprovalPayload(note) {
+  return {
+    note: note?.trim() || null,
+  };
+}
+
+export function buildRejectionPayload(reason) {
+  return {
+    reason: reason?.trim() || 'Rejected from frontend review.',
+  };
+}
+
+export function buildRevisionPayload(revisionRequest) {
+  return {
+    revisionRequest: revisionRequest.trim(),
+  };
+}
+
+export function getReviewSuccessMessage(action) {
+  if (action === 'approve') {
+    return 'Workflow approved. Inventory and stock history were refreshed from the backend.';
+  }
+
+  if (action === 'reject') {
+    return 'Workflow rejected. No stock modification was executed from React.';
+  }
+
+  return 'Workflow revision requested. The latest backend workflow state is displayed.';
+}
+
+export function normalizeAgentApiError(error) {
+  if (error?.errors) {
+    return Object.values(error.errors).flat().join(' ');
+  }
+
+  return error?.detail || error?.message || 'Something went wrong.';
 }
 
 export function sanitizeStructuredValue(value) {
