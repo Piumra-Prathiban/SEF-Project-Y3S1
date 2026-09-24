@@ -30,3 +30,11 @@ const Map<int, String> shipmentStatusNames = {
   2: 'Delivered',
   3: 'Cancelled',
 };
+
+const int orderStatusCancelled = 5;
+const int orderStatusRefunded = 6;
+
+const int shipmentStatusPending = 0;
+const int shipmentStatusShipped = 1;
+const int shipmentStatusDelivered = 2;
+const int shipmentStatusCancelled = 3;

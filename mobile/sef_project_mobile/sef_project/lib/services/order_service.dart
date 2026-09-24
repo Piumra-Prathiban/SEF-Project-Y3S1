@@ -31,4 +31,21 @@ class OrderService {
 
     return Order.fromJson(data as Map<String, dynamic>);
   }
+
+  /// Cancels an order the caller owns. The backend owns the rules (which
+  /// statuses may be cancelled, shipment checks, inventory release, refunds);
+  /// a rejected cancellation surfaces as an ApiException. The response is the
+  /// full updated order, so it refreshes status, payments and shipments.
+  Future<Order> cancelOrder({
+    required String token,
+    required String orderId,
+  }) async {
+    final data = await _client.post(
+      '/Orders/$orderId/cancel',
+      token: token,
+      body: const <String, dynamic>{},
+    );
+
+    return Order.fromJson(data as Map<String, dynamic>);
+  }
 }

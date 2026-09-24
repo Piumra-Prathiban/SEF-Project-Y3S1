@@ -84,6 +84,40 @@ Map<String, dynamic> orderListJson({
       'pageSize': pageSize,
     };
 
+Map<String, dynamic> paymentJson({
+  String id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  double amount = 2505.5,
+  int method = 0,
+  int status = 1,
+  String? transactionReference = 'MOCK-1234',
+  String? paidAt = '2026-09-20T10:05:00Z',
+}) =>
+    {
+      'id': id,
+      'amount': amount,
+      'method': method,
+      'status': status,
+      'transactionReference': transactionReference,
+      'paidAt': paidAt,
+    };
+
+Map<String, dynamic> shipmentJson({
+  String id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+  int status = 1,
+  String? trackingNumber = 'TRACK-99',
+  String? carrier = 'LankaExpress',
+  String? shippedAt = '2026-09-21T08:00:00Z',
+  String? deliveredAt,
+}) =>
+    {
+      'id': id,
+      'status': status,
+      'trackingNumber': trackingNumber,
+      'carrier': carrier,
+      'shippedAt': shippedAt,
+      'deliveredAt': deliveredAt,
+    };
+
 Map<String, dynamic> orderDetailJson({
   int status = 4,
   List<Map<String, dynamic>>? payments,
@@ -122,28 +156,8 @@ Map<String, dynamic> orderDetailJson({
         'country': 'Sri Lanka',
         'phone': null,
       },
-      'payments': payments ??
-          [
-            {
-              'id': 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-              'amount': 2505.5,
-              'method': 0,
-              'status': 1,
-              'transactionReference': 'MOCK-1234',
-              'paidAt': '2026-09-20T10:05:00Z',
-            },
-          ],
-      'shipments': shipments ??
-          [
-            {
-              'id': 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-              'status': 1,
-              'trackingNumber': 'TRACK-99',
-              'carrier': 'LankaExpress',
-              'shippedAt': '2026-09-21T08:00:00Z',
-              'deliveredAt': null,
-            },
-          ],
+      'payments': payments ?? [paymentJson()],
+      'shipments': shipments ?? [shipmentJson()],
       'statusHistory': statusHistory ??
           [
             {

@@ -6,6 +6,7 @@ import '../services/api_client.dart';
 import '../services/order_service.dart';
 import '../utils/formatters.dart';
 import '../widgets/error_view.dart';
+import '../widgets/shipment_progress.dart';
 import '../widgets/status_badge.dart';
 
 class OrderDetailScreen extends StatefulWidget {
@@ -30,6 +31,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   Order? _order;
   bool _loading = true;
   bool _notFound = false;
+  bool _cancelling = false;
   String? _error;
 
   @override
@@ -83,10 +85,107 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
+  // Same approach as the React app: no cancellable-status rules are encoded
+  // here - only the two states where cancellation can never apply again are
+  // hidden, and the backend rejects anything else with an explanation.
+  bool get _canCancel =>
+      _order != null &&
+      _order!.status != orderStatusCancelled &&
+      _order!.status != orderStatusRefunded;
+
+  Future<bool> _confirmCancellation() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Cancel this order?'),
+        content: const Text(
+          'This cannot be undone. Reserved stock is released, unshipped '
+          'shipments are cancelled and completed payments are refunded.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Keep order'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Yes, cancel order'),
+          ),
+        ],
+      ),
+    );
+
+    return confirmed ?? false;
+  }
+
+  void _showMessage(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Theme.of(context).colorScheme.error : null,
+      ),
+    );
+  }
+
+  Future<void> _cancelOrder() async {
+    final confirmed = await _confirmCancellation();
+
+    if (!confirmed || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _cancelling = true;
+      _error = null;
+    });
+
+    try {
+      final order = await widget.orderService.cancelOrder(
+        token: widget.token,
+        orderId: widget.orderId,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() => _order = order);
+      _showMessage('Order cancelled.');
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      if (error.status == 401) {
+        widget.onSignOut();
+        return;
+      }
+
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      if (mounted) {
+        _showMessage('The order could not be cancelled.', isError: true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _cancelling = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_order?.orderNumber ?? 'Order')),
+      appBar: AppBar(
+        title: Text(_order?.orderNumber ?? 'Order'),
+        actions: [
+          IconButton(
+            onPressed: widget.onSignOut,
+            icon: const Icon(Icons.logout),
+            tooltip: 'Sign out',
+          ),
+        ],
+      ),
       body: _buildBody(context),
     );
   }
@@ -126,6 +225,32 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ),
         const SizedBox(height: 4),
         Text('Placed ${formatDateTime(order.placedAt)}'),
+        _Section(
+          title: 'Cancel order',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _canCancel
+                    ? 'Cancellation cannot be undone. Reserved stock is '
+                        'released, unshipped shipments are cancelled and '
+                        'completed payments are refunded.'
+                    : 'This order can no longer be cancelled.',
+              ),
+              if (_canCancel) ...[
+                const SizedBox(height: 12),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                    foregroundColor: Theme.of(context).colorScheme.onError,
+                  ),
+                  onPressed: _cancelling ? null : _cancelOrder,
+                  child: Text(_cancelling ? 'Cancelling…' : 'Cancel order'),
+                ),
+              ],
+            ],
+          ),
+        ),
         _Section(
           title: 'Items',
           child: Column(
@@ -367,6 +492,8 @@ class _ShipmentBlock extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           StatusBadge(status: shipment.status, kind: StatusKind.shipment),
+          const SizedBox(height: 6),
+          ShipmentProgress(status: shipment.status),
           if (carrierAndTracking.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(carrierAndTracking),
