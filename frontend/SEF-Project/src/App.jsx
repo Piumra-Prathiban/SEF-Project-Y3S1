@@ -1,5 +1,8 @@
 import { Link, Route, Routes } from 'react-router-dom';
 import AppLayout from './components/AppLayout';
+import AgentWorkflowDetailPage from './features/marketing/agent/AgentWorkflowDetailPage';
+import AgentWorkflowListPage from './features/marketing/agent/AgentWorkflowListPage';
+import AgentWorkflowStartPage from './features/marketing/agent/AgentWorkflowStartPage';
 import AnalyticsPage from './features/marketing/analytics/AnalyticsPage';
 import DashboardPage from './features/marketing/analytics/DashboardPage';
 import ReportsPage from './features/marketing/analytics/ReportsPage';
@@ -37,6 +40,9 @@ export default function App() {
             <Route path="campaigns/new" element={<CampaignFormPage />} />
             <Route path="campaigns/:id" element={<CampaignDetailPage />} />
             <Route path="campaigns/:id/edit" element={<CampaignFormPage />} />
+            <Route path="agent" element={<AgentWorkflowListPage />} />
+            <Route path="agent/new" element={<AgentWorkflowStartPage />} />
+            <Route path="agent/:id" element={<AgentWorkflowDetailPage />} />
           </Route>
         </Route>
 

@@ -11,6 +11,7 @@ export default function MarketingLayout() {
         <NavLink to="/marketing/reports">Reports</NavLink>
         <NavLink to="/marketing/promotions">Promotions</NavLink>
         <NavLink to="/marketing/campaigns">Campaigns</NavLink>
+        <NavLink to="/marketing/agent">Promotion Agent</NavLink>
       </nav>
       <FlashMessage />
       <Outlet />
