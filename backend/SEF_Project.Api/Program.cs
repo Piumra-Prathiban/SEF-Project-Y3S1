@@ -25,6 +25,10 @@ var jwtSettings = builder.Configuration
     .GetSection("Jwt")
     .Get<JwtSettings>()
     ?? throw new InvalidOperationException("JWT settings are missing.");
+var allowedOrigins = CorsOriginPolicy.Normalize(
+    builder.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>());
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -75,7 +79,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("FrontendPolicy", policy =>
     {
         policy
-            .AllowAnyOrigin()
+            .WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
