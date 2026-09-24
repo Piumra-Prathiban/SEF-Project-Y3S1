@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SEF_Project.Api.Configuration;
 using SEF_Project.Api.Data;
@@ -34,11 +35,20 @@ public class MarketingApiFactory : WebApplicationFactory<Program>
     };
 
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
+    private readonly MutableTimeProvider _timeProvider = new(Now);
 
     public MarketingApiFactory()
     {
         _connection.Open();
     }
+
+    /// <summary>
+    /// Moves the shared test clock forward (e.g. so a promotion scheduled to
+    /// start "tomorrow" becomes live, the same way it would after a real day
+    /// passes in production). Every request in this test host reads time
+    /// through this one instance, so the change is visible everywhere at once.
+    /// </summary>
+    public void AdvanceClockTo(DateTime utc) => _timeProvider.Set(utc);
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -50,13 +60,18 @@ public class MarketingApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Jwt:ExpiryMinutes", TestJwtSettings.ExpiryMinutes.ToString());
         builder.UseSetting("ConnectionStrings:DefaultConnection", "Host=unused");
 
+        // The app's own console logging (including EF Core's verbose SQL
+        // logs) otherwise interleaves with each test's own captured output;
+        // this keeps that output readable.
+        builder.ConfigureLogging(logging => logging.ClearProviders());
+
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<DbContextOptions<AppDbContext>>();
             services.AddDbContext<AppDbContext>(options => options.UseSqlite(_connection));
 
             services.RemoveAll<TimeProvider>();
-            services.AddSingleton<TimeProvider>(new FixedTimeProvider(Now));
+            services.AddSingleton<TimeProvider>(_timeProvider);
         });
     }
 
@@ -107,14 +122,16 @@ public class MarketingApiFactory : WebApplicationFactory<Program>
         }
     }
 
-    private sealed class FixedTimeProvider : TimeProvider
+    private sealed class MutableTimeProvider : TimeProvider
     {
-        private readonly DateTimeOffset _now;
+        private DateTimeOffset _now;
 
-        public FixedTimeProvider(DateTime utcNow)
+        public MutableTimeProvider(DateTime utcNow)
         {
             _now = new DateTimeOffset(utcNow, TimeSpan.Zero);
         }
+
+        public void Set(DateTime utcNow) => _now = new DateTimeOffset(utcNow, TimeSpan.Zero);
 
         public override DateTimeOffset GetUtcNow() => _now;
     }
