@@ -11,6 +11,9 @@ class FakeCustomerRepository implements CustomerRepository {
   String? lastSortBy;
   String? lastSortDirection;
   int lastPage = 1;
+  RecommendationPreferences? lastRecommendationPreferences;
+  Object? recommendationError;
+  Duration recommendationDelay = Duration.zero;
 
   ProductPage productPage = const ProductPage(
     items: [
@@ -50,6 +53,37 @@ class FakeCustomerRepository implements CustomerRepository {
   ];
 
   Cart currentCart = Cart.empty();
+  RecommendationResult recommendationResult = const RecommendationResult(
+    workflowId: 'workflow-1',
+    status: 'completed',
+    recommendations: [
+      ProductRecommendation(
+        productId: 'product-1',
+        variantId: 'variant-1',
+        productName: 'Linen Shirt',
+        variantName: 'Blue / Medium',
+        sku: 'SHIRT-BLUE-M',
+        price: 4500,
+        quantity: 1,
+        availableQuantity: 5,
+        size: 'M',
+        colour: 'Blue',
+        reason: 'Matches the requested dinner style and budget.',
+      ),
+    ],
+    execution: RecommendationExecution(
+      agentName: 'Personal Stylist Agent',
+      status: 'completed',
+      outputValidated: true,
+      validationResults: [
+        RecommendationValidation(
+          rule: 'Price',
+          isValid: true,
+          message: 'Price verified.',
+        ),
+      ],
+    ),
+  );
   CustomerProfile currentProfile = const CustomerProfile(
     email: 'customer@example.com',
     firstName: 'Sam',
@@ -71,10 +105,14 @@ class FakeCustomerRepository implements CustomerRepository {
   Future<bool> hasToken() async => token;
 
   @override
-  Future<void> login(String email, String password) async { token = true; }
+  Future<void> login(String email, String password) async {
+    token = true;
+  }
 
   @override
-  Future<void> logout() async { token = false; }
+  Future<void> logout() async {
+    token = false;
+  }
 
   @override
   Future<ProductPage> products({
@@ -104,14 +142,18 @@ class FakeCustomerRepository implements CustomerRepository {
   @override
   Future<void> addWishlist(String productId) async {
     if (wishlistItems.any((item) => item.productId == productId)) return;
-    final product = productPage.items.firstWhere((item) => item.id == productId);
-    wishlistItems.add(WishlistItem(
-      productId: product.id,
-      productName: product.name,
-      description: product.description,
-      minimumPrice: product.minimumPrice,
-      isAvailable: product.isAvailable,
-    ));
+    final product = productPage.items.firstWhere(
+      (item) => item.id == productId,
+    );
+    wishlistItems.add(
+      WishlistItem(
+        productId: product.id,
+        productName: product.name,
+        description: product.description,
+        minimumPrice: product.minimumPrice,
+        isAvailable: product.isAvailable,
+      ),
+    );
   }
 
   @override
@@ -126,8 +168,11 @@ class FakeCustomerRepository implements CustomerRepository {
   Future<Cart> addCart(String variantId, int quantity) async {
     final product = productPage.items.first;
     final variant = product.variants.firstWhere((item) => item.id == variantId);
-    final existing = currentCart.items.where((item) => item.productVariantId == variantId);
-    final totalQuantity = quantity + (existing.isEmpty ? 0 : existing.first.quantity);
+    final existing = currentCart.items.where(
+      (item) => item.productVariantId == variantId,
+    );
+    final totalQuantity =
+        quantity + (existing.isEmpty ? 0 : existing.first.quantity);
     currentCart = _cartWith(totalQuantity, product, variant);
     return currentCart;
   }
@@ -141,10 +186,26 @@ class FakeCustomerRepository implements CustomerRepository {
   }
 
   @override
-  Future<void> removeCart(String itemId) async { currentCart = Cart.empty(); }
+  Future<void> removeCart(String itemId) async {
+    currentCart = Cart.empty();
+  }
 
   @override
-  Future<void> clearCart() async { currentCart = Cart.empty(); }
+  Future<void> clearCart() async {
+    currentCart = Cart.empty();
+  }
+
+  @override
+  Future<RecommendationResult> recommendations(
+    RecommendationPreferences preferences,
+  ) async {
+    lastRecommendationPreferences = preferences;
+    if (recommendationDelay > Duration.zero) {
+      await Future<void>.delayed(recommendationDelay);
+    }
+    if (recommendationError != null) throw recommendationError!;
+    return recommendationResult;
+  }
 
   Cart _cartWith(int quantity, Product product, ProductVariant variant) {
     final lineTotal = variant.price * quantity;
@@ -208,17 +269,19 @@ class FakeCustomerRepository implements CustomerRepository {
   void _setAddress(CustomerAddress address) {
     if (address.isDefault) {
       currentAddresses = currentAddresses
-          .map((item) => CustomerAddress(
-                id: item.id,
-                label: item.label,
-                addressLine1: item.addressLine1,
-                addressLine2: item.addressLine2,
-                city: item.city,
-                province: item.province,
-                postalCode: item.postalCode,
-                country: item.country,
-                isDefault: false,
-              ))
+          .map(
+            (item) => CustomerAddress(
+              id: item.id,
+              label: item.label,
+              addressLine1: item.addressLine1,
+              addressLine2: item.addressLine2,
+              city: item.city,
+              province: item.province,
+              postalCode: item.postalCode,
+              country: item.country,
+              isDefault: false,
+            ),
+          )
           .toList();
     }
     currentAddresses.removeWhere((item) => item.id == address.id);

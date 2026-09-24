@@ -1,12 +1,19 @@
 class ProductPage {
-  const ProductPage({required this.items, required this.page, required this.totalPages, required this.totalCount});
+  const ProductPage({
+    required this.items,
+    required this.page,
+    required this.totalPages,
+    required this.totalCount,
+  });
   final List<Product> items;
   final int page;
   final int totalPages;
   final int totalCount;
 
   factory ProductPage.fromJson(Map<String, dynamic> json) => ProductPage(
-    items: (json['items'] as List? ?? []).map((item) => Product.fromJson(item as Map<String, dynamic>)).toList(),
+    items: (json['items'] as List? ?? [])
+        .map((item) => Product.fromJson(item as Map<String, dynamic>))
+        .toList(),
     page: json['page'] as int? ?? 1,
     totalPages: json['totalPages'] as int? ?? 0,
     totalCount: json['totalCount'] as int? ?? 0,
@@ -14,7 +21,16 @@ class ProductPage {
 }
 
 class Product {
-  const Product({required this.id, required this.name, required this.minimumPrice, required this.isAvailable, required this.variants, this.description, this.categories = const [], this.images = const []});
+  const Product({
+    required this.id,
+    required this.name,
+    required this.minimumPrice,
+    required this.isAvailable,
+    required this.variants,
+    this.description,
+    this.categories = const [],
+    this.images = const [],
+  });
   final String id;
   final String name;
   final String? description;
@@ -30,14 +46,29 @@ class Product {
     description: json['description'] as String?,
     minimumPrice: (json['minimumPrice'] as num?)?.toDouble() ?? 0,
     isAvailable: json['isAvailable'] as bool? ?? false,
-    variants: (json['variants'] as List? ?? []).map((item) => ProductVariant.fromJson(item as Map<String, dynamic>)).toList(),
-    categories: (json['categories'] as List? ?? []).map((item) => Category.fromJson(item as Map<String, dynamic>)).toList(),
-    images: (json['images'] as List? ?? []).map((item) => item.toString()).toList(),
+    variants: (json['variants'] as List? ?? [])
+        .map((item) => ProductVariant.fromJson(item as Map<String, dynamic>))
+        .toList(),
+    categories: (json['categories'] as List? ?? [])
+        .map((item) => Category.fromJson(item as Map<String, dynamic>))
+        .toList(),
+    images: (json['images'] as List? ?? [])
+        .map((item) => item.toString())
+        .toList(),
   );
 }
 
 class ProductVariant {
-  const ProductVariant({required this.id, required this.sku, required this.name, required this.price, required this.availableQuantity, required this.isAvailable, this.size, this.colour});
+  const ProductVariant({
+    required this.id,
+    required this.sku,
+    required this.name,
+    required this.price,
+    required this.availableQuantity,
+    required this.isAvailable,
+    this.size,
+    this.colour,
+  });
   final String id;
   final String sku;
   final String name;
@@ -63,11 +94,18 @@ class Category {
   const Category({required this.id, required this.name});
   final String id;
   final String name;
-  factory Category.fromJson(Map<String, dynamic> json) => Category(id: json['id'] as String, name: json['name'] as String? ?? '');
+  factory Category.fromJson(Map<String, dynamic> json) =>
+      Category(id: json['id'] as String, name: json['name'] as String? ?? '');
 }
 
 class WishlistItem {
-  const WishlistItem({required this.productId, required this.productName, required this.isAvailable, this.description, this.minimumPrice});
+  const WishlistItem({
+    required this.productId,
+    required this.productName,
+    required this.isAvailable,
+    this.description,
+    this.minimumPrice,
+  });
   final String productId;
   final String productName;
   final String? description;
@@ -83,15 +121,29 @@ class WishlistItem {
 }
 
 class Cart {
-  const Cart({required this.items, required this.currency, required this.totalQuantity, required this.subtotal, required this.total});
+  const Cart({
+    required this.items,
+    required this.currency,
+    required this.totalQuantity,
+    required this.subtotal,
+    required this.total,
+  });
   final List<CartItem> items;
   final String currency;
   final int totalQuantity;
   final double subtotal;
   final double total;
-  factory Cart.empty() => const Cart(items: [], currency: 'LKR', totalQuantity: 0, subtotal: 0, total: 0);
+  factory Cart.empty() => const Cart(
+    items: [],
+    currency: 'LKR',
+    totalQuantity: 0,
+    subtotal: 0,
+    total: 0,
+  );
   factory Cart.fromJson(Map<String, dynamic> json) => Cart(
-    items: (json['items'] as List? ?? []).map((item) => CartItem.fromJson(item as Map<String, dynamic>)).toList(),
+    items: (json['items'] as List? ?? [])
+        .map((item) => CartItem.fromJson(item as Map<String, dynamic>))
+        .toList(),
     currency: json['currency'] as String? ?? 'LKR',
     totalQuantity: json['totalQuantity'] as int? ?? 0,
     subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0,
@@ -100,7 +152,18 @@ class Cart {
 }
 
 class CartItem {
-  const CartItem({required this.id, required this.productVariantId, required this.productName, required this.variantName, required this.sku, required this.unitPrice, required this.quantity, required this.lineTotal, required this.availableQuantity, required this.hasSufficientStock});
+  const CartItem({
+    required this.id,
+    required this.productVariantId,
+    required this.productName,
+    required this.variantName,
+    required this.sku,
+    required this.unitPrice,
+    required this.quantity,
+    required this.lineTotal,
+    required this.availableQuantity,
+    required this.hasSufficientStock,
+  });
   final String id;
   final String productVariantId;
   final String productName;
@@ -126,15 +189,34 @@ class CartItem {
 }
 
 class CustomerProfile {
-  const CustomerProfile({required this.email, required this.firstName, required this.lastName});
+  const CustomerProfile({
+    required this.email,
+    required this.firstName,
+    required this.lastName,
+  });
   final String email;
   final String firstName;
   final String lastName;
-  factory CustomerProfile.fromJson(Map<String, dynamic> json) => CustomerProfile(email: json['email'] as String? ?? '', firstName: json['firstName'] as String? ?? '', lastName: json['lastName'] as String? ?? '');
+  factory CustomerProfile.fromJson(Map<String, dynamic> json) =>
+      CustomerProfile(
+        email: json['email'] as String? ?? '',
+        firstName: json['firstName'] as String? ?? '',
+        lastName: json['lastName'] as String? ?? '',
+      );
 }
 
 class CustomerAddress {
-  const CustomerAddress({this.id, required this.label, required this.addressLine1, this.addressLine2, required this.city, this.province, required this.postalCode, required this.country, required this.isDefault});
+  const CustomerAddress({
+    this.id,
+    required this.label,
+    required this.addressLine1,
+    this.addressLine2,
+    required this.city,
+    this.province,
+    required this.postalCode,
+    required this.country,
+    required this.isDefault,
+  });
   final int? id;
   final String label;
   final String addressLine1;
@@ -144,6 +226,182 @@ class CustomerAddress {
   final String postalCode;
   final String country;
   final bool isDefault;
-  factory CustomerAddress.fromJson(Map<String, dynamic> json) => CustomerAddress(id: json['id'] as int?, label: json['label'] as String? ?? '', addressLine1: json['addressLine1'] as String? ?? '', addressLine2: json['addressLine2'] as String?, city: json['city'] as String? ?? '', province: json['province'] as String?, postalCode: json['postalCode'] as String? ?? '', country: json['country'] as String? ?? 'Sri Lanka', isDefault: json['isDefault'] as bool? ?? false);
-  Map<String, dynamic> toJson() => {'label': label, 'addressLine1': addressLine1, 'addressLine2': addressLine2, 'city': city, 'province': province, 'postalCode': postalCode, 'country': country, 'isDefault': isDefault};
+  factory CustomerAddress.fromJson(Map<String, dynamic> json) =>
+      CustomerAddress(
+        id: json['id'] as int?,
+        label: json['label'] as String? ?? '',
+        addressLine1: json['addressLine1'] as String? ?? '',
+        addressLine2: json['addressLine2'] as String?,
+        city: json['city'] as String? ?? '',
+        province: json['province'] as String?,
+        postalCode: json['postalCode'] as String? ?? '',
+        country: json['country'] as String? ?? 'Sri Lanka',
+        isDefault: json['isDefault'] as bool? ?? false,
+      );
+  Map<String, dynamic> toJson() => {
+    'label': label,
+    'addressLine1': addressLine1,
+    'addressLine2': addressLine2,
+    'city': city,
+    'province': province,
+    'postalCode': postalCode,
+    'country': country,
+    'isDefault': isDefault,
+  };
+}
+
+class RecommendationPreferences {
+  const RecommendationPreferences({
+    required this.occasion,
+    this.budget,
+    this.preferredColours = const [],
+    this.preferredSize,
+    this.stylePreferences,
+  });
+
+  final String occasion;
+  final double? budget;
+  final List<String> preferredColours;
+  final String? preferredSize;
+  final String? stylePreferences;
+
+  Map<String, dynamic> toJson() => {
+    'occasion': occasion,
+    'budget': budget,
+    'preferredColours': preferredColours,
+    'preferredSize': preferredSize,
+    'stylePreferences': stylePreferences,
+  };
+}
+
+class RecommendationResult {
+  const RecommendationResult({
+    required this.workflowId,
+    required this.status,
+    required this.recommendations,
+    required this.execution,
+    this.unappliedPreferences = const [],
+    this.relaxedCriteria = const [],
+  });
+
+  final String workflowId;
+  final String status;
+  final List<ProductRecommendation> recommendations;
+  final RecommendationExecution execution;
+  final List<String> unappliedPreferences;
+  final List<String> relaxedCriteria;
+
+  factory RecommendationResult.fromJson(Map<String, dynamic> json) =>
+      RecommendationResult(
+        workflowId: json['workflowId'] as String? ?? '',
+        status: json['status'] as String? ?? 'failed',
+        recommendations: (json['recommendations'] as List? ?? [])
+            .map(
+              (item) =>
+                  ProductRecommendation.fromJson(item as Map<String, dynamic>),
+            )
+            .toList(),
+        execution: RecommendationExecution.fromJson(
+          json['execution'] as Map<String, dynamic>? ?? const {},
+        ),
+        unappliedPreferences: (json['unappliedPreferences'] as List? ?? [])
+            .map((item) => item.toString())
+            .toList(),
+        relaxedCriteria: (json['relaxedCriteria'] as List? ?? [])
+            .map((item) => item.toString())
+            .toList(),
+      );
+}
+
+class ProductRecommendation {
+  const ProductRecommendation({
+    required this.productId,
+    required this.variantId,
+    required this.productName,
+    required this.variantName,
+    required this.sku,
+    required this.price,
+    required this.quantity,
+    required this.availableQuantity,
+    required this.reason,
+    this.size,
+    this.colour,
+  });
+
+  final String productId;
+  final String variantId;
+  final String productName;
+  final String variantName;
+  final String sku;
+  final double price;
+  final int quantity;
+  final int availableQuantity;
+  final String? size;
+  final String? colour;
+  final String reason;
+
+  factory ProductRecommendation.fromJson(Map<String, dynamic> json) =>
+      ProductRecommendation(
+        productId: json['productId'] as String? ?? '',
+        variantId: json['variantId'] as String? ?? '',
+        productName: json['productName'] as String? ?? '',
+        variantName: json['variantName'] as String? ?? '',
+        sku: json['sku'] as String? ?? '',
+        price: (json['price'] as num?)?.toDouble() ?? 0,
+        quantity: json['quantity'] as int? ?? 1,
+        availableQuantity: json['availableQuantity'] as int? ?? 0,
+        size: json['size']?.toString(),
+        colour: json['colour']?.toString(),
+        reason: json['reason'] as String? ?? '',
+      );
+}
+
+class RecommendationExecution {
+  const RecommendationExecution({
+    required this.agentName,
+    required this.status,
+    required this.outputValidated,
+    required this.validationResults,
+    this.errorSummary,
+  });
+
+  final String agentName;
+  final String status;
+  final bool outputValidated;
+  final String? errorSummary;
+  final List<RecommendationValidation> validationResults;
+
+  factory RecommendationExecution.fromJson(Map<String, dynamic> json) =>
+      RecommendationExecution(
+        agentName: json['agentName'] as String? ?? 'Personal Stylist Agent',
+        status: json['status'] as String? ?? 'failed',
+        outputValidated: json['outputValidated'] as bool? ?? false,
+        errorSummary: json['errorSummary'] as String?,
+        validationResults: (json['validationResults'] as List? ?? [])
+            .map(
+              (item) => RecommendationValidation.fromJson(
+                item as Map<String, dynamic>,
+              ),
+            )
+            .toList(),
+      );
+}
+
+class RecommendationValidation {
+  const RecommendationValidation({
+    required this.rule,
+    required this.isValid,
+    required this.message,
+  });
+
+  final String rule;
+  final bool isValid;
+  final String message;
+
+  factory RecommendationValidation.fromJson(Map<String, dynamic> json) =>
+      RecommendationValidation(
+        rule: json['rule'] as String? ?? 'Validation',
+        isValid: json['isValid'] as bool? ?? false,
+        message: json['message'] as String? ?? '',
+      );
 }

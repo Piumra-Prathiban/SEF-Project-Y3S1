@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sef_project/services/customer_api.dart';
 import 'package:sef_project/models/shopping_models.dart';
@@ -61,17 +63,93 @@ void main() {
     final repository = FakeCustomerRepository();
     final store = CustomerStore(repository);
 
-    await store.saveAddress(const CustomerAddress(
-      label: 'Office',
-      addressLine1: '20 Work Road',
-      city: 'Colombo',
-      postalCode: '00200',
-      country: 'Sri Lanka',
-      isDefault: true,
-    ));
+    await store.saveAddress(
+      const CustomerAddress(
+        label: 'Office',
+        addressLine1: '20 Work Road',
+        city: 'Colombo',
+        postalCode: '00200',
+        country: 'Sri Lanka',
+        isDefault: true,
+      ),
+    );
 
     expect(store.addresses.where((address) => address.isDefault), hasLength(1));
-    expect(store.addresses.singleWhere((address) => address.isDefault).label,
-        'Office');
+    expect(
+      store.addresses.singleWhere((address) => address.isDefault).label,
+      'Office',
+    );
+  });
+
+  test(
+    'recommendations retain authoritative result and hydrate product details',
+    () async {
+      final repository = FakeCustomerRepository();
+      final store = CustomerStore(repository);
+
+      await store.requestRecommendations(
+        const RecommendationPreferences(
+          occasion: 'Dinner',
+          budget: 20000,
+          preferredColours: ['Blue'],
+          preferredSize: 'M',
+        ),
+      );
+
+      expect(store.recommendationStatus, RecommendationUiStatus.completed);
+      expect(store.recommendation?.workflowId, 'workflow-1');
+      expect(store.recommendation?.recommendations.single.price, 4500);
+      expect(store.recommendationProduct('product-1')?.name, 'Linen Shirt');
+      expect(repository.lastRecommendationPreferences?.occasion, 'Dinner');
+    },
+  );
+
+  test(
+    'failed deterministic validation is shown as validation failure',
+    () async {
+      final repository = FakeCustomerRepository()
+        ..recommendationResult = const RecommendationResult(
+          workflowId: 'workflow-failed',
+          status: 'failed',
+          recommendations: [],
+          execution: RecommendationExecution(
+            agentName: 'Personal Stylist Agent',
+            status: 'failed',
+            outputValidated: false,
+            errorSummary: 'Agent output failed catalogue validation.',
+            validationResults: [
+              RecommendationValidation(
+                rule: 'Stock',
+                isValid: false,
+                message: 'Insufficient stock.',
+              ),
+            ],
+          ),
+        );
+      final store = CustomerStore(repository);
+
+      await store.requestRecommendations(
+        const RecommendationPreferences(occasion: 'Dinner'),
+      );
+
+      expect(
+        store.recommendationStatus,
+        RecommendationUiStatus.validationFailure,
+      );
+      expect(store.recommendation?.recommendations, isEmpty);
+    },
+  );
+
+  test('recommendation timeout has a distinct retryable state', () async {
+    final repository = FakeCustomerRepository()
+      ..recommendationError = TimeoutException('Timed out');
+    final store = CustomerStore(repository);
+
+    await store.requestRecommendations(
+      const RecommendationPreferences(occasion: 'Dinner'),
+    );
+
+    expect(store.recommendationStatus, RecommendationUiStatus.timeout);
+    expect(store.recommendationMessage, contains('timed out'));
   });
 }
