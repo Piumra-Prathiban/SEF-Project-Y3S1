@@ -559,3 +559,405 @@ tbody tr:last-child td {
     margin-bottom: 0.5rem;
   }
 }
+
+/* ---- Dashboards & charts ---------------------------------------------------- */
+
+:root {
+  --series-1: #2a78d6;
+  --chart-grid: #e1e0d9;
+  --chart-baseline: #c3c2b7;
+  --chart-axis-text: #898781;
+  --chart-surface: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --series-1: #3987e5;
+    --chart-grid: #2c2c2a;
+    --chart-baseline: #383835;
+  }
+}
+
+.sub-nav {
+  flex-wrap: wrap;
+  row-gap: 0.5rem;
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.filter-row .field select,
+.filter-row .field input {
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text-h);
+}
+
+.custom-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.custom-range .field-error {
+  flex-basis: 100%;
+}
+
+.range-summary {
+  font-size: 0.9rem;
+  margin-bottom: 0.55rem;
+}
+
+.section-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.dashboard-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+  gap: 1.25rem;
+}
+
+.dashboard-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem 1.25rem;
+  min-width: 0;
+  scroll-margin-top: 1rem;
+}
+
+.dashboard-section-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard-section-header p {
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.section-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.section-controls select {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text-h);
+}
+
+.section-controls label {
+  font-size: 0.85rem;
+}
+
+/* Refetch keeps the frame: previous render at reduced opacity. */
+.is-refreshing {
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+
+.data-note {
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+  color: var(--text);
+}
+
+.numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* KPI tiles */
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 1rem;
+}
+
+.kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.kpi-label {
+  font-size: 0.9rem;
+}
+
+.kpi-value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text-h);
+  line-height: 1.2;
+}
+
+.kpi-change {
+  font-size: 0.85rem;
+}
+
+.kpi-change-up { color: var(--success); }
+.kpi-change-down { color: var(--danger); }
+
+.mini-stats {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 2rem;
+}
+
+.mini-stats li {
+  display: flex;
+  flex-direction: column;
+}
+
+.mini-stat-value {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.mini-stat-label {
+  font-size: 0.85rem;
+}
+
+/* Line chart */
+
+.chart {
+  margin: 0;
+}
+
+.chart-plot {
+  position: relative;
+}
+
+.chart-svg {
+  display: block;
+  height: auto;
+  overflow: visible;
+  touch-action: pan-y;
+}
+
+.chart-grid {
+  stroke: var(--chart-grid);
+  stroke-width: 1;
+}
+
+.chart-baseline {
+  stroke: var(--chart-baseline);
+  stroke-width: 1;
+}
+
+.chart-axis {
+  fill: var(--chart-axis-text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--series-1);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart-area {
+  fill: var(--series-1);
+  opacity: 0.1;
+}
+
+.chart-marker {
+  fill: var(--series-1);
+  stroke: var(--chart-surface);
+  stroke-width: 2;
+}
+
+.chart-end-label {
+  fill: var(--text-h);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chart-crosshair {
+  stroke: var(--chart-baseline);
+  stroke-width: 1;
+}
+
+.chart-tooltip {
+  position: absolute;
+  top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  font-size: 0.85rem;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.chart-tooltip strong {
+  color: var(--text-h);
+  font-size: 0.95rem;
+}
+
+.chart-table {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.chart-table summary {
+  cursor: pointer;
+  width: fit-content;
+}
+
+.chart-table .table-wrap {
+  margin-top: 0.5rem;
+  max-height: 18rem;
+  overflow-y: auto;
+}
+
+/* Bar list */
+
+.bar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: minmax(6rem, 11rem) 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.bar-label {
+  overflow-wrap: anywhere;
+  color: var(--text-h);
+}
+
+.bar-track {
+  display: block;
+  height: 14px;
+}
+
+.bar-fill {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  background: var(--series-1);
+  border-radius: 0 4px 4px 0;
+}
+
+.bar-value {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--text-h);
+}
+
+/* Reports */
+
+.reports {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.report {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+}
+
+.report h2 {
+  margin-bottom: 0.75rem;
+}
+
+.report p + p,
+.report p + ul,
+.report p + ol,
+.report ul + p,
+.report ol + p {
+  margin-top: 0.6rem;
+}
+
+.report ul,
+.report ol {
+  padding-left: 1.25rem;
+  margin: 0.4rem 0 0;
+}
+
+.plain-list {
+  list-style: none;
+  padding-left: 0 !important;
+  display: grid;
+  gap: 0.4rem;
+}
+
+@media (max-width: 640px) {
+  .bar-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .bar-track {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+@media print {
+  .app-header,
+  .sub-nav,
+  .filter-row,
+  .page-header .button-row {
+    display: none;
+  }
+
+  .report {
+    break-inside: avoid;
+  }
+}

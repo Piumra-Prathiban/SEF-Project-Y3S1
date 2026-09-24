@@ -1,5 +1,8 @@
 import { Link, Route, Routes } from 'react-router-dom';
 import AppLayout from './components/AppLayout';
+import AnalyticsPage from './features/marketing/analytics/AnalyticsPage';
+import DashboardPage from './features/marketing/analytics/DashboardPage';
+import ReportsPage from './features/marketing/analytics/ReportsPage';
 import LoginPage from './features/auth/LoginPage';
 import HomePage from './features/home/HomePage';
 import CampaignDetailPage from './features/marketing/campaigns/CampaignDetailPage';
@@ -23,6 +26,9 @@ export default function App() {
         <Route element={<ProtectedRoute roles={MANAGER_ROLES} />}>
           <Route path="marketing" element={<MarketingLayout />}>
             <Route index element={<MarketingOverviewPage />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
+            <Route path="reports" element={<ReportsPage />} />
             <Route path="promotions" element={<PromotionListPage />} />
             <Route path="promotions/new" element={<PromotionFormPage />} />
             <Route path="promotions/:id" element={<PromotionDetailPage />} />
