@@ -18,6 +18,7 @@ import ErrorAlert from '../../components/ErrorAlert';
 import StatusBadge from '../../components/StatusBadge';
 import PaymentStatusForm from './PaymentStatusForm';
 import ShipmentsSection from './ShipmentsSection';
+import CancelOrderSection from './CancelOrderSection';
 import './orders.css';
 
 // Advisory only: mirrors the backend's order status state machine so the UI can
@@ -284,6 +285,12 @@ function OrderDetailPage() {
           )}
         </section>
       )}
+
+      <CancelOrderSection
+        order={order}
+        token={token}
+        onCancelled={(updatedOrder) => setOrder(updatedOrder)}
+      />
 
       <section className="order-detail__items">
         <h2>Items</h2>

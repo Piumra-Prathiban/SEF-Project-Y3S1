@@ -372,3 +372,19 @@
   color: #b91c1c;
   font-size: 14px;
 }
+
+.order-detail__cancel {
+  margin-bottom: 24px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.cancel-order__button {
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ef4444;
+}
+
+.cancel-order__button:hover:not(:disabled) {
+  border-color: rgba(239, 68, 68, 0.8);
+}

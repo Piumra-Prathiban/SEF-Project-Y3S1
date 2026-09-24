@@ -10,6 +10,7 @@ import {
   updatePaymentStatus,
   createShipment,
   updateShipmentStatus,
+  cancelOrder,
   OrderStatus,
   PaymentMethod,
   PaymentStatus,
@@ -27,6 +28,7 @@ vi.mock('../../services/orderService', async (importOriginal) => {
     updatePaymentStatus: vi.fn(),
     createShipment: vi.fn(),
     updateShipmentStatus: vi.fn(),
+    cancelOrder: vi.fn(),
   };
 });
 
@@ -166,6 +168,30 @@ const ORDER_WITH_PENDING_SHIPMENT = {
   ...ORDER_PENDING,
   shipments: [SHIPMENT_PENDING],
 };
+
+const CANCELLED_ORDER = makeOrder({
+  status: OrderStatus.Cancelled,
+  payments: [
+    {
+      id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      amount: 2505.5,
+      method: PaymentMethod.Card,
+      status: PaymentStatus.Refunded,
+      transactionReference: 'MOCK-1234',
+      paidAt: '2026-09-20T10:05:00Z',
+    },
+  ],
+  shipments: [
+    {
+      id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      status: ShipmentStatus.Cancelled,
+      trackingNumber: 'TRACK-99',
+      carrier: 'LankaExpress',
+      shippedAt: null,
+      deliveredAt: null,
+    },
+  ],
+});
 
 function paymentsTable() {
   return within(
@@ -828,6 +854,94 @@ describe('OrderDetailPage', () => {
 
     expect(
       await screen.findByText('A shipment already exists for this order.'),
+    ).toBeInTheDocument();
+  });
+
+  it.each(['Customer', 'Staff'])(
+    'lets %s users cancel an eligible order and refreshes everything',
+    async (role) => {
+      mockAuth.user = { ...mockAuth.user, role };
+      getOrderById.mockResolvedValue(ORDER_PENDING);
+      cancelOrder.mockResolvedValue(CANCELLED_ORDER);
+
+      const user = userEvent.setup();
+      renderPage();
+
+      await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+      await user.click(screen.getByRole('button', { name: 'Cancel order' }));
+
+      await waitFor(() => {
+        expect(cancelOrder).toHaveBeenCalledWith('test-token', ORDER_ID);
+      });
+
+      expect(await screen.findByText('Order cancelled.')).toBeInTheDocument();
+      expect(
+        screen.getByText('This order can no longer be cancelled.'),
+      ).toBeInTheDocument();
+
+      expect(within(paymentsTable()).getByText('Refunded')).toBeInTheDocument();
+
+      const shipments = screen.getByRole('region', { name: 'Shipments' });
+      expect(within(shipments).getByText('Cancelled')).toBeInTheDocument();
+    },
+  );
+
+  it('requires confirmation before cancelling', async () => {
+    getOrderById.mockResolvedValue(ORDER_PENDING);
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    await user.click(screen.getByRole('button', { name: 'Cancel order' }));
+
+    expect(window.confirm).toHaveBeenCalled();
+    expect(cancelOrder).not.toHaveBeenCalled();
+  });
+
+  it('hides the cancellation action once the order can no longer be cancelled', async () => {
+    getOrderById.mockResolvedValue(CANCELLED_ORDER);
+
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    expect(
+      screen.getByText('This order can no longer be cancelled.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Cancel order' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('surfaces the backend conflict when cancellation is blocked', async () => {
+    getOrderById.mockResolvedValue(ORDER_PENDING);
+    cancelOrder.mockRejectedValue(
+      Object.assign(
+        new Error(
+          'Order cannot be cancelled because it has already been shipped.',
+        ),
+        { status: 409, data: null },
+      ),
+    );
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    await user.click(screen.getByRole('button', { name: 'Cancel order' }));
+
+    expect(
+      await screen.findByText(
+        'Order cannot be cancelled because it has already been shipped.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Cancel order' }),
     ).toBeInTheDocument();
   });
 });
