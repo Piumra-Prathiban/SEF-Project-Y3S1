@@ -256,7 +256,9 @@ export function buildOrderQuery(query = {}) {
   if (query.sortDirection) {
     params.set('sortDirection', query.sortDirection);
   }
-  if (query.status !== undefined && query.status !== null) {
+  if (query.status !== undefined
+    && query.status !== null
+    && query.status !== '') {
     params.set('status', query.status);
   }
   if (query.from) {
