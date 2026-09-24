@@ -107,7 +107,10 @@
 
 .order-detail__items,
 .order-detail__totals,
-.order-detail__address {
+.order-detail__address,
+.order-detail__payments,
+.order-detail__shipments,
+.order-detail__history {
   margin-bottom: 24px;
 }
 
@@ -140,4 +143,46 @@
   font-style: normal;
   line-height: 1.6;
   color: var(--text);
+}
+
+.order-detail__address address span {
+  display: block;
+}
+
+.order-detail__empty {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.timeline {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline__item {
+  display: grid;
+  gap: 4px;
+  padding-left: 16px;
+  border-left: 2px solid var(--border);
+}
+
+.timeline__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.timeline__time {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.timeline__note {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
 }

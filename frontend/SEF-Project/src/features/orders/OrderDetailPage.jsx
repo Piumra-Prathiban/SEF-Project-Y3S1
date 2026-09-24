@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { getOrderById } from '../../services/orderService';
+import { getOrderById, PaymentMethodName } from '../../services/orderService';
 import { formatCurrency, formatDateTime } from '../../utils/format';
 import Loading from '../../components/Loading';
 import ErrorAlert from '../../components/ErrorAlert';
@@ -56,6 +56,20 @@ function OrderDetailPage() {
     );
   }
 
+  if (error?.status === 404) {
+    return (
+      <div className="orders-page">
+        <h1>Order not found</h1>
+        <p className="order-detail__empty">
+          This order does not exist or you do not have access to it.
+        </p>
+        <Link to="/orders" className="order-detail__back">
+          Back to orders
+        </Link>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="orders-page">
@@ -89,8 +103,8 @@ function OrderDetailPage() {
         <table className="orders-table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>SKU</th>
+              <th>Product</th>
+              <th>Variant (SKU)</th>
               <th>Quantity</th>
               <th>Unit price</th>
               <th>Line total</th>
@@ -140,19 +154,117 @@ function OrderDetailPage() {
         <section className="order-detail__address">
           <h2>Delivery address</h2>
           <address>
-            {order.deliveryAddress.fullName}
-            <br />
-            {order.deliveryAddress.line1}
-            {order.deliveryAddress.line2 && `, ${order.deliveryAddress.line2}`}
-            <br />
-            {order.deliveryAddress.city}
-            {order.deliveryAddress.province &&
-              `, ${order.deliveryAddress.province}`}
-            <br />
-            {order.deliveryAddress.postalCode} {order.deliveryAddress.country}
+            <span>{order.deliveryAddress.fullName}</span>
+            <span>
+              {order.deliveryAddress.line1}
+              {order.deliveryAddress.line2 &&
+                `, ${order.deliveryAddress.line2}`}
+            </span>
+            <span>
+              {order.deliveryAddress.city}
+              {order.deliveryAddress.province &&
+                `, ${order.deliveryAddress.province}`}
+            </span>
+            <span>
+              {order.deliveryAddress.postalCode} {order.deliveryAddress.country}
+            </span>
+            {order.deliveryAddress.phone && (
+              <span>{order.deliveryAddress.phone}</span>
+            )}
           </address>
         </section>
       )}
+
+      <section className="order-detail__payments">
+        <h2>Payments</h2>
+        {order.payments.length === 0 ? (
+          <p className="order-detail__empty">No payments recorded.</p>
+        ) : (
+          <table className="orders-table">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Status</th>
+                <th>Amount</th>
+                <th>Paid at</th>
+                <th>Reference</th>
+              </tr>
+            </thead>
+            <tbody>
+              {order.payments.map((payment) => (
+                <tr key={payment.id}>
+                  <td>{PaymentMethodName[payment.method] ?? payment.method}</td>
+                  <td>
+                    <StatusBadge status={payment.status} kind="payment" />
+                  </td>
+                  <td>{formatCurrency(payment.amount, order.currency)}</td>
+                  <td>{payment.paidAt ? formatDateTime(payment.paidAt) : '—'}</td>
+                  <td>{payment.transactionReference ?? '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <section className="order-detail__shipments">
+        <h2>Shipments</h2>
+        {order.shipments.length === 0 ? (
+          <p className="order-detail__empty">No shipments recorded.</p>
+        ) : (
+          <table className="orders-table">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Carrier</th>
+                <th>Tracking number</th>
+                <th>Shipped at</th>
+                <th>Delivered at</th>
+              </tr>
+            </thead>
+            <tbody>
+              {order.shipments.map((shipment) => (
+                <tr key={shipment.id}>
+                  <td>
+                    <StatusBadge status={shipment.status} kind="shipment" />
+                  </td>
+                  <td>{shipment.carrier ?? '—'}</td>
+                  <td>{shipment.trackingNumber ?? '—'}</td>
+                  <td>
+                    {shipment.shippedAt ? formatDateTime(shipment.shippedAt) : '—'}
+                  </td>
+                  <td>
+                    {shipment.deliveredAt
+                      ? formatDateTime(shipment.deliveredAt)
+                      : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <section className="order-detail__history">
+        <h2>Status history</h2>
+        {order.statusHistory.length === 0 ? (
+          <p className="order-detail__empty">No status changes recorded.</p>
+        ) : (
+          <ol className="timeline" aria-label="Status history timeline">
+            {order.statusHistory.map((entry) => (
+              <li key={entry.id} className="timeline__item">
+                <div className="timeline__header">
+                  <StatusBadge status={entry.status} />
+                  <span className="timeline__time">
+                    {formatDateTime(entry.changedAt)}
+                  </span>
+                </div>
+                {entry.note && <p className="timeline__note">{entry.note}</p>}
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
     </div>
   );
 }
