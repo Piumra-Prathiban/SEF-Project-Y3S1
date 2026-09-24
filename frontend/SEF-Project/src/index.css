@@ -392,6 +392,10 @@ button:disabled {
   text-transform: uppercase;
 }
 
+.data-table tr.is-selected-row td {
+  background: var(--accent-bg);
+}
+
 .status-pill {
   border-radius: 999px;
   display: inline-flex;
@@ -489,6 +493,14 @@ button:disabled {
 .detail-grid dd {
   color: var(--text-h);
   margin: 4px 0 0;
+}
+
+.stock-management-panel .alert {
+  margin-top: 18px;
+}
+
+.stock-history-section {
+  margin-top: 24px;
 }
 
 @media (max-width: 900px) {

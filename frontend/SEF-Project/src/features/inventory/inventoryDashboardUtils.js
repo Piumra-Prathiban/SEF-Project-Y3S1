@@ -10,6 +10,24 @@ export function normalizeInventoryItems(response) {
   return response?.items ?? [];
 }
 
+export function normalizeStockHistoryItems(response) {
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  return response?.items ?? response?.transactions ?? [];
+}
+
+export function getVariantId(item) {
+  return firstDefined(
+    item.variantId,
+    item.productVariantId,
+    item.variant?.id,
+    item.productVariant?.id,
+    item.id,
+  );
+}
+
 export function getInventoryQuantity(item) {
   return firstDefined(
     item.quantityOnHand,
@@ -130,4 +148,98 @@ export function buildInventorySummary(inventoryItems, lowStockItems) {
     lowStockVariants: lowStockItems.length,
     outOfStockVariants,
   };
+}
+
+export const STOCK_TRANSACTION_TYPES = [
+  { value: 'StockIn', label: 'Stock In' },
+  { value: 'StockOut', label: 'Stock Out' },
+  { value: 'Adjustment', label: 'Adjustment' },
+];
+
+export function validateStockAdjustment(adjustment) {
+  const errors = [];
+  const quantity = Number(adjustment.quantity);
+
+  if (!adjustment.transactionType) {
+    errors.push('Transaction type is required.');
+  } else if (!STOCK_TRANSACTION_TYPES.some((type) => type.value === adjustment.transactionType)) {
+    errors.push('Transaction type is not valid.');
+  }
+
+  if (adjustment.quantity === '' || Number.isNaN(quantity)) {
+    errors.push('Quantity is required.');
+  } else if (quantity <= 0) {
+    errors.push('Quantity must be greater than zero.');
+  }
+
+  if (!adjustment.reason?.trim()) {
+    errors.push('Reason is required.');
+  }
+
+  return errors;
+}
+
+export function buildStockAdjustmentPayload(adjustment) {
+  return {
+    transactionType: adjustment.transactionType,
+    quantity: Number(adjustment.quantity),
+    reason: adjustment.reason.trim(),
+  };
+}
+
+export function getHistoryDate(transaction) {
+  return firstDefined(
+    transaction.timestamp,
+    transaction.createdAt,
+    transaction.transactionDate,
+    transaction.occurredAt,
+    transaction.date,
+    null,
+  );
+}
+
+export function getHistoryType(transaction) {
+  return firstDefined(
+    transaction.transactionType,
+    transaction.type,
+    transaction.adjustmentType,
+    '-',
+  );
+}
+
+export function getHistoryQuantity(transaction) {
+  return firstDefined(transaction.quantity, transaction.adjustmentQuantity, '-');
+}
+
+export function getHistoryPreviousQuantity(transaction) {
+  return firstDefined(
+    transaction.previousQuantity,
+    transaction.previousStock,
+    transaction.oldQuantity,
+    '-',
+  );
+}
+
+export function getHistoryNewQuantity(transaction) {
+  return firstDefined(
+    transaction.newQuantity,
+    transaction.newStock,
+    transaction.resultingQuantity,
+    '-',
+  );
+}
+
+export function getHistoryReason(transaction) {
+  return firstDefined(transaction.reason, transaction.notes, '-');
+}
+
+export function getHistoryResponsibleUser(transaction) {
+  return firstDefined(
+    transaction.responsibleUserName,
+    transaction.responsibleUserEmail,
+    transaction.responsibleUser,
+    transaction.userName,
+    transaction.userEmail,
+    '-',
+  );
 }
