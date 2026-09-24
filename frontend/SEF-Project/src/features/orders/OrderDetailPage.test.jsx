@@ -8,9 +8,12 @@ import {
   updateOrderStatus,
   createPayment,
   updatePaymentStatus,
+  createShipment,
+  updateShipmentStatus,
   OrderStatus,
   PaymentMethod,
   PaymentStatus,
+  ShipmentStatus,
 } from '../../services/orderService';
 
 vi.mock('../../services/orderService', async (importOriginal) => {
@@ -22,6 +25,8 @@ vi.mock('../../services/orderService', async (importOriginal) => {
     updateOrderStatus: vi.fn(),
     createPayment: vi.fn(),
     updatePaymentStatus: vi.fn(),
+    createShipment: vi.fn(),
+    updateShipmentStatus: vi.fn(),
   };
 });
 
@@ -138,6 +143,28 @@ const PAYMENT_COMPLETED_UPDATED = {
 const ORDER_WITH_PENDING_PAYMENT = {
   ...ORDER_PENDING,
   payments: [PAYMENT_PENDING],
+};
+
+const SHIPMENT_PENDING = {
+  id: 'mmmmmmmm-mmmm-mmmm-mmmm-mmmmmmmmmmmm',
+  status: ShipmentStatus.Pending,
+  trackingNumber: null,
+  carrier: null,
+  shippedAt: null,
+  deliveredAt: null,
+};
+
+const SHIPMENT_SHIPPED = {
+  ...SHIPMENT_PENDING,
+  status: ShipmentStatus.Shipped,
+  carrier: 'DHL Express',
+  trackingNumber: 'DHL-123',
+  shippedAt: '2026-09-24T10:00:00Z',
+};
+
+const ORDER_WITH_PENDING_SHIPMENT = {
+  ...ORDER_PENDING,
+  shipments: [SHIPMENT_PENDING],
 };
 
 function paymentsTable() {
@@ -634,6 +661,173 @@ describe('OrderDetailPage', () => {
       await screen.findByText(
         'Payment amount exceeds the outstanding balance.',
       ),
+    ).toBeInTheDocument();
+  });
+
+  it('shows shipment progress and tracking to customers without staff controls', async () => {
+    mockAuth.user = { ...mockAuth.user, role: 'Customer' };
+
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    const shipments = screen.getByRole('region', { name: 'Shipments' });
+
+    expect(within(shipments).getByText('LankaExpress')).toBeInTheDocument();
+    expect(within(shipments).getByText('TRACK-99')).toBeInTheDocument();
+    expect(within(shipments).getByText('Shipped at')).toBeInTheDocument();
+    expect(within(shipments).getByText('Delivered at')).toBeInTheDocument();
+
+    const progress = within(shipments).getByRole('list', {
+      name: 'Shipment progress',
+    });
+
+    expect(within(progress).getAllByRole('listitem')).toHaveLength(3);
+    expect(within(progress).getByText('Shipped')).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+
+    expect(
+      within(shipments).queryByLabelText('New shipment status'),
+    ).not.toBeInTheDocument();
+    expect(
+      within(shipments).queryByRole('button', { name: 'Create shipment' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('hides shipment controls from customers when there is no shipment', async () => {
+    mockAuth.user = { ...mockAuth.user, role: 'Customer' };
+    getOrderById.mockResolvedValue(ORDER_PENDING);
+
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    expect(screen.getByText('No shipments recorded.')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Create shipment' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('lets staff create a shipment and refreshes the order', async () => {
+    getOrderById
+      .mockResolvedValueOnce(ORDER_PENDING)
+      .mockResolvedValueOnce(ORDER_WITH_PENDING_SHIPMENT);
+
+    createShipment.mockResolvedValue(SHIPMENT_PENDING);
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    await user.type(screen.getByLabelText('Carrier'), 'DHL Express');
+    await user.type(screen.getByLabelText('Tracking number'), 'DHL-123');
+    await user.click(screen.getByRole('button', { name: 'Create shipment' }));
+
+    await waitFor(() => {
+      expect(createShipment).toHaveBeenCalledWith('test-token', ORDER_ID, {
+        carrier: 'DHL Express',
+        trackingNumber: 'DHL-123',
+      });
+    });
+
+    expect(await screen.findByText('Shipment created.')).toBeInTheDocument();
+
+    const shipments = screen.getByRole('region', { name: 'Shipments' });
+    expect(
+      within(shipments).getByRole('list', { name: 'Shipment progress' }),
+    ).toBeInTheDocument();
+    expect(getOrderById).toHaveBeenCalledTimes(2);
+  });
+
+  it('lets staff update a shipment status and tracking details', async () => {
+    getOrderById
+      .mockResolvedValueOnce(ORDER_WITH_PENDING_SHIPMENT)
+      .mockResolvedValueOnce({
+        ...ORDER_WITH_PENDING_SHIPMENT,
+        shipments: [SHIPMENT_SHIPPED],
+      });
+
+    updateShipmentStatus.mockResolvedValue(SHIPMENT_SHIPPED);
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    await user.selectOptions(
+      screen.getByLabelText('New shipment status'),
+      String(ShipmentStatus.Shipped),
+    );
+    await user.type(screen.getByLabelText('Carrier'), 'DHL Express');
+    await user.click(screen.getByRole('button', { name: 'Update shipment' }));
+
+    await waitFor(() => {
+      expect(updateShipmentStatus).toHaveBeenCalledWith(
+        'test-token',
+        ORDER_ID,
+        SHIPMENT_PENDING.id,
+        {
+          status: ShipmentStatus.Shipped,
+          carrier: 'DHL Express',
+          trackingNumber: null,
+        },
+      );
+    });
+
+    expect(
+      await screen.findByText('Shipment marked as Shipped.'),
+    ).toBeInTheDocument();
+    expect(getOrderById).toHaveBeenCalledTimes(2);
+  });
+
+  it('surfaces a permission error when the backend rejects a shipment update', async () => {
+    getOrderById.mockResolvedValue(ORDER_WITH_PENDING_SHIPMENT);
+    updateShipmentStatus.mockRejectedValue(
+      Object.assign(new Error('Only staff can manage shipments.'), {
+        status: 403,
+        data: null,
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    await user.selectOptions(
+      screen.getByLabelText('New shipment status'),
+      String(ShipmentStatus.Shipped),
+    );
+    await user.click(screen.getByRole('button', { name: 'Update shipment' }));
+
+    expect(
+      await screen.findByText(
+        'You do not have permission to manage shipments.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the server message when shipment creation conflicts', async () => {
+    getOrderById.mockResolvedValue(ORDER_PENDING);
+    createShipment.mockRejectedValue(
+      Object.assign(new Error('A shipment already exists for this order.'), {
+        status: 409,
+        data: null,
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    await user.click(screen.getByRole('button', { name: 'Create shipment' }));
+
+    expect(
+      await screen.findByText('A shipment already exists for this order.'),
     ).toBeInTheDocument();
   });
 });

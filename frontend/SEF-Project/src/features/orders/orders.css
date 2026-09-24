@@ -231,7 +231,8 @@
   font-size: 14px;
 }
 
-.payment-form {
+.payment-form,
+.shipment-form {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
@@ -241,13 +242,15 @@
   border-top: 1px solid var(--border);
 }
 
-.payment-form h3 {
+.payment-form h3,
+.shipment-form h4 {
   width: 100%;
   margin: 0;
   font-size: 16px;
 }
 
-.payment-form label {
+.payment-form label,
+.shipment-form label {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -256,7 +259,9 @@
 }
 
 .payment-form input,
-.payment-form select {
+.payment-form select,
+.shipment-form input,
+.shipment-form select {
   padding: 6px 8px;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -265,7 +270,8 @@
   font: inherit;
 }
 
-.payment-form__note {
+.payment-form__note,
+.shipment-form__note {
   width: 100%;
   margin: 0;
   color: var(--text);
@@ -293,4 +299,76 @@
 
 .payment-actions__none {
   color: var(--text);
+}
+
+.shipment-list {
+  display: grid;
+  gap: 16px;
+}
+
+.shipment {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.shipment__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.shipment__details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.shipment__details dt {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.shipment__details dd {
+  margin: 0;
+  color: var(--text-h);
+  font-size: 14px;
+}
+
+.shipment-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shipment-progress__step {
+  padding: 2px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.shipment-progress__step--complete {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--text-h);
+}
+
+.shipment-progress__step--current {
+  font-weight: 600;
+  border-color: var(--accent);
+}
+
+.shipment-progress--cancelled {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 14px;
 }

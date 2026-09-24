@@ -17,6 +17,7 @@ import Loading from '../../components/Loading';
 import ErrorAlert from '../../components/ErrorAlert';
 import StatusBadge from '../../components/StatusBadge';
 import PaymentStatusForm from './PaymentStatusForm';
+import ShipmentsSection from './ShipmentsSection';
 import './orders.css';
 
 // Advisory only: mirrors the backend's order status state machine so the UI can
@@ -101,7 +102,7 @@ function OrderDetailPage() {
     };
   }, [token, id, retryTick]);
 
-  const canManageStatus = isStaff(user);
+  const canManage = isStaff(user);
   const allowedStatusOptions = order
     ? (ALLOWED_STATUS_TRANSITIONS[order.status] ?? [])
     : [];
@@ -238,7 +239,7 @@ function OrderDetailPage() {
         <span>Placed {formatDateTime(order.placedAt)}</span>
       </div>
 
-      {canManageStatus && (
+      {canManage && (
         <section className="order-detail__status-management">
           <h2>Update status</h2>
 
@@ -375,7 +376,7 @@ function OrderDetailPage() {
                 <th>Amount</th>
                 <th>Paid at</th>
                 <th>Reference</th>
-                {canManageStatus && <th>Update</th>}
+                {canManage && <th>Update</th>}
               </tr>
             </thead>
             <tbody>
@@ -388,7 +389,7 @@ function OrderDetailPage() {
                   <td>{formatCurrency(payment.amount, order.currency)}</td>
                   <td>{payment.paidAt ? formatDateTime(payment.paidAt) : '—'}</td>
                   <td>{payment.transactionReference ?? '—'}</td>
-                  {canManageStatus && (
+                  {canManage && (
                     <td>
                       <PaymentStatusForm
                         token={token}
@@ -465,43 +466,12 @@ function OrderDetailPage() {
         </form>
       </section>
 
-      <section className="order-detail__shipments">
-        <h2>Shipments</h2>
-        {order.shipments.length === 0 ? (
-          <p className="order-detail__empty">No shipments recorded.</p>
-        ) : (
-          <table className="orders-table">
-            <thead>
-              <tr>
-                <th>Status</th>
-                <th>Carrier</th>
-                <th>Tracking number</th>
-                <th>Shipped at</th>
-                <th>Delivered at</th>
-              </tr>
-            </thead>
-            <tbody>
-              {order.shipments.map((shipment) => (
-                <tr key={shipment.id}>
-                  <td>
-                    <StatusBadge status={shipment.status} kind="shipment" />
-                  </td>
-                  <td>{shipment.carrier ?? '—'}</td>
-                  <td>{shipment.trackingNumber ?? '—'}</td>
-                  <td>
-                    {shipment.shippedAt ? formatDateTime(shipment.shippedAt) : '—'}
-                  </td>
-                  <td>
-                    {shipment.deliveredAt
-                      ? formatDateTime(shipment.deliveredAt)
-                      : '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+      <ShipmentsSection
+        order={order}
+        token={token}
+        canManage={canManage}
+        onRefresh={refreshOrder}
+      />
 
       <section className="order-detail__history">
         <h2>Status history</h2>
