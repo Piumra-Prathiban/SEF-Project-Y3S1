@@ -503,6 +503,23 @@ button:disabled {
   margin-top: 24px;
 }
 
+.structured-section {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  margin: 18px 0;
+  padding: 18px;
+}
+
+.structured-output {
+  background: var(--code-bg);
+  border-radius: 12px;
+  color: var(--text-h);
+  margin: 12px 0 0;
+  overflow-x: auto;
+  padding: 14px;
+  white-space: pre-wrap;
+}
+
 @media (max-width: 900px) {
   .app-header,
   .app-header__user {

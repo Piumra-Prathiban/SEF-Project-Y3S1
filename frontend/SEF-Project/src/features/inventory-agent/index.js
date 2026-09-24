@@ -1,3 +1,5 @@
+export { InventoryAgentPage } from './InventoryAgentPage';
+
 export const inventoryAgentFeature = {
   area: 'Inventory Agent',
   description:

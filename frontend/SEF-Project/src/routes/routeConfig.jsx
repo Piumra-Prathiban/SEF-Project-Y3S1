@@ -3,7 +3,7 @@ import { CategoriesPage } from '../features/categories';
 import { CollectionsPage } from '../features/collections';
 import { ColoursPage } from '../features/colours';
 import { InventoryDashboardPage, LowStockPage } from '../features/inventory';
-import { inventoryAgentFeature } from '../features/inventory-agent';
+import { InventoryAgentPage } from '../features/inventory-agent';
 import { ProductsPage } from '../features/products';
 import { SizesPage } from '../features/sizes';
 import { VariantsPage } from '../features/variants';
@@ -86,7 +86,7 @@ export const memberOneRoutes = [
   {
     path: '/inventory-agent',
     label: 'Inventory Agent',
-    element: createPlaceholder(inventoryAgentFeature),
+    element: <InventoryAgentPage />,
     roles: STAFF_ROLES,
     showInNavigation: true,
   },
