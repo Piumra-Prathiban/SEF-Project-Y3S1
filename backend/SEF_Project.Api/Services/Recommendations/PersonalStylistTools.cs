@@ -119,7 +119,9 @@ public class ProductSearchTool : IProductSearchTool
                 variant.Sku,
                 variant.Name,
                 variant.Price,
-                variant.AvailableQuantity))
+                variant.AvailableQuantity,
+                Size: null,
+                Colour: null))
             .ToList();
 
         return new RecommendationCatalogProduct(
@@ -179,7 +181,9 @@ public class ProductAvailabilityTool : IProductAvailabilityTool
                     variant.VariantName,
                     variant.Sku,
                     variant.Price,
-                    variant.AvailableQuantity))
+                    variant.AvailableQuantity,
+                    variant.Size,
+                    variant.Colour))
                 .ToList());
     }
 }

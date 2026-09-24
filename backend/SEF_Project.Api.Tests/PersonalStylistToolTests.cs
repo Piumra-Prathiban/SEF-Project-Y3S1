@@ -191,6 +191,36 @@ public class PersonalStylistToolTests
         Assert.True(result.Price >= 0);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ProductAvailabilityService_RejectsInactiveProductOrVariant(
+        bool deactivateProduct)
+    {
+        await using var connection = new SqliteConnection("DataSource=:memory:");
+        await connection.OpenAsync();
+        await using var context = await CreateContextAsync(connection);
+        var variant = await context.ProductVariants
+            .Include(item => item.Product)
+            .FirstAsync(item => item.Inventory != null);
+
+        if (deactivateProduct)
+        {
+            variant.Product.IsActive = false;
+        }
+        else
+        {
+            variant.IsActive = false;
+        }
+
+        await context.SaveChangesAsync();
+
+        var results = await new ProductAvailabilityService(context)
+            .GetAvailableVariantsAsync(new[] { variant.Id });
+
+        Assert.Empty(results);
+    }
+
     [Fact]
     public async Task EveryToolRejectsMalformedInputBeforeCallingDomainServices()
     {

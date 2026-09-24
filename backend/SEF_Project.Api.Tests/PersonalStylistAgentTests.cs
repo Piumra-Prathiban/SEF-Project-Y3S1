@@ -53,6 +53,10 @@ public class PersonalStylistAgentTests
                 new PersonalStylistDraftRecommendation(
                     Guid.NewGuid(),
                     Guid.NewGuid(),
+                    fixture.Availability.Price,
+                    1,
+                    fixture.Availability.Size,
+                    fixture.Availability.Colour,
                     "Invented recommendation")
             })));
         var agent = fixture.CreateAgent(model: model);
@@ -150,7 +154,9 @@ public class PersonalStylistAgentTests
         Assert.Equal(4, step.ToolExecutions.Count);
         Assert.All(step.ToolExecutions, execution =>
             Assert.Equal(AgentToolStatus.Success, execution.Status));
-        Assert.True(Assert.Single(step.ValidationResults).IsValid);
+        Assert.Equal(11, step.ValidationResults.Count);
+        Assert.All(step.ValidationResults, validation =>
+            Assert.True(validation.IsValid));
         Assert.Empty(workflow.Errors);
         Assert.Contains(fixture.Product.ProductId.ToString(), workflow.FinalOutcome);
         Assert.DoesNotContain("chain-of-thought", workflow.FinalOutcome);
@@ -171,6 +177,10 @@ public class PersonalStylistAgentTests
                 new PersonalStylistDraftRecommendation(
                     Guid.NewGuid(),
                     Guid.NewGuid(),
+                    fixture.Availability.Price,
+                    1,
+                    fixture.Availability.Size,
+                    fixture.Availability.Colour,
                     "Unknown product")
             })));
         var agent = fixture.CreateAgent(
@@ -193,7 +203,9 @@ public class PersonalStylistAgentTests
         Assert.Empty(result.Recommendations);
         Assert.Equal(AgentWorkflowStatus.Failed, workflow.Status);
         Assert.Equal(AgentStepStatus.Failed, step.Status);
-        Assert.False(Assert.Single(step.ValidationResults).IsValid);
+        Assert.Equal(11, step.ValidationResults.Count);
+        Assert.Contains(step.ValidationResults, validation =>
+            !validation.IsValid);
         Assert.Equal("MalformedOutput", Assert.Single(workflow.Errors).ErrorType);
         Assert.Equal("No recommendations returned.", workflow.FinalOutcome);
     }
@@ -264,7 +276,9 @@ public class PersonalStylistAgentTests
                 "FORMAL-M",
                 "Medium",
                 15000m,
-                3);
+                3,
+                Size: "M",
+                Colour: "Navy");
             var product = new RecommendationCatalogProduct(
                 productId,
                 "Formal Jacket",
@@ -279,7 +293,9 @@ public class PersonalStylistAgentTests
                 variant.Name,
                 variant.Sku,
                 variant.Price,
-                variant.AvailableQuantity);
+                variant.AvailableQuantity,
+                variant.Size,
+                variant.Colour);
 
             return new AgentFixture
             {
@@ -290,7 +306,7 @@ public class PersonalStylistAgentTests
                 Wishlist = new FakeWishlistTool(),
                 Search = new FakeProductSearchTool(new ProductSearchToolOutput(
                     new[] { product },
-                    new RecommendationCatalogCapabilities(false, false))),
+                    new RecommendationCatalogCapabilities(true, true))),
                 AvailabilityTool = new FakeAvailabilityTool(
                     new ProductAvailabilityToolOutput(new[] { availability }))
             };
@@ -425,7 +441,7 @@ public class PersonalStylistAgentTests
 
         public List<string> ToolNames { get; } = new();
 
-        public AgentOutputValidation? Validation { get; private set; }
+        public RecommendationValidationCheck? Validation { get; private set; }
 
         public bool Completed { get; private set; }
 
@@ -462,14 +478,10 @@ public class PersonalStylistAgentTests
 
         public Task RecordValidationAsync(
             AgentWorkflowHandle workflow,
-            bool isValid,
-            string message,
+            RecommendationValidationCheck check,
             CancellationToken cancellationToken = default)
         {
-            Validation = new AgentOutputValidation(
-                isValid,
-                message,
-                Array.Empty<PersonalStylistRecommendation>());
+            Validation = check;
             return Task.CompletedTask;
         }
 

@@ -107,18 +107,19 @@ public class AgentWorkflowRecorder : IAgentWorkflowRecorder
 
     public async Task RecordValidationAsync(
         AgentWorkflowHandle workflow,
-        bool isValid,
-        string message,
+        RecommendationValidationCheck check,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(check);
+
         _context.AgentValidationResults.Add(new AgentValidationResult
         {
             Id = Guid.NewGuid(),
             StepId = workflow.StepId,
-            IsValid = isValid,
-            ValidatorName = "CatalogueGroundingValidator",
-            Message = Limit(message, 2000),
-            Severity = isValid
+            IsValid = check.IsValid,
+            ValidatorName = Limit(check.Rule, 100) ?? "RecommendationValidation",
+            Message = Limit(check.Message, 2000),
+            Severity = check.IsValid
                 ? ValidationSeverity.Info
                 : ValidationSeverity.Error
         });

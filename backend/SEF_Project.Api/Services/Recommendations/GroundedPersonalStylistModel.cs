@@ -27,25 +27,45 @@ public class GroundedPersonalStylistModel : IPersonalStylistRecommendationModel
             "occasion",
             StringComparer.Ordinal);
 
-        var recommendations = input.CatalogueProducts
+        var rankedProducts = input.CatalogueProducts
             .Where(product => availability.ContainsKey(product.ProductId))
             .OrderByDescending(product =>
                 wishlistProductIds.Contains(product.ProductId))
             .ThenBy(product => product.MinimumAvailablePrice)
             .ThenBy(product => product.Name)
-            .Take(PersonalStylistAgentContract.MaximumRecommendations)
-            .Select(product =>
-            {
-                var variant = availability[product.ProductId][0];
-                return new PersonalStylistDraftRecommendation(
-                    product.ProductId,
-                    variant.VariantId,
-                    BuildReason(
-                        input.Preferences,
-                        wishlistProductIds.Contains(product.ProductId),
-                        occasionRelaxed));
-            })
             .ToList();
+        var recommendations = new List<PersonalStylistDraftRecommendation>();
+        decimal total = 0;
+
+        foreach (var product in rankedProducts)
+        {
+            var variant = availability[product.ProductId][0];
+
+            if (input.Preferences.Budget.HasValue &&
+                total + variant.Price > input.Preferences.Budget.Value)
+            {
+                continue;
+            }
+
+            recommendations.Add(new PersonalStylistDraftRecommendation(
+                product.ProductId,
+                variant.VariantId,
+                variant.Price,
+                Quantity: 1,
+                variant.Size,
+                variant.Colour,
+                BuildReason(
+                    input.Preferences,
+                    wishlistProductIds.Contains(product.ProductId),
+                    occasionRelaxed)));
+            total += variant.Price;
+
+            if (recommendations.Count ==
+                PersonalStylistAgentContract.MaximumRecommendations)
+            {
+                break;
+            }
+        }
 
         return Task.FromResult(new PersonalStylistModelOutput(recommendations));
     }

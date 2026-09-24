@@ -140,7 +140,10 @@ public class RecommendationApiTests
                         "Medium",
                         "JACKET-M",
                         12000m,
+                        1,
                         3,
+                        "M",
+                        "Navy",
                         "Available for the requested occasion.")
                 },
                 new[] { "preferredSize" },
@@ -151,7 +154,14 @@ public class RecommendationApiTests
                     4,
                     4,
                     true,
-                    null))
+                    null,
+                    new[]
+                    {
+                        new RecommendationValidationCheck(
+                            "Schema",
+                            true,
+                            "Valid")
+                    }))
         };
         var service = new RecommendationService(agent);
 
@@ -176,7 +186,9 @@ public class RecommendationApiTests
         Assert.Equal(productId, recommendation.ProductId);
         Assert.Equal(variantId, recommendation.VariantId);
         Assert.Equal(12000m, recommendation.Price);
+        Assert.Equal(1, recommendation.Quantity);
         Assert.True(response.Execution.OutputValidated);
+        Assert.True(Assert.Single(response.Execution.ValidationResults).IsValid);
     }
 
     private static IList<ValidationResult> Validate(object model)

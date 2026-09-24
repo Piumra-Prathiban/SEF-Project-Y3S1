@@ -21,8 +21,7 @@ public interface IAgentWorkflowRecorder
 
     Task RecordValidationAsync(
         AgentWorkflowHandle workflow,
-        bool isValid,
-        string message,
+        RecommendationValidationCheck check,
         CancellationToken cancellationToken = default);
 
     Task CompleteAsync(

@@ -54,7 +54,9 @@ public class ProductAvailabilityService : IProductAvailabilityService
                 variant.Sku,
                 variant.Price,
                 variant.Inventory!.QuantityOnHand -
-                    variant.Inventory.ReservedQuantity))
+                    variant.Inventory.ReservedQuantity,
+                Size: null,
+                Colour: null))
             .OrderBy(variant => distinctIds.IndexOf(variant.VariantId))
             .ToList();
     }

@@ -21,8 +21,10 @@ public class RecommendationsController : ControllerBase
     /// <summary>Starts a fashion product recommendation request.</summary>
     /// <remarks>
     /// Customer identity comes from the JWT. Product prices and availability
-    /// come from the server-side catalogue and inventory services. This is a
-    /// domain-specific recommendation endpoint, not a general chat endpoint.
+    /// come from the server-side catalogue and inventory services. Agent output
+    /// is rejected unless all deterministic catalogue, variant, stock, price,
+    /// size, colour, budget, and schema checks pass. This is a domain-specific
+    /// recommendation endpoint, not a general chat endpoint.
     /// </remarks>
     /// <response code="200">
     /// Returns catalogue-grounded recommendations or a structured safe-failure result.

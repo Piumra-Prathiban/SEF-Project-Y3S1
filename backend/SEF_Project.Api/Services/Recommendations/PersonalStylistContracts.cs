@@ -82,7 +82,9 @@ public sealed record RecommendationCatalogVariant(
     string Sku,
     string Name,
     decimal Price,
-    int AvailableQuantity);
+    int AvailableQuantity,
+    string? Size = null,
+    string? Colour = null);
 
 public sealed record ProductAvailabilityToolItem(
     Guid ProductId,
@@ -98,7 +100,9 @@ public sealed record VerifiedProductAvailability(
     string VariantName,
     string Sku,
     decimal Price,
-    int AvailableQuantity);
+    int AvailableQuantity,
+    string? Size = null,
+    string? Colour = null);
 
 public sealed record ProductAvailabilityToolOutput(
     IReadOnlyList<VerifiedProductAvailability> AvailableVariants);
@@ -114,6 +118,10 @@ public sealed record PersonalStylistModelInput(
 public sealed record PersonalStylistDraftRecommendation(
     Guid ProductId,
     Guid VariantId,
+    decimal Price,
+    int Quantity,
+    string? Size,
+    string? Colour,
     string Reason);
 
 public sealed record PersonalStylistModelOutput(
@@ -126,8 +134,16 @@ public sealed record PersonalStylistRecommendation(
     string VariantName,
     string Sku,
     decimal Price,
+    int Quantity,
     int AvailableQuantity,
+    string? Size,
+    string? Colour,
     string Reason);
+
+public sealed record RecommendationValidationCheck(
+    string Rule,
+    bool IsValid,
+    string Message);
 
 public sealed record PersonalStylistExecutionSummary(
     string AgentName,
@@ -135,7 +151,8 @@ public sealed record PersonalStylistExecutionSummary(
     int ToolAttempts,
     int SuccessfulToolExecutions,
     bool OutputValidated,
-    string? ErrorSummary);
+    string? ErrorSummary,
+    IReadOnlyList<RecommendationValidationCheck> ValidationResults);
 
 public sealed record PersonalStylistAgentResult(
     Guid WorkflowId,
@@ -153,7 +170,8 @@ public sealed record AgentToolExecutionHandle(Guid ToolExecutionId);
 public sealed record AgentOutputValidation(
     bool IsValid,
     string Message,
-    IReadOnlyList<PersonalStylistRecommendation> Recommendations);
+    IReadOnlyList<PersonalStylistRecommendation> Recommendations,
+    IReadOnlyList<RecommendationValidationCheck> Checks);
 
 public class PersonalStylistToolException : Exception
 {

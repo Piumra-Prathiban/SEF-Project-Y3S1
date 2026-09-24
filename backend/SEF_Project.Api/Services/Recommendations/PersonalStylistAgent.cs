@@ -58,6 +58,8 @@ public class PersonalStylistAgent : IPersonalStylistAgent
         RecommendationCustomerContext? customer = null;
         var unappliedPreferences = new List<string>();
         var relaxedCriteria = new List<string>();
+        IReadOnlyList<RecommendationValidationCheck> validationChecks =
+            Array.Empty<RecommendationValidationCheck>();
 
         using var overallTimeout = new CancellationTokenSource(
             TimeSpan.FromSeconds(_options.OverallTimeoutSeconds));
@@ -152,12 +154,15 @@ public class PersonalStylistAgent : IPersonalStylistAgent
                 modelInput,
                 executionCancellation.Token);
             var validation = _outputValidator.Validate(modelOutput, modelInput);
+            validationChecks = validation.Checks;
 
-            await _workflowRecorder.RecordValidationAsync(
-                workflow,
-                validation.IsValid,
-                validation.Message,
-                CancellationToken.None);
+            foreach (var check in validation.Checks)
+            {
+                await _workflowRecorder.RecordValidationAsync(
+                    workflow,
+                    check,
+                    CancellationToken.None);
+            }
 
             if (!validation.IsValid)
             {
@@ -173,6 +178,10 @@ public class PersonalStylistAgent : IPersonalStylistAgent
                     {
                         item.ProductId,
                         item.VariantId,
+                        item.Price,
+                        item.Quantity,
+                        item.Size,
+                        item.Colour,
                         item.Reason
                     })
                 }),
@@ -197,7 +206,8 @@ public class PersonalStylistAgent : IPersonalStylistAgent
                     counters.Attempts,
                     counters.Successes,
                     OutputValidated: true,
-                    ErrorSummary: null));
+                    ErrorSummary: null,
+                    validationChecks));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -235,7 +245,8 @@ public class PersonalStylistAgent : IPersonalStylistAgent
                     counters.Attempts,
                     counters.Successes,
                     OutputValidated: false,
-                    failure.ErrorSummary));
+                    failure.ErrorSummary,
+                    validationChecks));
         }
     }
 

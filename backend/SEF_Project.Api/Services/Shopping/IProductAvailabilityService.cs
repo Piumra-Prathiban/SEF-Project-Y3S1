@@ -7,7 +7,9 @@ public sealed record AvailableProductVariant(
     string VariantName,
     string Sku,
     decimal Price,
-    int AvailableQuantity);
+    int AvailableQuantity,
+    string? Size = null,
+    string? Colour = null);
 
 public interface IProductAvailabilityService
 {

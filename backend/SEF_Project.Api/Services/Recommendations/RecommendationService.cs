@@ -55,7 +55,10 @@ public class RecommendationService : IRecommendationService
                     VariantName = item.VariantName,
                     Sku = item.Sku,
                     Price = item.Price,
+                    Quantity = item.Quantity,
                     AvailableQuantity = item.AvailableQuantity,
+                    Size = item.Size,
+                    Colour = item.Colour,
                     Reason = item.Reason
                 })
                 .ToList(),
@@ -69,7 +72,15 @@ public class RecommendationService : IRecommendationService
                 SuccessfulToolExecutions =
                     result.Execution.SuccessfulToolExecutions,
                 OutputValidated = result.Execution.OutputValidated,
-                ErrorSummary = result.Execution.ErrorSummary
+                ErrorSummary = result.Execution.ErrorSummary,
+                ValidationResults = result.Execution.ValidationResults
+                    .Select(check => new RecommendationValidationResponse
+                    {
+                        Rule = check.Rule,
+                        IsValid = check.IsValid,
+                        Message = check.Message
+                    })
+                    .ToList()
             }
         };
     }

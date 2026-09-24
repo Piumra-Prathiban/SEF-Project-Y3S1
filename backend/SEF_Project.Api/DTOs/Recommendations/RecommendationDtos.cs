@@ -12,7 +12,7 @@ public class RecommendationRequest : IValidatableObject
     [StringLength(100, MinimumLength = 2)]
     public string Occasion { get; set; } = string.Empty;
 
-    /// <summary>Maximum price for an individual recommended product.</summary>
+    /// <summary>Maximum total price of all recommended product quantities.</summary>
     [Range(1, 999999999)]
     public decimal? Budget { get; set; }
 
@@ -119,7 +119,13 @@ public class ProductRecommendationResponse
 
     public decimal Price { get; set; }
 
+    public int Quantity { get; set; }
+
     public int AvailableQuantity { get; set; }
+
+    public string? Size { get; set; }
+
+    public string? Colour { get; set; }
 
     public string Reason { get; set; } = string.Empty;
 }
@@ -137,4 +143,16 @@ public class RecommendationExecutionSummaryResponse
     public bool OutputValidated { get; set; }
 
     public string? ErrorSummary { get; set; }
+
+    public IReadOnlyList<RecommendationValidationResponse> ValidationResults { get; set; } =
+        Array.Empty<RecommendationValidationResponse>();
+}
+
+public class RecommendationValidationResponse
+{
+    public string Rule { get; set; } = string.Empty;
+
+    public bool IsValid { get; set; }
+
+    public string Message { get; set; } = string.Empty;
 }
