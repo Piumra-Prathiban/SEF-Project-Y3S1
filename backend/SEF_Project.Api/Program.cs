@@ -8,6 +8,7 @@ using System.Text;
 using SEF_Project.Api.Services.Auth;
 using SEF_Project.Api.Services.Orders;
 using SEF_Project.Api.Services.Marketing;
+using SEF_Project.Api.Services.Analytics;
 using SEF_Project.Api.Middleware;
 
 
@@ -53,6 +54,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPromotionPricingService, PromotionPricingService>();
 builder.Services.AddScoped<IPromotionService, PromotionService>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.AddCors(options =>
