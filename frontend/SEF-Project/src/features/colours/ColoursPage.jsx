@@ -1,21 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from '../../components/ui/Alert';
+import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
 import { useMemberOneApi } from '../../hooks/useMemberOneApi';
+import { normalizeApiError } from '../../utils/apiErrorUtils';
 import { ColourForm } from './ColourForm';
 import {
   filterColours,
   isValidHexCode,
 } from './colourUtils';
-
-function normalizeError(error) {
-  if (error?.errors) {
-    return Object.values(error.errors).flat().join(' ');
-  }
-
-  return error?.detail || error?.message || 'Something went wrong.';
-}
 
 function ColourSwatch({ hexCode }) {
   if (!hexCode || !isValidHexCode(hexCode)) {
@@ -61,7 +55,7 @@ export function ColoursPage() {
       const response = await api.getColours();
       setColours(response);
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +111,7 @@ export function ColoursPage() {
       closeForm();
       await loadColours();
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     } finally {
       setIsSaving(false);
     }
@@ -140,7 +134,7 @@ export function ColoursPage() {
       setMessage('Colour deactivated successfully.');
       await loadColours();
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     }
   }
 
@@ -176,7 +170,7 @@ export function ColoursPage() {
       </div>
 
       {message && <Alert>{message}</Alert>}
-      {error && <Alert tone="danger">{error}</Alert>}
+      <ApiErrorAlert message={error} onRetry={loadColours} />
 
       {formMode && (
         <section className="panel">

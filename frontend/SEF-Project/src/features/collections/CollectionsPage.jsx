@@ -1,18 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from '../../components/ui/Alert';
+import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
 import { useMemberOneApi } from '../../hooks/useMemberOneApi';
+import { normalizeApiError } from '../../utils/apiErrorUtils';
 import { CollectionForm } from './CollectionForm';
 import { filterCollections } from './collectionUtils';
-
-function normalizeError(error) {
-  if (error?.errors) {
-    return Object.values(error.errors).flat().join(' ');
-  }
-
-  return error?.detail || error?.message || 'Something went wrong.';
-}
 
 function formatDate(value) {
   if (!value) {
@@ -55,7 +49,7 @@ export function CollectionsPage() {
       const response = await api.getCollections();
       setCollections(response);
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     } finally {
       setIsLoading(false);
     }
@@ -111,7 +105,7 @@ export function CollectionsPage() {
       closeForm();
       await loadCollections();
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     } finally {
       setIsSaving(false);
     }
@@ -134,7 +128,7 @@ export function CollectionsPage() {
       setMessage('Collection deactivated successfully.');
       await loadCollections();
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     }
   }
 
@@ -170,7 +164,7 @@ export function CollectionsPage() {
       </div>
 
       {message && <Alert>{message}</Alert>}
-      {error && <Alert tone="danger">{error}</Alert>}
+      <ApiErrorAlert message={error} onRetry={loadCollections} />
 
       {formMode && (
         <section className="panel">

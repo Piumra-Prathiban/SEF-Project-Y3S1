@@ -1,18 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from '../../components/ui/Alert';
+import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
 import { useMemberOneApi } from '../../hooks/useMemberOneApi';
+import { normalizeApiError } from '../../utils/apiErrorUtils';
 import { CategoryForm } from './CategoryForm';
 import { filterCategories } from './categoryUtils';
-
-function normalizeError(error) {
-  if (error?.errors) {
-    return Object.values(error.errors).flat().join(' ');
-  }
-
-  return error?.detail || error?.message || 'Something went wrong.';
-}
 
 function formatDate(value) {
   if (!value) {
@@ -51,7 +45,7 @@ export function CategoriesPage() {
       const response = await api.getCategories();
       setCategories(response);
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     } finally {
       setIsLoading(false);
     }
@@ -107,7 +101,7 @@ export function CategoriesPage() {
       closeForm();
       await loadCategories();
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     } finally {
       setIsSaving(false);
     }
@@ -130,7 +124,7 @@ export function CategoriesPage() {
       setMessage('Category deactivated successfully.');
       await loadCategories();
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     }
   }
 
@@ -166,7 +160,7 @@ export function CategoriesPage() {
       </div>
 
       {message && <Alert>{message}</Alert>}
-      {error && <Alert tone="danger">{error}</Alert>}
+      <ApiErrorAlert message={error} onRetry={loadCategories} />
 
       {formMode && (
         <section className="panel">

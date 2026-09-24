@@ -366,6 +366,14 @@ button:disabled {
   padding-left: 20px;
 }
 
+.feedback-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+}
+
 .table-card {
   overflow-x: auto;
   padding: 0;

@@ -1,3 +1,5 @@
+import { normalizeApiError } from '../../utils/apiErrorUtils.js';
+
 const HIDDEN_REASONING_KEYS = new Set([
   'chainOfThought',
   'chain_of_thought',
@@ -201,11 +203,7 @@ export function getReviewSuccessMessage(action) {
 }
 
 export function normalizeAgentApiError(error) {
-  if (error?.errors) {
-    return Object.values(error.errors).flat().join(' ');
-  }
-
-  return error?.detail || error?.message || 'Something went wrong.';
+  return normalizeApiError(error);
 }
 
 export function sanitizeStructuredValue(value) {

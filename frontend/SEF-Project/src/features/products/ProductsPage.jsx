@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from '../../components/ui/Alert';
+import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
 import { useAuth } from '../../contexts/AuthContext';
@@ -11,6 +12,7 @@ import {
   defaultProductQuery,
   updatePagedQuery,
 } from './productQueryUtils';
+import { normalizeApiError } from '../../utils/apiErrorUtils';
 
 function formatDate(value) {
   if (!value) {
@@ -36,14 +38,6 @@ function getBasePrice(product) {
     currency: 'LKR',
     maximumFractionDigits: 2,
   }).format(Math.min(...prices));
-}
-
-function normalizeError(error) {
-  if (error?.errors) {
-    return Object.values(error.errors).flat().join(' ');
-  }
-
-  return error?.detail || error?.message || 'Something went wrong.';
 }
 
 export function ProductsPage() {
@@ -77,7 +71,7 @@ export function ProductsPage() {
       const response = await api.getProducts(productQuery);
       setProductsResponse(response);
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     } finally {
       setIsLoading(false);
     }
@@ -93,7 +87,7 @@ export function ProductsPage() {
       setCategories(categoryResponse);
       setCollections(collectionResponse);
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     }
   }, [api]);
 
@@ -123,7 +117,7 @@ export function ProductsPage() {
       const product = await api.getProduct(productId);
       setSelectedProduct(product);
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     }
   }
 
@@ -163,7 +157,7 @@ export function ProductsPage() {
       closeForm();
       await loadProducts();
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     } finally {
       setIsSaving(false);
     }
@@ -191,7 +185,7 @@ export function ProductsPage() {
 
       await loadProducts();
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     }
   }
 
@@ -302,7 +296,7 @@ export function ProductsPage() {
       </div>
 
       {message && <Alert>{message}</Alert>}
-      {error && <Alert tone="danger">{error}</Alert>}
+      <ApiErrorAlert message={error} onRetry={loadProducts} />
 
       {formMode && (
         <section className="panel">

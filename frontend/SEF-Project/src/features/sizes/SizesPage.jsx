@@ -1,18 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from '../../components/ui/Alert';
+import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
 import { useMemberOneApi } from '../../hooks/useMemberOneApi';
+import { normalizeApiError } from '../../utils/apiErrorUtils';
 import { SizeForm } from './SizeForm';
 import { filterSizes } from './sizeUtils';
-
-function normalizeError(error) {
-  if (error?.errors) {
-    return Object.values(error.errors).flat().join(' ');
-  }
-
-  return error?.detail || error?.message || 'Something went wrong.';
-}
 
 export function SizesPage() {
   const api = useMemberOneApi();
@@ -41,7 +35,7 @@ export function SizesPage() {
       const response = await api.getSizes();
       setSizes(response);
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     } finally {
       setIsLoading(false);
     }
@@ -97,7 +91,7 @@ export function SizesPage() {
       closeForm();
       await loadSizes();
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     } finally {
       setIsSaving(false);
     }
@@ -120,7 +114,7 @@ export function SizesPage() {
       setMessage('Size deactivated successfully.');
       await loadSizes();
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     }
   }
 
@@ -156,7 +150,7 @@ export function SizesPage() {
       </div>
 
       {message && <Alert>{message}</Alert>}
-      {error && <Alert tone="danger">{error}</Alert>}
+      <ApiErrorAlert message={error} onRetry={loadSizes} />
 
       {formMode && (
         <section className="panel">

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from '../../components/ui/Alert';
+import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
 import { useMemberOneApi } from '../../hooks/useMemberOneApi';
+import { normalizeApiError } from '../../utils/apiErrorUtils';
 import {
   buildInventoryQuery,
   buildInventorySummary,
@@ -30,14 +32,6 @@ import {
   updateInventoryQuery,
   validateStockAdjustment,
 } from './inventoryDashboardUtils';
-
-function normalizeError(error) {
-  if (error?.errors) {
-    return Object.values(error.errors).flat().join(' ');
-  }
-
-  return error?.detail || error?.message || 'Something went wrong.';
-}
 
 function getStatusClass(status) {
   const normalized = status.toLowerCase();
@@ -127,7 +121,7 @@ export function InventoryDashboardPage() {
       setLowStockItems(normalizeInventoryItems(lowStockResponse));
       setLastRefreshedAt(new Date());
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     } finally {
       setIsLoading(false);
     }
@@ -138,7 +132,7 @@ export function InventoryDashboardPage() {
       const categoryResponse = await api.getCategories();
       setCategories(categoryResponse);
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     }
   }, [api]);
 
@@ -163,7 +157,7 @@ export function InventoryDashboardPage() {
     } catch (err) {
       setSelectedInventoryItem(fallbackItem ?? null);
       setStockHistory([]);
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     } finally {
       setIsLoadingSelected(false);
     }
@@ -251,7 +245,7 @@ export function InventoryDashboardPage() {
       await loadDashboard();
       await loadSelectedVariant(selectedVariantId, selectedInventoryItem);
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     } finally {
       setIsSubmittingAdjustment(false);
     }
@@ -341,7 +335,7 @@ export function InventoryDashboardPage() {
         </div>
       </div>
 
-      {error && <Alert tone="danger">{error}</Alert>}
+      <ApiErrorAlert message={error} onRetry={loadDashboard} />
       {message && <Alert>{message}</Alert>}
 
       {isLoading ? (

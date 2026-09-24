@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from '../../components/ui/Alert';
+import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
 import { navigateTo } from '../../hooks/useLocation';
 import { useMemberOneApi } from '../../hooks/useMemberOneApi';
+import { normalizeApiError } from '../../utils/apiErrorUtils';
 import { VariantForm } from './VariantForm';
 import {
   getVariantColourName,
@@ -11,20 +13,6 @@ import {
   getVariantStock,
   normalizeProductList,
 } from './variantUtils';
-
-function normalizeError(error) {
-  if (error?.errors) {
-    return Object.values(error.errors).flat().join(' ');
-  }
-
-  if (error?.isConflict) {
-    return error.detail
-      || error.title
-      || 'Variant conflict. Check for a duplicate SKU or duplicate Product + Size + Colour combination.';
-  }
-
-  return error?.detail || error?.message || 'Something went wrong.';
-}
 
 function formatPrice(value) {
   if (typeof value !== 'number') {
@@ -87,7 +75,7 @@ export function VariantsPage() {
       setSizes(sizeResponse);
       setColours(colourResponse);
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     } finally {
       setIsLoadingLookups(false);
     }
@@ -106,7 +94,7 @@ export function VariantsPage() {
       const response = await api.getProductVariants(selectedProductId);
       setVariants(response);
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     } finally {
       setIsLoadingVariants(false);
     }
@@ -181,7 +169,7 @@ export function VariantsPage() {
       closeForm();
       await loadVariants();
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     } finally {
       setIsSaving(false);
     }
@@ -204,7 +192,7 @@ export function VariantsPage() {
       setMessage('Variant deactivated successfully.');
       await loadVariants();
     } catch (err) {
-      setError(normalizeError(err));
+      setError(normalizeApiError(err));
     }
   }
 
@@ -241,7 +229,7 @@ export function VariantsPage() {
       </div>
 
       {message && <Alert>{message}</Alert>}
-      {error && <Alert tone="danger">{error}</Alert>}
+      <ApiErrorAlert message={error} onRetry={loadVariants} />
 
       {selectedProduct && (
         <section className="panel">

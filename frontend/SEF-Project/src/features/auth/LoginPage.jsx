@@ -1,27 +1,29 @@
 import { useState } from 'react';
-import { Alert } from '../../components/ui/Alert';
+import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { PageShell } from '../../components/ui/PageShell';
 import { useAuth } from '../../contexts/AuthContext';
 import { navigateTo } from '../../hooks/useLocation';
+import { normalizeApiError } from '../../utils/apiErrorUtils';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
 
   async function handleLogin(event) {
     event.preventDefault();
     setError(null);
+    setIsSubmitting(true);
 
     try {
       await login(email, password);
       navigateTo('/products');
     } catch (err) {
-      setError({
-        status: err.status,
-        message: err.message,
-      });
+      setError(normalizeApiError(err));
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -55,15 +57,12 @@ export function LoginPage() {
             />
           </label>
 
-          <button type="submit">Login</button>
+          <button disabled={isSubmitting} type="submit">
+            {isSubmitting ? 'Signing in...' : 'Login'}
+          </button>
         </form>
 
-        {error && (
-          <Alert tone="danger">
-            {error.status ? `${error.status}: ` : ''}
-            {error.message}
-          </Alert>
-        )}
+        <ApiErrorAlert message={error} />
       </PageShell>
     </main>
   );

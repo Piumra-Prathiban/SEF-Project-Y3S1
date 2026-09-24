@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Alert } from '../../components/ui/Alert';
+import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
 import { useAuth } from '../../contexts/AuthContext';
@@ -316,7 +317,10 @@ export function InventoryAgentPage() {
       </section>
 
       {message && <Alert>{message}</Alert>}
-      {error && <Alert tone="danger">{error}</Alert>}
+      <ApiErrorAlert
+        message={error}
+        onRetry={workflowId ? () => loadWorkflow(workflowId) : null}
+      />
 
       {isRefreshing && !workflow ? (
         <LoadingState message="Loading workflow..." />
