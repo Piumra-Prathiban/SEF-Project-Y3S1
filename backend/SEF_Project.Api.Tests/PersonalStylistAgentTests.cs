@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SEF_Project.Api.Data;
+using SEF_Project.Api.DTOs.Recommendations;
 using SEF_Project.Api.Models.Enums;
 using SEF_Project.Api.Services.Recommendations;
 
@@ -126,7 +127,7 @@ public class PersonalStylistAgentTests
     }
 
     [Fact]
-    public async Task Agent_PersistsWorkflowStepToolsValidationAndFinalResult()
+    public async Task CompleteRecommendationWorkflow_PersistsPlanDelegationAndAuditableResult()
     {
         await using var connection = new SqliteConnection("DataSource=:memory:");
         await connection.OpenAsync();
@@ -135,7 +136,16 @@ public class PersonalStylistAgentTests
         var recorder = new AgentWorkflowRecorder(context);
         var agent = fixture.CreateAgent(recorder: recorder);
 
-        var result = await agent.RunAsync(7, fixture.Context);
+        var response = await new RecommendationService(agent).StartAsync(
+            7,
+            new RecommendationRequest
+            {
+                Occasion = fixture.Context.Occasion,
+                Budget = fixture.Context.Budget,
+                PreferredColours = fixture.Context.PreferredColours,
+                PreferredSize = fixture.Context.PreferredSize,
+                StylePreferences = fixture.Context.StylePreferences
+            });
 
         context.ChangeTracker.Clear();
         var workflow = await context.AgentWorkflows
@@ -145,11 +155,21 @@ public class PersonalStylistAgentTests
             .Include(item => item.Steps)
                 .ThenInclude(step => step.ValidationResults)
             .Include(item => item.Errors)
-            .SingleAsync(item => item.Id == result.WorkflowId);
-        var step = Assert.Single(workflow.Steps);
+            .SingleAsync(item => item.Id == response.WorkflowId);
+        var coordinatorStep = workflow.Steps.Single(step =>
+            step.AgentName == PersonalStylistAgentContract.CoordinatorAgentName);
+        var step = workflow.Steps.Single(step =>
+            step.AgentName == PersonalStylistAgentContract.AgentName);
 
         Assert.Equal(AgentWorkflowStatus.Completed, workflow.Status);
+        Assert.Equal("completed", response.Status);
+        Assert.Single(response.Recommendations);
+        Assert.Contains("Wedding", workflow.Objective);
+        Assert.Contains("steps", workflow.PlanSummary);
+        Assert.Equal(AgentStepStatus.Completed, coordinatorStep.Status);
+        Assert.Equal(1, coordinatorStep.StepOrder);
         Assert.Equal(AgentStepStatus.Completed, step.Status);
+        Assert.Equal(2, step.StepOrder);
         Assert.Equal(PersonalStylistAgentContract.AgentName, step.AgentName);
         Assert.Equal(4, step.ToolExecutions.Count);
         Assert.All(step.ToolExecutions, execution =>
@@ -197,10 +217,12 @@ public class PersonalStylistAgentTests
                 .ThenInclude(step => step.ValidationResults)
             .Include(item => item.Errors)
             .SingleAsync(item => item.Id == result.WorkflowId);
-        var step = Assert.Single(workflow.Steps);
+        var step = workflow.Steps.Single(item =>
+            item.AgentName == PersonalStylistAgentContract.AgentName);
 
         Assert.Null(logger.LastError);
         Assert.Empty(result.Recommendations);
+        Assert.Equal(2, workflow.Steps.Count);
         Assert.Equal(AgentWorkflowStatus.Failed, workflow.Status);
         Assert.Equal(AgentStepStatus.Failed, step.Status);
         Assert.Equal(11, step.ValidationResults.Count);
@@ -208,6 +230,69 @@ public class PersonalStylistAgentTests
             !validation.IsValid);
         Assert.Equal("MalformedOutput", Assert.Single(workflow.Errors).ErrorType);
         Assert.Equal("No recommendations returned.", workflow.FinalOutcome);
+    }
+
+    [Fact]
+    public async Task Agent_AppendsVisibleStepToExistingWorkflowWithoutFinalizingIt()
+    {
+        await using var connection = new SqliteConnection("DataSource=:memory:");
+        await connection.OpenAsync();
+        await using var context = await CreateContextAsync(connection);
+        var workflowId = Guid.NewGuid();
+        var existingPlan = "{\"steps\":[\"coordinate\",\"personal-stylist\",\"inventory-promotion\",\"validation\"]}";
+        context.AgentWorkflows.Add(new SEF_Project.Api.Models.AgenticAI.AgentWorkflow
+        {
+            Id = workflowId,
+            Objective = "Prepare an outfit for a wedding.",
+            PlanSummary = existingPlan,
+            Status = AgentWorkflowStatus.Planning,
+            Steps =
+            {
+                new SEF_Project.Api.Models.AgenticAI.AgentWorkflowStep
+                {
+                    Id = Guid.NewGuid(),
+                    StepOrder = 1,
+                    AgentName = "Planning / Coordinator Agent",
+                    Title = "Plan customer objective",
+                    Status = AgentStepStatus.Completed,
+                    Summary = "Delegated fashion discovery.",
+                    StartedAt = DateTime.UtcNow,
+                    CompletedAt = DateTime.UtcNow
+                }
+            }
+        });
+        await context.SaveChangesAsync();
+        var fixture = AgentFixture.Create();
+        var agent = fixture.CreateAgent(
+            recorder: new AgentWorkflowRecorder(context));
+
+        var result = await agent.RunWithinWorkflowAsync(
+            workflowId,
+            7,
+            fixture.Context);
+
+        context.ChangeTracker.Clear();
+        var workflow = await context.AgentWorkflows
+            .AsNoTracking()
+            .Include(item => item.Steps)
+                .ThenInclude(step => step.ToolExecutions)
+            .Include(item => item.Steps)
+                .ThenInclude(step => step.ValidationResults)
+            .SingleAsync(item => item.Id == workflowId);
+        var stylistStep = workflow.Steps.Single(step =>
+            step.AgentName == PersonalStylistAgentContract.AgentName);
+
+        Assert.Equal(workflowId, result.WorkflowId);
+        Assert.Equal(AgentWorkflowStatus.InProgress, workflow.Status);
+        Assert.Equal("Prepare an outfit for a wedding.", workflow.Objective);
+        Assert.Equal(existingPlan, workflow.PlanSummary);
+        Assert.Null(workflow.FinalOutcome);
+        Assert.Equal(2, stylistStep.StepOrder);
+        Assert.Equal(AgentStepStatus.Completed, stylistStep.Status);
+        Assert.Equal(4, stylistStep.ToolExecutions.Count);
+        Assert.Equal(11, stylistStep.ValidationResults.Count);
+        Assert.All(stylistStep.ValidationResults, validation =>
+            Assert.True(validation.IsValid));
     }
 
     [Fact]
@@ -455,6 +540,14 @@ public class PersonalStylistAgentTests
             Task.FromResult(new AgentWorkflowHandle(
                 Guid.NewGuid(),
                 Guid.NewGuid()));
+
+        public Task<AgentWorkflowHandle> AttachAsync(
+            Guid workflowId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new AgentWorkflowHandle(
+                workflowId,
+                Guid.NewGuid(),
+                CompletesWorkflow: false));
 
         public Task<AgentToolExecutionHandle> StartToolAsync(
             AgentWorkflowHandle workflow,

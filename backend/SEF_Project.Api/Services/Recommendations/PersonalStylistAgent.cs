@@ -43,17 +43,46 @@ public class PersonalStylistAgent : IPersonalStylistAgent
         _logger = logger;
     }
 
-    public async Task<PersonalStylistAgentResult> RunAsync(
+    public Task<PersonalStylistAgentResult> RunAsync(
+        int userId,
+        RecommendationContext context,
+        CancellationToken cancellationToken = default) =>
+        RunCoreAsync(
+            workflowId: null,
+            userId,
+            context,
+            cancellationToken);
+
+    public Task<PersonalStylistAgentResult> RunWithinWorkflowAsync(
+        Guid workflowId,
         int userId,
         RecommendationContext context,
         CancellationToken cancellationToken = default)
     {
+        if (workflowId == Guid.Empty)
+        {
+            throw new ArgumentException("A valid workflow identifier is required.");
+        }
+
+        return RunCoreAsync(workflowId, userId, context, cancellationToken);
+    }
+
+    private async Task<PersonalStylistAgentResult> RunCoreAsync(
+        Guid? workflowId,
+        int userId,
+        RecommendationContext context,
+        CancellationToken cancellationToken)
+    {
         PersonalStylistToolValidation.ValidateUserId(userId);
         PersonalStylistToolValidation.ValidatePreferences(context);
 
-        var workflow = await _workflowRecorder.StartAsync(
-            "Generate grounded fashion product recommendations for the authenticated customer.",
-            cancellationToken);
+        var workflow = workflowId.HasValue
+            ? await _workflowRecorder.AttachAsync(
+                workflowId.Value,
+                cancellationToken)
+            : await _workflowRecorder.StartAsync(
+                BuildObjective(context),
+                cancellationToken);
         var counters = new ExecutionCounters();
         RecommendationCustomerContext? customer = null;
         var unappliedPreferences = new List<string>();
@@ -470,6 +499,15 @@ public class PersonalStylistAgent : IPersonalStylistAgent
 
     private static string Json<T>(T value) =>
         JsonSerializer.Serialize(value, JsonOptions);
+
+    private static string BuildObjective(RecommendationContext context)
+    {
+        var budget = context.Budget.HasValue
+            ? $" within a total budget of {context.Budget.Value:0.##}"
+            : string.Empty;
+
+        return $"Recommend available fashion products for {context.Occasion}{budget}.";
+    }
 
     private sealed class ExecutionCounters
     {

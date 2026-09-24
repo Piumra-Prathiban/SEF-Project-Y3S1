@@ -10,6 +10,16 @@ public interface IPersonalStylistAgent
         int userId,
         RecommendationContext context,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Executes the Personal Stylist as one delegated step in an existing
+    /// shared workflow. The parent workflow remains open for downstream agents.
+    /// </summary>
+    Task<PersonalStylistAgentResult> RunWithinWorkflowAsync(
+        Guid workflowId,
+        int userId,
+        RecommendationContext context,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>

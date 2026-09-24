@@ -3,6 +3,7 @@ namespace SEF_Project.Api.Services.Recommendations;
 public static class PersonalStylistAgentContract
 {
     public const string AgentName = "Personal Stylist Agent";
+    public const string CoordinatorAgentName = "Recommendation Workflow Coordinator";
     public const int MaximumRecommendations = 5;
     public const int MaximumCandidateVariants = 50;
 }
@@ -163,7 +164,10 @@ public sealed record PersonalStylistAgentResult(
     IReadOnlyList<string> RelaxedCriteria,
     PersonalStylistExecutionSummary Execution);
 
-public sealed record AgentWorkflowHandle(Guid WorkflowId, Guid StepId);
+public sealed record AgentWorkflowHandle(
+    Guid WorkflowId,
+    Guid StepId,
+    bool CompletesWorkflow = true);
 
 public sealed record AgentToolExecutionHandle(Guid ToolExecutionId);
 

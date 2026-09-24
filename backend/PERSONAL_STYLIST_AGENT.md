@@ -100,3 +100,23 @@ capabilities when Member 1's schema supplies them.
 - Tool summaries omit names, free-form preferences, and hidden reasoning. No chain-of-thought is recorded.
 
 `IPersonalStylistRecommendationModel` is the replaceable model boundary. The registered implementation uses a deterministic, catalogue-grounded selection policy, so the feature remains safe and testable without giving a model direct database access. Any future AI provider implementation must retain the same structured output contract and final grounding validator.
+
+## Shared workflow integration
+
+The agent uses the existing `AgentWorkflow`, `AgentWorkflowStep`,
+`AgentToolExecution`, `AgentValidationResult`, and `AgentWorkflowError` tables.
+No parallel workflow infrastructure is introduced.
+
+For a direct `POST /api/recommendations` request, the recommendation workflow
+coordinator persists the customer objective, a structured plan, and its completed
+planning/delegation step before the Personal Stylist step begins. The workflow is
+completed only after tools and deterministic validation succeed; safe failure is
+persisted otherwise.
+
+The group coordinator can instead call
+`IPersonalStylistAgent.RunWithinWorkflowAsync`. This accepts an existing workflow
+ID, verifies that its objective and plan are already persisted, appends the
+Personal Stylist as the next ordered step, and returns control with the workflow
+still `InProgress`. The group's Inventory/Promotion and Validation/Business Rules
+agents can then append their own steps and finalize the shared workflow. Their
+implementations are not copied or replaced by this component.

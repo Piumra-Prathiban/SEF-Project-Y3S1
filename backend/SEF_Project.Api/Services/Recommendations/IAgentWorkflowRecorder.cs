@@ -6,6 +6,10 @@ public interface IAgentWorkflowRecorder
         string objective,
         CancellationToken cancellationToken = default);
 
+    Task<AgentWorkflowHandle> AttachAsync(
+        Guid workflowId,
+        CancellationToken cancellationToken = default);
+
     Task<AgentToolExecutionHandle> StartToolAsync(
         AgentWorkflowHandle workflow,
         string toolName,

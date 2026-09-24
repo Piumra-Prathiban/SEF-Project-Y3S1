@@ -266,5 +266,12 @@ public class RecommendationApiTests
             Context = context;
             return Task.FromResult(Result);
         }
+
+        public Task<PersonalStylistAgentResult> RunWithinWorkflowAsync(
+            Guid workflowId,
+            int userId,
+            RecommendationContext context,
+            CancellationToken cancellationToken = default) =>
+            RunAsync(userId, context, cancellationToken);
     }
 }

@@ -28,30 +28,113 @@ public class AgentWorkflowRecorder : IAgentWorkflowRecorder
         var workflow = new AgentWorkflow
         {
             Id = Guid.NewGuid(),
-            Objective = objective,
+            Objective = objective.Trim(),
             Status = AgentWorkflowStatus.InProgress,
-            PlanSummary =
-                "Use only customer_preference, wishlist, product_search, and product_availability; validate grounded output.",
+            PlanSummary = JsonSerializer.Serialize(new
+            {
+                version = 1,
+                steps = new[]
+                {
+                    "Plan and delegate the customer objective.",
+                    "Run the Personal Stylist Agent with allow-listed read-only tools.",
+                    "Verify current inventory through the controlled availability boundary.",
+                    "Apply deterministic validation and business rules before finalization."
+                }
+            }),
             StartedAt = now
         };
-        var step = new AgentWorkflowStep
+        var coordinatorStep = new AgentWorkflowStep
         {
             Id = Guid.NewGuid(),
             WorkflowId = workflow.Id,
             StepOrder = 1,
+            AgentName = PersonalStylistAgentContract.CoordinatorAgentName,
+            Title = "Plan and delegate recommendation workflow",
+            Status = AgentStepStatus.Completed,
+            Summary = "Created a bounded recommendation plan and delegated fashion discovery to the Personal Stylist Agent.",
+            StartedAt = now,
+            CompletedAt = now
+        };
+        var stylistStep = CreatePersonalStylistStep(
+            workflow.Id,
+            stepOrder: 2,
+            now);
+
+        workflow.Steps.Add(coordinatorStep);
+        workflow.Steps.Add(stylistStep);
+        _context.AgentWorkflows.Add(workflow);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new AgentWorkflowHandle(
+            workflow.Id,
+            stylistStep.Id,
+            CompletesWorkflow: true);
+    }
+
+    public async Task<AgentWorkflowHandle> AttachAsync(
+        Guid workflowId,
+        CancellationToken cancellationToken = default)
+    {
+        if (workflowId == Guid.Empty)
+        {
+            throw new ArgumentException("A valid workflow identifier is required.");
+        }
+
+        var workflow = await _context.AgentWorkflows
+            .Include(item => item.Steps)
+            .SingleOrDefaultAsync(item => item.Id == workflowId, cancellationToken)
+            ?? throw new ArgumentException("Agent workflow was not found.");
+
+        if (workflow.Status is AgentWorkflowStatus.Completed or
+            AgentWorkflowStatus.Failed or AgentWorkflowStatus.Cancelled or
+            AgentWorkflowStatus.AwaitingApproval)
+        {
+            throw new InvalidOperationException(
+                "The workflow cannot accept another delegated agent step.");
+        }
+
+        if (string.IsNullOrWhiteSpace(workflow.Objective) ||
+            string.IsNullOrWhiteSpace(workflow.PlanSummary))
+        {
+            throw new InvalidOperationException(
+                "The coordinator must persist an objective and plan before delegation.");
+        }
+
+        var now = DateTime.UtcNow;
+        var nextOrder = workflow.Steps.Count == 0
+            ? 1
+            : workflow.Steps.Max(item => item.StepOrder) + 1;
+        var stylistStep = CreatePersonalStylistStep(
+            workflow.Id,
+            nextOrder,
+            now);
+
+        workflow.Status = AgentWorkflowStatus.InProgress;
+        workflow.StartedAt ??= now;
+        _context.AgentWorkflowSteps.Add(stylistStep);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new AgentWorkflowHandle(
+            workflow.Id,
+            stylistStep.Id,
+            CompletesWorkflow: false);
+    }
+
+    private static AgentWorkflowStep CreatePersonalStylistStep(
+        Guid workflowId,
+        int stepOrder,
+        DateTime startedAt) =>
+        new()
+        {
+            Id = Guid.NewGuid(),
+            WorkflowId = workflowId,
+            StepOrder = stepOrder,
             AgentName = PersonalStylistAgentContract.AgentName,
             Title = "Generate grounded fashion recommendations",
             Status = AgentStepStatus.Running,
             Summary = "Structured tool orchestration; no hidden reasoning is stored.",
-            StartedAt = now
+            StartedAt = startedAt
         };
-
-        workflow.Steps.Add(step);
-        _context.AgentWorkflows.Add(workflow);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return new AgentWorkflowHandle(workflow.Id, step.Id);
-    }
 
     public async Task<AgentToolExecutionHandle> StartToolAsync(
         AgentWorkflowHandle workflow,
@@ -138,12 +221,17 @@ public class AgentWorkflowRecorder : IAgentWorkflowRecorder
             .SingleAsync(item => item.Id == workflow.WorkflowId, cancellationToken);
         var step = entity.Steps.Single(item => item.Id == workflow.StepId);
 
-        entity.Status = AgentWorkflowStatus.Completed;
-        entity.FinalOutcome = Limit(finalResultJson, 4000);
-        entity.CompletedAt = now;
         step.Status = AgentStepStatus.Completed;
         step.Summary = "Returned only catalogue-grounded product variants.";
         step.CompletedAt = now;
+
+        if (workflow.CompletesWorkflow)
+        {
+            entity.Status = AgentWorkflowStatus.Completed;
+            entity.FinalOutcome = Limit(finalResultJson, 4000);
+            entity.CompletedAt = now;
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
     }
 
