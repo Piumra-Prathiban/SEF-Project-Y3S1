@@ -8,6 +8,7 @@ import {
 import { formatDateTime } from '../../utils/format';
 import StatusBadge from '../../components/StatusBadge';
 import { describeShipmentError } from './shipmentErrors';
+import { useSessionGuard } from '../../hooks/useSessionGuard';
 import './orders.css';
 
 // Presentation only: the shipment lifecycle stages, used to draw progress.
@@ -59,6 +60,7 @@ function ShipmentProgress({ status }) {
 }
 
 function ShipmentUpdateForm({ token, orderId, shipment, onChanged }) {
+  const guardSessionExpiry = useSessionGuard();
   const [selectedStatus, setSelectedStatus] = useState('');
   const [carrier, setCarrier] = useState(shipment.carrier ?? '');
   const [trackingNumber, setTrackingNumber] = useState(
@@ -103,7 +105,9 @@ function ShipmentUpdateForm({ token, orderId, shipment, onChanged }) {
       setSelectedStatus('');
       await onChanged(`Shipment marked as ${ShipmentStatusName[targetStatus]}.`);
     } catch (err) {
-      setError(describeShipmentError(err));
+      if (!guardSessionExpiry(err)) {
+        setError(describeShipmentError(err));
+      }
     } finally {
       setUpdating(false);
     }
@@ -165,6 +169,7 @@ function ShipmentUpdateForm({ token, orderId, shipment, onChanged }) {
 }
 
 function ShipmentsSection({ order, token, canManage, onRefresh }) {
+  const guardSessionExpiry = useSessionGuard();
   const [carrier, setCarrier] = useState('');
   const [trackingNumber, setTrackingNumber] = useState('');
   const [creating, setCreating] = useState(false);
@@ -189,7 +194,9 @@ function ShipmentsSection({ order, token, canManage, onRefresh }) {
       setTrackingNumber('');
       setSuccess('Shipment created.');
     } catch (err) {
-      setError(describeShipmentError(err));
+      if (!guardSessionExpiry(err)) {
+        setError(describeShipmentError(err));
+      }
     } finally {
       setCreating(false);
     }
@@ -203,7 +210,9 @@ function ShipmentsSection({ order, token, canManage, onRefresh }) {
       await onRefresh();
       setSuccess(message);
     } catch (err) {
-      setError(describeShipmentError(err));
+      if (!guardSessionExpiry(err)) {
+        setError(describeShipmentError(err));
+      }
     }
   }
 
@@ -234,15 +243,25 @@ function ShipmentsSection({ order, token, canManage, onRefresh }) {
                 <div>
                   <dt>Shipped at</dt>
                   <dd>
-                    {shipment.shippedAt ? formatDateTime(shipment.shippedAt) : '—'}
+                    {shipment.shippedAt ? (
+                      <time dateTime={shipment.shippedAt}>
+                        {formatDateTime(shipment.shippedAt)}
+                      </time>
+                    ) : (
+                      '—'
+                    )}
                   </dd>
                 </div>
                 <div>
                   <dt>Delivered at</dt>
                   <dd>
-                    {shipment.deliveredAt
-                      ? formatDateTime(shipment.deliveredAt)
-                      : '—'}
+                    {shipment.deliveredAt ? (
+                      <time dateTime={shipment.deliveredAt}>
+                        {formatDateTime(shipment.deliveredAt)}
+                      </time>
+                    ) : (
+                      '—'
+                    )}
                   </dd>
                 </div>
               </dl>

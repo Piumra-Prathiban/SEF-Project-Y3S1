@@ -6,6 +6,7 @@ import {
   PaymentStatusName,
 } from '../../services/orderService';
 import { describePaymentError } from './paymentErrors';
+import { useSessionGuard } from '../../hooks/useSessionGuard';
 import './orders.css';
 
 // Advisory only: mirrors the backend's payment status state machine so staff get
@@ -21,6 +22,7 @@ const ALLOWED_PAYMENT_TRANSITIONS = {
 const CONFIRM_STATUSES = [PaymentStatus.Completed, PaymentStatus.Refunded];
 
 function PaymentStatusForm({ token, orderId, payment, onUpdated }) {
+  const guardSessionExpiry = useSessionGuard();
   const [selectedStatus, setSelectedStatus] = useState('');
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState(null);
@@ -61,7 +63,9 @@ function PaymentStatusForm({ token, orderId, payment, onUpdated }) {
       setSelectedStatus('');
       onUpdated(`Payment marked as ${PaymentStatusName[targetStatus]}.`);
     } catch (err) {
-      setError(describePaymentError(err));
+      if (!guardSessionExpiry(err)) {
+        setError(describePaymentError(err));
+      }
     } finally {
       setUpdating(false);
     }

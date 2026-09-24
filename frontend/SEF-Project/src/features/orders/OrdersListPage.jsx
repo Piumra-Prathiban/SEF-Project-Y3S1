@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getOrders, OrderStatus } from '../../services/orderService';
 import { formatCurrency, formatDate } from '../../utils/format';
 import { isStaff } from '../../utils/roles';
+import { useSessionGuard } from '../../hooks/useSessionGuard';
 import Loading from '../../components/Loading';
 import ErrorAlert from '../../components/ErrorAlert';
 import StatusBadge from '../../components/StatusBadge';
@@ -24,25 +25,48 @@ function localDayToIso(dateString, endOfDay) {
   ).toISOString();
 }
 
+function readPage(searchParams) {
+  const page = Number(searchParams.get('page'));
+
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
 function OrdersListPage() {
   const { token, user } = useAuth();
+  const guardSessionExpiry = useSessionGuard();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [page, setPage] = useState(1);
-  const [status, setStatus] = useState('');
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
-  const [sortBy, setSortBy] = useState('');
-  const [sortDirection, setSortDirection] = useState('');
-  const [orderNumberInput, setOrderNumberInput] = useState('');
-  const [customerIdInput, setCustomerIdInput] = useState('');
-  const [orderNumber, setOrderNumber] = useState('');
-  const [customerId, setCustomerId] = useState('');
+  const page = readPage(searchParams);
+  const status = searchParams.get('status') ?? '';
+  const from = searchParams.get('from') ?? '';
+  const to = searchParams.get('to') ?? '';
+  const sortBy = searchParams.get('sortBy') ?? '';
+  const sortDirection = searchParams.get('sortDirection') ?? '';
+  const orderNumber = searchParams.get('orderNumber') ?? '';
+  const customerId = searchParams.get('customerId') ?? '';
+
+  const [orderNumberInput, setOrderNumberInput] = useState(orderNumber);
+  const [customerIdInput, setCustomerIdInput] = useState(customerId);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [retryTick, setRetryTick] = useState(0);
 
   const canFilterByCustomer = isStaff(user);
+
+  function updateParams(changes) {
+    const next = new URLSearchParams(searchParams);
+
+    Object.entries(changes).forEach(([key, value]) => {
+      if (value === '' || value === null || value === undefined) {
+        next.delete(key);
+      } else {
+        next.set(key, String(value));
+      }
+    });
+
+    setSearchParams(next, { replace: true });
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -60,7 +84,7 @@ function OrdersListPage() {
           ...(from && { from: localDayToIso(from) }),
           ...(to && { to: localDayToIso(to, true) }),
           ...(orderNumber && { orderNumber }),
-          ...(customerId !== '' && { customerId }),
+          ...(customerId !== '' && { customerId: Number(customerId) }),
         };
 
         const response = await getOrders(token, query);
@@ -69,7 +93,7 @@ function OrdersListPage() {
           setData(response);
         }
       } catch (err) {
-        if (!cancelled) {
+        if (!cancelled && !guardSessionExpiry(err)) {
           setError(err);
         }
       } finally {
@@ -95,37 +119,47 @@ function OrdersListPage() {
     orderNumber,
     customerId,
     retryTick,
+    guardSessionExpiry,
   ]);
 
-  function applyImmediateFilter(setter, value) {
-    setter(value);
-    setPage(1);
+  function applyFilter(key, value) {
+    updateParams({ [key]: value, page: undefined });
   }
 
   function handleSearchSubmit(event) {
     event.preventDefault();
 
-    setOrderNumber(orderNumberInput.trim());
-    setCustomerId(customerIdInput === '' ? '' : Number(customerIdInput));
-    setPage(1);
+    updateParams({
+      orderNumber: orderNumberInput.trim(),
+      customerId: customerIdInput === '' ? undefined : Number(customerIdInput),
+      page: undefined,
+    });
   }
 
   function handleClearFilters() {
-    setStatus('');
-    setFrom('');
-    setTo('');
-    setSortBy('');
-    setSortDirection('');
     setOrderNumberInput('');
     setCustomerIdInput('');
-    setOrderNumber('');
-    setCustomerId('');
-    setPage(1);
+    updateParams({
+      status: undefined,
+      from: undefined,
+      to: undefined,
+      sortBy: undefined,
+      sortDirection: undefined,
+      orderNumber: undefined,
+      customerId: undefined,
+      page: undefined,
+    });
+  }
+
+  function handlePageChange(nextPage) {
+    updateParams({ page: nextPage === 1 ? undefined : nextPage });
   }
 
   const hasActiveFilters = Boolean(
     status || from || to || orderNumber || customerId !== '',
   );
+
+  const showLoading = loading || (!error && !data);
 
   return (
     <div className="orders-page">
@@ -137,9 +171,7 @@ function OrdersListPage() {
           <select
             id="order-status-filter"
             value={status}
-            onChange={(event) =>
-              applyImmediateFilter(setStatus, event.target.value)
-            }
+            onChange={(event) => applyFilter('status', event.target.value)}
           >
             <option value="">All statuses</option>
             {Object.keys(OrderStatus).map((name) => (
@@ -156,9 +188,7 @@ function OrdersListPage() {
             id="order-from-filter"
             type="date"
             value={from}
-            onChange={(event) =>
-              applyImmediateFilter(setFrom, event.target.value)
-            }
+            onChange={(event) => applyFilter('from', event.target.value)}
           />
         </label>
 
@@ -168,9 +198,7 @@ function OrdersListPage() {
             id="order-to-filter"
             type="date"
             value={to}
-            onChange={(event) =>
-              applyImmediateFilter(setTo, event.target.value)
-            }
+            onChange={(event) => applyFilter('to', event.target.value)}
           />
         </label>
 
@@ -179,9 +207,7 @@ function OrdersListPage() {
           <select
             id="order-sort-by"
             value={sortBy}
-            onChange={(event) =>
-              applyImmediateFilter(setSortBy, event.target.value)
-            }
+            onChange={(event) => applyFilter('sortBy', event.target.value)}
           >
             <option value="">Placed (default)</option>
             <option value="total">Total</option>
@@ -197,7 +223,7 @@ function OrdersListPage() {
             id="order-sort-direction"
             value={sortDirection}
             onChange={(event) =>
-              applyImmediateFilter(setSortDirection, event.target.value)
+              applyFilter('sortDirection', event.target.value)
             }
           >
             <option value="">Descending</option>
@@ -210,7 +236,7 @@ function OrdersListPage() {
             Order number
             <input
               id="order-number-search"
-              type="text"
+              type="search"
               value={orderNumberInput}
               onChange={(event) => setOrderNumberInput(event.target.value)}
               placeholder="e.g. ORD-1001"
@@ -240,57 +266,63 @@ function OrdersListPage() {
         </form>
       </section>
 
-      {loading ? (
-        <Loading />
-      ) : error ? (
-        <ErrorAlert
-          error={error}
-          onRetry={() => setRetryTick((tick) => tick + 1)}
-        />
-      ) : data.items.length === 0 ? (
-        <div className="orders-empty">
-          <p>No orders found.</p>
-          {hasActiveFilters && (
-            <button type="button" onClick={handleClearFilters}>
-              Clear filters
-            </button>
-          )}
-        </div>
-      ) : (
-        <>
-          <table className="orders-table">
-            <thead>
-              <tr>
-                <th>Order number</th>
-                <th>Placed</th>
-                <th>Status</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.items.map((order) => (
-                <tr key={order.id}>
-                  <td>
-                    <Link to={`/orders/${order.id}`}>{order.orderNumber}</Link>
-                  </td>
-                  <td>{formatDate(order.placedAt)}</td>
-                  <td>
-                    <StatusBadge status={order.status} />
-                  </td>
-                  <td>{formatCurrency(order.total, order.currency)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <Pagination
-            page={data.page}
-            pageSize={data.pageSize}
-            totalCount={data.totalCount}
-            onPageChange={setPage}
+      <div className="orders-results" aria-busy={showLoading}>
+        {showLoading ? (
+          <Loading />
+        ) : error ? (
+          <ErrorAlert
+            error={error}
+            onRetry={() => setRetryTick((tick) => tick + 1)}
           />
-        </>
-      )}
+        ) : data.items.length === 0 ? (
+          <div className="orders-empty">
+            <p>No orders found.</p>
+            {hasActiveFilters && (
+              <button type="button" onClick={handleClearFilters}>
+                Clear filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="table-scroll">
+              <table className="orders-table" aria-label="Orders">
+                <thead>
+                  <tr>
+                    <th scope="col">Order number</th>
+                    <th scope="col">Placed</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.items.map((order) => (
+                    <tr key={order.id}>
+                      <td>
+                        <Link to={`/orders/${order.id}`}>
+                          {order.orderNumber}
+                        </Link>
+                      </td>
+                      <td>{formatDate(order.placedAt)}</td>
+                      <td>
+                        <StatusBadge status={order.status} />
+                      </td>
+                      <td>{formatCurrency(order.total, order.currency)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <Pagination
+              page={data.page}
+              pageSize={data.pageSize}
+              totalCount={data.totalCount}
+              onPageChange={handlePageChange}
+            />
+          </>
+        )}
+      </div>
     </div>
   );
 }

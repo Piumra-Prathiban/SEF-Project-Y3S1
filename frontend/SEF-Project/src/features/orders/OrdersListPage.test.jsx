@@ -7,7 +7,7 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import OrdersListPage from './OrdersListPage';
 import OrderDetailPage from './OrderDetailPage';
 import { getOrderById, getOrders } from '../../services/orderService';
@@ -101,10 +101,20 @@ function buildListResponse({ items, totalCount, page = 1, pageSize = 20 } = {}) 
   };
 }
 
-function renderPage() {
+function LocationProbe() {
+  const location = useLocation();
+
+  return (
+    <span data-testid="location">{`${location.pathname}${location.search}`}</span>
+  );
+}
+
+function renderPage(initialEntries = ['/orders']) {
   return render(
-    <MemoryRouter initialEntries={['/orders']}>
+    <MemoryRouter initialEntries={initialEntries}>
+      <LocationProbe />
       <Routes>
+        <Route path="/login" element={<p>Login page</p>} />
         <Route path="/orders" element={<OrdersListPage />} />
         <Route path="/orders/:id" element={<OrderDetailPage />} />
       </Routes>
@@ -312,5 +322,56 @@ describe('OrdersListPage', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Slim Fit Denim Jacket')).toBeInTheDocument();
     expect(getOrderById).toHaveBeenCalledWith('test-token', ORDER_A.id);
+  });
+
+  it('reads filters from the URL and fetches with them', async () => {
+    renderPage(['/orders?status=Pending&page=2&sortBy=total&orderNumber=ORD-1']);
+
+    await waitFor(() => {
+      expect(getOrders).toHaveBeenCalledWith(
+        'test-token',
+        expect.objectContaining({
+          page: 2,
+          status: 'Pending',
+          sortBy: 'total',
+          orderNumber: 'ORD-1',
+        }),
+      );
+    });
+
+    expect(screen.getByLabelText('Status')).toHaveValue('Pending');
+    expect(screen.getByLabelText('Sort by')).toHaveValue('total');
+    expect(screen.getByLabelText('Order number')).toHaveValue('ORD-1');
+  });
+
+  it('writes filters to the URL so navigation and refresh keep them', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText('ORD-1001');
+
+    await user.selectOptions(screen.getByLabelText('Status'), 'Pending');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location')).toHaveTextContent(
+        '/orders?status=Pending',
+      );
+    });
+  });
+
+  it('signs the user out when the session has expired', async () => {
+    getOrders.mockRejectedValue(
+      Object.assign(new Error('Unauthorized'), { status: 401, data: null }),
+    );
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(mockAuth.logout).toHaveBeenCalled();
+    });
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/login');
+    expect(await screen.findByText('Login page')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

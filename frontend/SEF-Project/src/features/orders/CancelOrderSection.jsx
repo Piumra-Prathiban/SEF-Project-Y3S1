@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { cancelOrder, OrderStatus } from '../../services/orderService';
+import { useSessionGuard } from '../../hooks/useSessionGuard';
 import './orders.css';
 
 // The backend decides whether an order can actually be cancelled (order status,
@@ -21,6 +22,7 @@ function describeCancelError(error) {
 }
 
 function CancelOrderSection({ order, token, onCancelled }) {
+  const guardSessionExpiry = useSessionGuard();
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -63,7 +65,9 @@ function CancelOrderSection({ order, token, onCancelled }) {
       setSuccess('Order cancelled.');
       onCancelled(updatedOrder);
     } catch (err) {
-      setError(describeCancelError(err));
+      if (!guardSessionExpiry(err)) {
+        setError(describeCancelError(err));
+      }
     } finally {
       setCancelling(false);
     }

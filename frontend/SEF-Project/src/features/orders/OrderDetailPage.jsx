@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   getOrderById,
@@ -12,6 +12,7 @@ import {
 } from '../../services/orderService';
 import { formatCurrency, formatDateTime } from '../../utils/format';
 import { isStaff } from '../../utils/roles';
+import { useSessionGuard } from '../../hooks/useSessionGuard';
 import { describePaymentError } from './paymentErrors';
 import Loading from '../../components/Loading';
 import ErrorAlert from '../../components/ErrorAlert';
@@ -57,6 +58,9 @@ function describeStatusError(error) {
 function OrderDetailPage() {
   const { id } = useParams();
   const { token, user } = useAuth();
+  const guardSessionExpiry = useSessionGuard();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -86,7 +90,7 @@ function OrderDetailPage() {
           setOrder(response);
         }
       } catch (err) {
-        if (!cancelled) {
+        if (!cancelled && !guardSessionExpiry(err)) {
           setError(err);
         }
       } finally {
@@ -101,9 +105,10 @@ function OrderDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [token, id, retryTick]);
+  }, [token, id, retryTick, guardSessionExpiry]);
 
   const canManage = isStaff(user);
+  const canGoBack = location.key !== 'default';
   const allowedStatusOptions = order
     ? (ALLOWED_STATUS_TRANSITIONS[order.status] ?? [])
     : [];
@@ -147,7 +152,9 @@ function OrderDetailPage() {
         `Order status updated to ${OrderStatusName[targetStatus]}.`,
       );
     } catch (err) {
-      setStatusError(err);
+      if (!guardSessionExpiry(err)) {
+        setStatusError(err);
+      }
     } finally {
       setUpdating(false);
     }
@@ -160,7 +167,9 @@ function OrderDetailPage() {
     try {
       await refreshOrder();
     } catch (err) {
-      setPaymentError(err);
+      if (!guardSessionExpiry(err)) {
+        setPaymentError(err);
+      }
     }
   }
 
@@ -184,7 +193,9 @@ function OrderDetailPage() {
         'Payment recorded with status Pending. Staff confirm it once processed.',
       );
     } catch (err) {
-      setPaymentError(err);
+      if (!guardSessionExpiry(err)) {
+        setPaymentError(err);
+      }
     } finally {
       setCreatingPayment(false);
     }
@@ -229,15 +240,28 @@ function OrderDetailPage() {
 
   return (
     <div className="orders-page">
-      <Link to="/orders" className="order-detail__back">
-        Back to orders
-      </Link>
+      {canGoBack ? (
+        <button
+          type="button"
+          className="order-detail__back"
+          onClick={() => navigate(-1)}
+        >
+          Back to orders
+        </button>
+      ) : (
+        <Link to="/orders" className="order-detail__back">
+          Back to orders
+        </Link>
+      )}
 
       <h1>Order {order.orderNumber}</h1>
 
       <div className="order-detail__meta">
         <StatusBadge status={order.status} />
-        <span>Placed {formatDateTime(order.placedAt)}</span>
+        <span>
+          Placed{' '}
+          <time dateTime={order.placedAt}>{formatDateTime(order.placedAt)}</time>
+        </span>
       </div>
 
       {canManage && (
@@ -292,7 +316,7 @@ function OrderDetailPage() {
         onCancelled={(updatedOrder) => setOrder(updatedOrder)}
       />
 
-      <section className="order-detail__items">
+      <section className="order-detail__items" aria-label="Items">
         <h2>Items</h2>
         <table className="orders-table">
           <thead>
@@ -318,7 +342,7 @@ function OrderDetailPage() {
         </table>
       </section>
 
-      <section className="order-detail__totals">
+      <section className="order-detail__totals" aria-label="Totals">
         <h2>Totals</h2>
         <dl>
           <div>
@@ -345,7 +369,7 @@ function OrderDetailPage() {
       </section>
 
       {order.deliveryAddress && (
-        <section className="order-detail__address">
+        <section className="order-detail__address" aria-label="Delivery address">
           <h2>Delivery address</h2>
           <address>
             <span>{order.deliveryAddress.fullName}</span>
@@ -394,7 +418,15 @@ function OrderDetailPage() {
                     <StatusBadge status={payment.status} kind="payment" />
                   </td>
                   <td>{formatCurrency(payment.amount, order.currency)}</td>
-                  <td>{payment.paidAt ? formatDateTime(payment.paidAt) : '—'}</td>
+                  <td>
+                    {payment.paidAt ? (
+                      <time dateTime={payment.paidAt}>
+                        {formatDateTime(payment.paidAt)}
+                      </time>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
                   <td>{payment.transactionReference ?? '—'}</td>
                   {canManage && (
                     <td>
@@ -480,7 +512,7 @@ function OrderDetailPage() {
         onRefresh={refreshOrder}
       />
 
-      <section className="order-detail__history">
+      <section className="order-detail__history" aria-label="Status history">
         <h2>Status history</h2>
         {order.statusHistory.length === 0 ? (
           <p className="order-detail__empty">No status changes recorded.</p>
@@ -490,9 +522,12 @@ function OrderDetailPage() {
               <li key={entry.id} className="timeline__item">
                 <div className="timeline__header">
                   <StatusBadge status={entry.status} />
-                  <span className="timeline__time">
+                  <time
+                    className="timeline__time"
+                    dateTime={entry.changedAt}
+                  >
                     {formatDateTime(entry.changedAt)}
-                  </span>
+                  </time>
                 </div>
                 {entry.note && <p className="timeline__note">{entry.note}</p>}
               </li>

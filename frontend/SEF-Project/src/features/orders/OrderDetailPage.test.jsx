@@ -203,6 +203,7 @@ function renderPage() {
   return render(
     <MemoryRouter initialEntries={[`/orders/${ORDER_ID}`]}>
       <Routes>
+        <Route path="/login" element={<p>Login page</p>} />
         <Route path="/orders/:id" element={<OrderDetailPage />} />
       </Routes>
     </MemoryRouter>,
@@ -943,5 +944,52 @@ describe('OrderDetailPage', () => {
     expect(
       screen.getByRole('button', { name: 'Cancel order' }),
     ).toBeInTheDocument();
+  });
+
+  it('signs the user out when the session has expired', async () => {
+    getOrderById.mockRejectedValue(
+      Object.assign(new Error('Unauthorized'), { status: 401, data: null }),
+    );
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(mockAuth.logout).toHaveBeenCalled();
+    });
+
+    expect(await screen.findByText('Login page')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('links back to the orders list when the order is opened directly', async () => {
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    expect(
+      screen.getByRole('link', { name: 'Back to orders' }),
+    ).toHaveAttribute('href', '/orders');
+  });
+
+  it('returns to the previous view when history is available', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter
+        initialEntries={['/orders', `/orders/${ORDER_ID}`]}
+        initialIndex={1}
+      >
+        <Routes>
+          <Route path="/orders" element={<p>Orders list</p>} />
+          <Route path="/orders/:id" element={<OrderDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Back to orders' }),
+    );
+
+    expect(screen.getByText('Orders list')).toBeInTheDocument();
   });
 });
