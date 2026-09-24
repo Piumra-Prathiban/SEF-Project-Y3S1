@@ -6,7 +6,11 @@ import OrderDetailPage from './OrderDetailPage';
 import {
   getOrderById,
   updateOrderStatus,
+  createPayment,
+  updatePaymentStatus,
   OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
 } from '../../services/orderService';
 
 vi.mock('../../services/orderService', async (importOriginal) => {
@@ -16,6 +20,8 @@ vi.mock('../../services/orderService', async (importOriginal) => {
     ...actual,
     getOrderById: vi.fn(),
     updateOrderStatus: vi.fn(),
+    createPayment: vi.fn(),
+    updatePaymentStatus: vi.fn(),
   };
 });
 
@@ -113,6 +119,33 @@ const ORDER_PENDING = makeOrder({
   ],
 });
 
+const PAYMENT_PENDING = {
+  id: 'llllllll-llll-llll-llll-llllllllllll',
+  amount: 500,
+  method: PaymentMethod.OnlineTransfer,
+  status: PaymentStatus.Pending,
+  transactionReference: null,
+  paidAt: null,
+};
+
+const PAYMENT_COMPLETED_UPDATED = {
+  ...PAYMENT_PENDING,
+  status: PaymentStatus.Completed,
+  transactionReference: 'MOCK-99999999',
+  paidAt: '2026-09-24T09:30:00Z',
+};
+
+const ORDER_WITH_PENDING_PAYMENT = {
+  ...ORDER_PENDING,
+  payments: [PAYMENT_PENDING],
+};
+
+function paymentsTable() {
+  return within(
+    screen.getByRole('region', { name: 'Payments' }),
+  ).getByRole('table');
+}
+
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={[`/orders/${ORDER_ID}`]}>
@@ -164,8 +197,9 @@ describe('OrderDetailPage', () => {
     expect(screen.getByText('Asha Perera')).toBeInTheDocument();
     expect(screen.getByText(/12 Galle Road/)).toBeInTheDocument();
 
-    expect(screen.getByText('Card')).toBeInTheDocument();
-    expect(screen.getByText('MOCK-1234')).toBeInTheDocument();
+    const table = paymentsTable();
+    expect(within(table).getByText('Card')).toBeInTheDocument();
+    expect(within(table).getByText('MOCK-1234')).toBeInTheDocument();
 
     expect(screen.getByText('LankaExpress')).toBeInTheDocument();
     expect(screen.getByText('TRACK-99')).toBeInTheDocument();
@@ -410,5 +444,196 @@ describe('OrderDetailPage', () => {
 
     expect(confirmSpy).toHaveBeenCalled();
     expect(updateOrderStatus).not.toHaveBeenCalled();
+  });
+
+  it('shows payment records and a payment action to customers without staff controls', async () => {
+    mockAuth.user = { ...mockAuth.user, role: 'Customer' };
+
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    const table = paymentsTable();
+
+    expect(within(table).getByText('Card')).toBeInTheDocument();
+    expect(within(table).getByText('MOCK-1234')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Submit payment' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/Update .* payment/),
+    ).not.toBeInTheDocument();
+  });
+
+  it('offers staff only the next allowed payment statuses', async () => {
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    const options = within(screen.getByLabelText('Update Card payment'))
+      .getAllByRole('option')
+      .map((option) => option.textContent);
+
+    expect(options).toEqual(['Select…', 'Refunded']);
+  });
+
+  it('lets staff complete a pending payment and refreshes the order', async () => {
+    getOrderById
+      .mockResolvedValueOnce(ORDER_WITH_PENDING_PAYMENT)
+      .mockResolvedValueOnce({
+        ...ORDER_WITH_PENDING_PAYMENT,
+        payments: [PAYMENT_COMPLETED_UPDATED],
+      });
+
+    updatePaymentStatus.mockResolvedValue(PAYMENT_COMPLETED_UPDATED);
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    await user.selectOptions(
+      screen.getByLabelText('Update OnlineTransfer payment'),
+      String(PaymentStatus.Completed),
+    );
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+
+    await waitFor(() => {
+      expect(updatePaymentStatus).toHaveBeenCalledWith(
+        'test-token',
+        ORDER_ID,
+        PAYMENT_PENDING.id,
+        { status: PaymentStatus.Completed },
+      );
+    });
+
+    expect(
+      await screen.findByText('Payment marked as Completed.'),
+    ).toBeInTheDocument();
+
+    expect(within(paymentsTable()).getByText('MOCK-99999999')).toBeInTheDocument();
+    expect(getOrderById).toHaveBeenCalledTimes(2);
+  });
+
+  it('surfaces a permission error when the backend rejects a payment update', async () => {
+    getOrderById.mockResolvedValue(ORDER_WITH_PENDING_PAYMENT);
+    updatePaymentStatus.mockRejectedValue(
+      Object.assign(new Error('Only staff can update payments.'), {
+        status: 403,
+        data: null,
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    await user.selectOptions(
+      screen.getByLabelText('Update OnlineTransfer payment'),
+      String(PaymentStatus.Completed),
+    );
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+
+    expect(
+      await screen.findByText(
+        'You do not have permission to perform this payment action.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the server message when a payment status change conflicts', async () => {
+    getOrderById.mockResolvedValue(ORDER_WITH_PENDING_PAYMENT);
+    updatePaymentStatus.mockRejectedValue(
+      Object.assign(
+        new Error("Transition from 'Pending' to 'Completed' is not allowed."),
+        { status: 409, data: null },
+      ),
+    );
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    await user.selectOptions(
+      screen.getByLabelText('Update OnlineTransfer payment'),
+      String(PaymentStatus.Completed),
+    );
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+
+    expect(
+      await screen.findByText(
+        "Transition from 'Pending' to 'Completed' is not allowed.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('records a payment and shows it as pending', async () => {
+    mockAuth.user = { ...mockAuth.user, role: 'Customer' };
+
+    getOrderById
+      .mockResolvedValueOnce(makeOrder({ payments: [] }))
+      .mockResolvedValueOnce(ORDER_WITH_PENDING_PAYMENT);
+
+    createPayment.mockResolvedValue(PAYMENT_PENDING);
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+    expect(screen.getByText('No payments recorded.')).toBeInTheDocument();
+
+    await user.selectOptions(
+      screen.getByLabelText('Method'),
+      String(PaymentMethod.OnlineTransfer),
+    );
+    await user.type(screen.getByLabelText(/Amount/), '500');
+    await user.click(screen.getByRole('button', { name: 'Submit payment' }));
+
+    await waitFor(() => {
+      expect(createPayment).toHaveBeenCalledWith('test-token', ORDER_ID, {
+        method: PaymentMethod.OnlineTransfer,
+        amount: 500,
+      });
+    });
+
+    expect(
+      await screen.findByText(
+        'Payment recorded with status Pending. Staff confirm it once processed.',
+      ),
+    ).toBeInTheDocument();
+
+    expect(within(paymentsTable()).getByText('Pending')).toBeInTheDocument();
+  });
+
+  it('shows a conflict message when a payment amount is rejected', async () => {
+    mockAuth.user = { ...mockAuth.user, role: 'Customer' };
+
+    getOrderById.mockResolvedValue(makeOrder({ payments: [] }));
+    createPayment.mockRejectedValue(
+      Object.assign(
+        new Error('Payment amount exceeds the outstanding balance.'),
+        { status: 409, data: null },
+      ),
+    );
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    await user.selectOptions(
+      screen.getByLabelText('Method'),
+      String(PaymentMethod.Card),
+    );
+    await user.type(screen.getByLabelText(/Amount/), '999999');
+    await user.click(screen.getByRole('button', { name: 'Submit payment' }));
+
+    expect(
+      await screen.findByText(
+        'Payment amount exceeds the outstanding balance.',
+      ),
+    ).toBeInTheDocument();
   });
 });

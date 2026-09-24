@@ -4,15 +4,19 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   getOrderById,
   updateOrderStatus,
+  createPayment,
   OrderStatus,
   OrderStatusName,
+  PaymentMethod,
   PaymentMethodName,
 } from '../../services/orderService';
 import { formatCurrency, formatDateTime } from '../../utils/format';
 import { isStaff } from '../../utils/roles';
+import { describePaymentError } from './paymentErrors';
 import Loading from '../../components/Loading';
 import ErrorAlert from '../../components/ErrorAlert';
 import StatusBadge from '../../components/StatusBadge';
+import PaymentStatusForm from './PaymentStatusForm';
 import './orders.css';
 
 // Advisory only: mirrors the backend's order status state machine so the UI can
@@ -60,6 +64,11 @@ function OrderDetailPage() {
   const [updating, setUpdating] = useState(false);
   const [statusError, setStatusError] = useState(null);
   const [statusSuccess, setStatusSuccess] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [creatingPayment, setCreatingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState(null);
+  const [paymentSuccess, setPaymentSuccess] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -96,6 +105,11 @@ function OrderDetailPage() {
   const allowedStatusOptions = order
     ? (ALLOWED_STATUS_TRANSITIONS[order.status] ?? [])
     : [];
+
+  async function refreshOrder() {
+    const response = await getOrderById(token, id);
+    setOrder(response);
+  }
 
   async function handleStatusSubmit(event) {
     event.preventDefault();
@@ -134,6 +148,43 @@ function OrderDetailPage() {
       setStatusError(err);
     } finally {
       setUpdating(false);
+    }
+  }
+
+  async function handlePaymentUpdated(message) {
+    setPaymentSuccess(message);
+    setPaymentError(null);
+
+    try {
+      await refreshOrder();
+    } catch (err) {
+      setPaymentError(err);
+    }
+  }
+
+  async function handlePaymentSubmit(event) {
+    event.preventDefault();
+
+    setCreatingPayment(true);
+    setPaymentError(null);
+    setPaymentSuccess(null);
+
+    try {
+      await createPayment(token, id, {
+        method: Number(paymentMethod),
+        amount: Number(paymentAmount),
+      });
+
+      await refreshOrder();
+      setPaymentMethod('');
+      setPaymentAmount('');
+      setPaymentSuccess(
+        'Payment recorded with status Pending. Staff confirm it once processed.',
+      );
+    } catch (err) {
+      setPaymentError(err);
+    } finally {
+      setCreatingPayment(false);
     }
   }
 
@@ -310,8 +361,9 @@ function OrderDetailPage() {
         </section>
       )}
 
-      <section className="order-detail__payments">
+      <section className="order-detail__payments" aria-label="Payments">
         <h2>Payments</h2>
+
         {order.payments.length === 0 ? (
           <p className="order-detail__empty">No payments recorded.</p>
         ) : (
@@ -323,6 +375,7 @@ function OrderDetailPage() {
                 <th>Amount</th>
                 <th>Paid at</th>
                 <th>Reference</th>
+                {canManageStatus && <th>Update</th>}
               </tr>
             </thead>
             <tbody>
@@ -335,11 +388,81 @@ function OrderDetailPage() {
                   <td>{formatCurrency(payment.amount, order.currency)}</td>
                   <td>{payment.paidAt ? formatDateTime(payment.paidAt) : '—'}</td>
                   <td>{payment.transactionReference ?? '—'}</td>
+                  {canManageStatus && (
+                    <td>
+                      <PaymentStatusForm
+                        token={token}
+                        orderId={order.id}
+                        payment={payment}
+                        onUpdated={handlePaymentUpdated}
+                      />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
           </table>
         )}
+
+        {paymentSuccess && (
+          <p className="status-feedback status-feedback--success" role="status">
+            {paymentSuccess}
+          </p>
+        )}
+
+        {paymentError && (
+          <p className="status-feedback status-feedback--error" role="alert">
+            {describePaymentError(paymentError)}
+          </p>
+        )}
+
+        <form className="payment-form" onSubmit={handlePaymentSubmit}>
+          <h3>Record a payment</h3>
+
+          <label htmlFor="payment-method">
+            Method
+            <select
+              id="payment-method"
+              value={paymentMethod}
+              onChange={(event) => setPaymentMethod(event.target.value)}
+            >
+              <option value="">Select a method…</option>
+              {Object.entries(PaymentMethod).map(([name, value]) => (
+                <option key={name} value={value}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label htmlFor="payment-amount">
+            Amount ({order.currency})
+            <input
+              id="payment-amount"
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={paymentAmount}
+              onChange={(event) => setPaymentAmount(event.target.value)}
+            />
+          </label>
+
+          <button
+            type="submit"
+            disabled={
+              creatingPayment || paymentMethod === '' || paymentAmount === ''
+            }
+          >
+            {creatingPayment ? 'Submitting…' : 'Submit payment'}
+          </button>
+
+          <p className="payment-form__note">
+            Order total {formatCurrency(order.total, order.currency)}. Only the
+            method and amount are recorded — no card details are collected or
+            stored. Submitted payments start as Pending and the server checks the
+            outstanding balance before accepting them.
+          </p>
+        </form>
       </section>
 
       <section className="order-detail__shipments">

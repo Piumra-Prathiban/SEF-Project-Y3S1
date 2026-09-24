@@ -230,3 +230,67 @@
   color: var(--text);
   font-size: 14px;
 }
+
+.payment-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.payment-form h3 {
+  width: 100%;
+  margin: 0;
+  font-size: 16px;
+}
+
+.payment-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.payment-form input,
+.payment-form select {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+}
+
+.payment-form__note {
+  width: 100%;
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.payment-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.payment-actions select {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+}
+
+.payment-actions .status-feedback {
+  margin: 0;
+}
+
+.payment-actions__none {
+  color: var(--text);
+}
