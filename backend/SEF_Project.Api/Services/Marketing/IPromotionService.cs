@@ -28,6 +28,9 @@ public interface IPromotionService
         PromotionRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<PromotionTargetsResponse> GetTargetOptionsAsync(
+        CancellationToken cancellationToken = default);
+
     /// <summary>Returns false when the promotion does not exist.</summary>
     Task<bool> DeletePromotionAsync(
         Guid promotionId,

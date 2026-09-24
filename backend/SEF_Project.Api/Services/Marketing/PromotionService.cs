@@ -162,6 +162,38 @@ public class PromotionService : IPromotionService
         }
     }
 
+    public async Task<PromotionTargetsResponse> GetTargetOptionsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var products = await _context.Products
+            .AsNoTracking()
+            .OrderBy(p => p.Name)
+            .Select(p => new PromotionTargetOption
+            {
+                Id = p.Id,
+                Name = p.Name,
+                IsActive = p.IsActive
+            })
+            .ToListAsync(cancellationToken);
+
+        var categories = await _context.Categories
+            .AsNoTracking()
+            .OrderBy(c => c.Name)
+            .Select(c => new PromotionTargetOption
+            {
+                Id = c.Id,
+                Name = c.Name,
+                IsActive = c.IsActive
+            })
+            .ToListAsync(cancellationToken);
+
+        return new PromotionTargetsResponse
+        {
+            Products = products,
+            Categories = categories
+        };
+    }
+
     public async Task<bool> DeletePromotionAsync(
         Guid promotionId,
         CancellationToken cancellationToken = default)

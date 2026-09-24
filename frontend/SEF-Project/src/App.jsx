@@ -1,135 +1,49 @@
-import { useState } from 'react';
-import { useAuth } from './contexts/AuthContext';
+import { Link, Route, Routes } from 'react-router-dom';
+import AppLayout from './components/AppLayout';
+import LoginPage from './features/auth/LoginPage';
+import HomePage from './features/home/HomePage';
+import CampaignDetailPage from './features/marketing/campaigns/CampaignDetailPage';
+import CampaignFormPage from './features/marketing/campaigns/CampaignFormPage';
+import CampaignListPage from './features/marketing/campaigns/CampaignListPage';
+import MarketingLayout from './features/marketing/MarketingLayout';
+import MarketingOverviewPage from './features/marketing/MarketingOverviewPage';
+import { MANAGER_ROLES } from './features/marketing/marketingConstants';
+import PromotionDetailPage from './features/marketing/promotions/PromotionDetailPage';
+import PromotionFormPage from './features/marketing/promotions/PromotionFormPage';
+import PromotionListPage from './features/marketing/promotions/PromotionListPage';
+import ProtectedRoute from './routes/ProtectedRoute';
 
-function App() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
-  const [currentUserResponse, setCurrentUserResponse] = useState(null);
-
-  const {
-    user,
-    isAuthenticated,
-    login,
-    logout,
-    fetchCurrentUser,
-  } = useAuth();
-
-  async function handleLogin(event) {
-    event.preventDefault();
-
-    setError(null);
-    setCurrentUserResponse(null);
-
-    try {
-      await login(email, password);
-    } catch (err) {
-      setError({
-        status: err.status,
-        message: err.message,
-        data: err.data,
-      });
-    }
-  }
-
-  async function handleCheckCurrentUser() {
-    setError(null);
-
-    try {
-      const response = await fetchCurrentUser();
-      setCurrentUserResponse(response);
-    } catch (err) {
-      setError({
-        status: err.status,
-        message: err.message,
-        data: err.data,
-      });
-    }
-  }
-
-  if (isAuthenticated) {
-    return (
-      <main>
-        <h1>Welcome</h1>
-
-        <p>
-          Logged in as: {user.email}
-        </p>
-
-        <p>
-          Role: {user.role}
-        </p>
-
-        <button
-          type="button"
-          onClick={handleCheckCurrentUser}
-        >
-          Check Current User
-        </button>
-
-        <button
-          type="button"
-          onClick={logout}
-        >
-          Logout
-        </button>
-
-        {currentUserResponse && (
-          <pre>
-            {JSON.stringify(currentUserResponse, null, 2)}
-          </pre>
-        )}
-
-        {error && (
-          <pre>
-            {JSON.stringify(error, null, 2)}
-          </pre>
-        )}
-      </main>
-    );
-  }
-
+export default function App() {
   return (
-    <main>
-      <h1>React → API Test</h1>
+    <Routes>
+      <Route element={<AppLayout />}>
+        <Route index element={<HomePage />} />
+        <Route path="login" element={<LoginPage />} />
 
-      <form onSubmit={handleLogin}>
-        <div>
-          <label>
-            Email
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-            />
-          </label>
-        </div>
+        <Route element={<ProtectedRoute roles={MANAGER_ROLES} />}>
+          <Route path="marketing" element={<MarketingLayout />}>
+            <Route index element={<MarketingOverviewPage />} />
+            <Route path="promotions" element={<PromotionListPage />} />
+            <Route path="promotions/new" element={<PromotionFormPage />} />
+            <Route path="promotions/:id" element={<PromotionDetailPage />} />
+            <Route path="promotions/:id/edit" element={<PromotionFormPage />} />
+            <Route path="campaigns" element={<CampaignListPage />} />
+            <Route path="campaigns/new" element={<CampaignFormPage />} />
+            <Route path="campaigns/:id" element={<CampaignDetailPage />} />
+            <Route path="campaigns/:id/edit" element={<CampaignFormPage />} />
+          </Route>
+        </Route>
 
-        <div>
-          <label>
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-            />
-          </label>
-        </div>
-
-        <button type="submit">
-          Login
-        </button>
-      </form>
-
-      {error && (
-        <pre>
-          {JSON.stringify(error, null, 2)}
-        </pre>
-      )}
-    </main>
+        <Route
+          path="*"
+          element={
+            <section>
+              <h1>Page not found</h1>
+              <Link to="/">Go to home</Link>
+            </section>
+          }
+        />
+      </Route>
+    </Routes>
   );
 }
-
-export default App;

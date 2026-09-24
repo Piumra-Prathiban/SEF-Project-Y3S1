@@ -59,6 +59,16 @@ public class PromotionsController : ControllerBase
         return response is null ? NotFound() : Ok(response);
     }
 
+    /// <summary>Products and categories a promotion can target (for the admin UI).</summary>
+    [HttpGet("targets")]
+    [Authorize(Roles = "Staff,Administrator")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<PromotionTargetsResponse>> GetTargetOptions(
+        CancellationToken cancellationToken) =>
+        Ok(await _promotionService.GetTargetOptionsAsync(cancellationToken));
+
     [HttpPost]
     [Authorize(Roles = "Staff,Administrator")]
     [ProducesResponseType(StatusCodes.Status201Created)]

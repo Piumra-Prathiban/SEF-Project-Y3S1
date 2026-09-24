@@ -138,6 +138,29 @@ public class PromotionsApiTests : IClassFixture<MarketingApiFactory>
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    [Fact]
+    public async Task GetTargetOptions_ShouldReturnProductsAndCategories_WhenStaff()
+    {
+        var targets = await _factory.CreateClientAs("Staff")
+            .GetFromJsonAsync<PromotionTargetsResponse>($"{Url}/targets");
+
+        Assert.Equal(5, targets!.Products.Count);
+        Assert.Equal(4, targets.Categories.Count);
+        Assert.Contains(targets.Products, p => p.Id == SeedData.ProductMargherita);
+    }
+
+    [Theory]
+    [InlineData("Customer", HttpStatusCode.Forbidden)]
+    [InlineData(null, HttpStatusCode.Unauthorized)]
+    public async Task GetTargetOptions_ShouldRejectNonStaff(
+        string? role,
+        HttpStatusCode expected)
+    {
+        var response = await _factory.CreateClientAs(role).GetAsync($"{Url}/targets");
+
+        Assert.Equal(expected, response.StatusCode);
+    }
+
     // ---- Create / update / delete ----------------------------------------
 
     [Theory]
