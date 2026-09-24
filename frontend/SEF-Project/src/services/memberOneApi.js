@@ -1,4 +1,4 @@
-import { apiRequest } from './api';
+import { apiRequest } from './api.js';
 
 function jsonRequest(endpoint, method, data, options = {}) {
   return apiRequest(endpoint, {

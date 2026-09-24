@@ -1,5 +1,5 @@
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:5193/api';
+  import.meta.env?.VITE_API_BASE_URL || 'http://localhost:5193/api';
 
 export class ApiError extends Error {
   constructor(message, response, data) {

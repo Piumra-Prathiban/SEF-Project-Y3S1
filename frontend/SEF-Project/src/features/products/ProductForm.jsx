@@ -1,14 +1,10 @@
 import { useState } from 'react';
 import { Alert } from '../../components/ui/Alert';
-
-const initialFormState = {
-  name: '',
-  description: '',
-  categoryId: '',
-  collectionId: '',
-  supplierId: '',
-  isActive: true,
-};
+import {
+  buildProductPayload,
+  initialProductFormState,
+  validateProductForm,
+} from './productFormUtils';
 
 export function ProductForm({
   categories,
@@ -19,12 +15,12 @@ export function ProductForm({
   onSubmit,
 }) {
   const [form, setForm] = useState(() => ({
-    name: initialValue?.name ?? initialFormState.name,
-    description: initialValue?.description ?? initialFormState.description,
-    categoryId: initialValue?.categoryId ?? initialFormState.categoryId,
-    collectionId: initialValue?.collectionId ?? initialFormState.collectionId,
-    supplierId: initialValue?.supplierId ?? initialFormState.supplierId,
-    isActive: initialValue?.isActive ?? initialFormState.isActive,
+    name: initialValue?.name ?? initialProductFormState.name,
+    description: initialValue?.description ?? initialProductFormState.description,
+    categoryId: initialValue?.categoryId ?? initialProductFormState.categoryId,
+    collectionId: initialValue?.collectionId ?? initialProductFormState.collectionId,
+    supplierId: initialValue?.supplierId ?? initialProductFormState.supplierId,
+    isActive: initialValue?.isActive ?? initialProductFormState.isActive,
   }));
   const [validationErrors, setValidationErrors] = useState([]);
 
@@ -35,42 +31,17 @@ export function ProductForm({
     }));
   }
 
-  function validate() {
-    const errors = [];
-
-    if (!form.name.trim()) {
-      errors.push('Product name is required.');
-    }
-
-    if (!form.categoryId) {
-      errors.push('Category is required.');
-    }
-
-    if (!form.collectionId) {
-      errors.push('Collection is required.');
-    }
-
-    return errors;
-  }
-
   function handleSubmit(event) {
     event.preventDefault();
 
-    const errors = validate();
+    const errors = validateProductForm(form);
     setValidationErrors(errors);
 
     if (errors.length > 0) {
       return;
     }
 
-    onSubmit({
-      name: form.name.trim(),
-      description: form.description.trim() || null,
-      categoryId: form.categoryId,
-      collectionId: form.collectionId,
-      supplierId: form.supplierId || null,
-      isActive: form.isActive,
-    });
+    onSubmit(buildProductPayload(form));
   }
 
   return (
