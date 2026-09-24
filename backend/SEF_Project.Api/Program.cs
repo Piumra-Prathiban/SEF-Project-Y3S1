@@ -101,6 +101,17 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Shopping discovery, customer experience, and controlled product recommendation APIs."
     });
 
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Description = "Enter the JWT access token returned by the shared authentication API.",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
+    });
+    options.OperationFilter<JwtSecurityOperationFilter>();
+
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFile));
 });
