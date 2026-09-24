@@ -2,7 +2,7 @@ import { PlaceholderPage } from '../components/ui/PlaceholderPage';
 import { CategoriesPage } from '../features/categories';
 import { CollectionsPage } from '../features/collections';
 import { ColoursPage } from '../features/colours';
-import { InventoryDashboardPage } from '../features/inventory';
+import { InventoryDashboardPage, LowStockPage } from '../features/inventory';
 import { inventoryAgentFeature } from '../features/inventory-agent';
 import { ProductsPage } from '../features/products';
 import { SizesPage } from '../features/sizes';
@@ -79,10 +79,8 @@ export const memberOneRoutes = [
   {
     path: '/inventory/low-stock',
     label: 'Low Stock',
-    element: createPlaceholder({
-      area: 'Low Stock',
-      description: 'Variants where quantity on hand is at or below reorder level.',
-    }),
+    element: <LowStockPage />,
+    roles: STAFF_ROLES,
     showInNavigation: true,
   },
   {

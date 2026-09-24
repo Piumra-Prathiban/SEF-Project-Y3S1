@@ -3,8 +3,10 @@ import { describe, it } from 'node:test';
 import {
   buildInventorySummary,
   buildInventoryQuery,
+  buildLowStockQuery,
   buildStockAdjustmentPayload,
   defaultInventoryQuery,
+  defaultLowStockQuery,
   getColourName,
   getHistoryNewQuantity,
   getHistoryPreviousQuantity,
@@ -15,6 +17,7 @@ import {
   getInventoryStatus,
   getProductName,
   getReorderLevel,
+  getShortageAmount,
   getSizeName,
   getSku,
   getVariantId,
@@ -22,6 +25,7 @@ import {
   normalizeInventoryItems,
   normalizeStockHistoryItems,
   updateInventoryQuery,
+  updateLowStockQuery,
   validateStockAdjustment,
 } from './inventoryDashboardUtils.js';
 
@@ -74,6 +78,35 @@ describe('inventory dashboard utilities', () => {
     );
   });
 
+  it('resets pagination when low-stock sorting changes', () => {
+    const query = updateLowStockQuery(
+      { ...defaultLowStockQuery, page: 3 },
+      'sortBy',
+      'sku',
+    );
+
+    assert.equal(query.sortBy, 'sku');
+    assert.equal(query.page, 1);
+  });
+
+  it('passes server-side low-stock sorting and pagination parameters through to the API', () => {
+    assert.deepEqual(
+      buildLowStockQuery({
+        ...defaultLowStockQuery,
+        sortBy: 'quantity',
+        sortDirection: 'desc',
+        page: 2,
+        pageSize: 25,
+      }),
+      {
+        sortBy: 'quantity',
+        sortDirection: 'desc',
+        page: 2,
+        pageSize: 25,
+      },
+    );
+  });
+
   it('extracts pagination metadata from server responses', () => {
     assert.deepEqual(
       getPaginationMeta(
@@ -119,6 +152,12 @@ describe('inventory dashboard utilities', () => {
     assert.equal(getInventoryStatus({ quantityOnHand: 0, reorderLevel: 5 }), 'Out of Stock');
     assert.equal(getInventoryStatus({ quantityOnHand: 4, reorderLevel: 5 }), 'Low Stock');
     assert.equal(getInventoryStatus({ quantityOnHand: 8, reorderLevel: 5 }), 'In Stock');
+  });
+
+  it('uses provided shortage amount or safely calculates the reorder shortfall', () => {
+    assert.equal(getShortageAmount({ shortageAmount: 7, quantityOnHand: 1, reorderLevel: 5 }), 7);
+    assert.equal(getShortageAmount({ quantityOnHand: 3, reorderLevel: 5 }), 2);
+    assert.equal(getShortageAmount({ quantityOnHand: 8, reorderLevel: 5 }), 0);
   });
 
   it('builds reliable summary metrics from inventory and low-stock data', () => {

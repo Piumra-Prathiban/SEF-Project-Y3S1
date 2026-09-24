@@ -12,7 +12,22 @@ export const defaultInventoryQuery = {
   pageSize: 10,
 };
 
+export const defaultLowStockQuery = {
+  sortBy: 'product',
+  sortDirection: 'asc',
+  page: 1,
+  pageSize: 10,
+};
+
 export function updateInventoryQuery(currentQuery, field, value) {
+  return {
+    ...currentQuery,
+    [field]: value,
+    page: field === 'page' ? value : 1,
+  };
+}
+
+export function updateLowStockQuery(currentQuery, field, value) {
   return {
     ...currentQuery,
     [field]: value,
@@ -27,6 +42,15 @@ export function buildInventoryQuery(query) {
     categoryId: query.categoryId,
     stockStatus: query.stockStatus,
     lowStockOnly: query.lowStockOnly ? true : '',
+    page: query.page,
+    pageSize: query.pageSize,
+  };
+}
+
+export function buildLowStockQuery(query) {
+  return {
+    sortBy: query.sortBy,
+    sortDirection: query.sortDirection,
     page: query.page,
     pageSize: query.pageSize,
   };
@@ -97,6 +121,28 @@ export function getReorderLevel(item) {
     item.stock?.reorderLevel,
     0,
   );
+}
+
+export function getShortageAmount(item) {
+  const providedShortage = firstDefined(
+    item.shortageAmount,
+    item.shortageQuantity,
+    item.shortfall,
+    item.reorderShortage,
+  );
+
+  if (providedShortage !== undefined) {
+    return providedShortage;
+  }
+
+  const quantity = Number(getInventoryQuantity(item));
+  const reorderLevel = Number(getReorderLevel(item));
+
+  if (Number.isNaN(quantity) || Number.isNaN(reorderLevel)) {
+    return '-';
+  }
+
+  return Math.max(reorderLevel - quantity, 0);
 }
 
 export function getInventoryStatus(item) {

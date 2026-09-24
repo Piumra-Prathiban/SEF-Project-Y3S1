@@ -70,6 +70,10 @@ const initialAdjustmentForm = {
   reason: '',
 };
 
+function getInitialSelectedVariantId() {
+  return new URLSearchParams(window.location.search).get('variantId');
+}
+
 export function InventoryDashboardPage() {
   const api = useMemberOneApi();
   const [inventoryItems, setInventoryItems] = useState([]);
@@ -77,7 +81,7 @@ export function InventoryDashboardPage() {
   const [lowStockItems, setLowStockItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [query, setQuery] = useState(defaultInventoryQuery);
-  const [selectedVariantId, setSelectedVariantId] = useState(null);
+  const [selectedVariantId, setSelectedVariantId] = useState(getInitialSelectedVariantId);
   const [selectedInventoryItem, setSelectedInventoryItem] = useState(null);
   const [stockHistory, setStockHistory] = useState([]);
   const [adjustmentForm, setAdjustmentForm] = useState(initialAdjustmentForm);
@@ -171,6 +175,21 @@ export function InventoryDashboardPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadDashboard();
   }, [loadDashboard]);
+
+  useEffect(() => {
+    if (!selectedVariantId || selectedInventoryItem) {
+      return;
+    }
+
+    const matchingItem = inventoryItems.find(
+      (item) => String(getVariantId(item)) === String(selectedVariantId),
+    );
+
+    // This effect intentionally opens the variant linked from the low-stock
+    // page once inventory data is available.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadSelectedVariant(selectedVariantId, matchingItem);
+  }, [inventoryItems, loadSelectedVariant, selectedInventoryItem, selectedVariantId]);
 
   useEffect(() => {
     // This effect intentionally loads category filter data when the
