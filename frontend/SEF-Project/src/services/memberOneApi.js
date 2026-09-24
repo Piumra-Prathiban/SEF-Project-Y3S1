@@ -15,6 +15,21 @@ function deleteRequest(endpoint, options = {}) {
   });
 }
 
+function splitQueryAndOptions(query, options) {
+  const queryLooksLikeOptions =
+    query
+    && typeof query === 'object'
+    && !Array.isArray(query)
+    && options === undefined
+    && ('token' in query || 'headers' in query || 'signal' in query);
+
+  if (queryLooksLikeOptions) {
+    return { query: undefined, options: query };
+  }
+
+  return { query, options };
+}
+
 export function getProducts(query, options) {
   return apiRequest('/products', {
     ...options,
@@ -158,10 +173,13 @@ export function deleteVariant(id, options) {
   return deleteRequest(`/variants/${id}`, options);
 }
 
-export function getInventory(options) {
+export function getInventory(query, options) {
+  const request = splitQueryAndOptions(query, options);
+
   return apiRequest('/inventory', {
-    ...options,
+    ...request.options,
     method: 'GET',
+    query: request.query,
   });
 }
 
@@ -183,10 +201,13 @@ export function getStockHistory(variantId, options) {
   });
 }
 
-export function getLowStock(options) {
+export function getLowStock(query, options) {
+  const request = splitQueryAndOptions(query, options);
+
   return apiRequest('/inventory/low-stock', {
-    ...options,
+    ...request.options,
     method: 'GET',
+    query: request.query,
   });
 }
 

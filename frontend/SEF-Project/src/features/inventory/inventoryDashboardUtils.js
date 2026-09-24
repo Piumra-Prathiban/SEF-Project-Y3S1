@@ -2,12 +2,60 @@ function firstDefined(...values) {
   return values.find((value) => value !== undefined && value !== null);
 }
 
+export const defaultInventoryQuery = {
+  product: '',
+  sku: '',
+  categoryId: '',
+  stockStatus: '',
+  lowStockOnly: false,
+  page: 1,
+  pageSize: 10,
+};
+
+export function updateInventoryQuery(currentQuery, field, value) {
+  return {
+    ...currentQuery,
+    [field]: value,
+    page: field === 'page' ? value : 1,
+  };
+}
+
+export function buildInventoryQuery(query) {
+  return {
+    product: query.product,
+    sku: query.sku,
+    categoryId: query.categoryId,
+    stockStatus: query.stockStatus,
+    lowStockOnly: query.lowStockOnly ? true : '',
+    page: query.page,
+    pageSize: query.pageSize,
+  };
+}
+
 export function normalizeInventoryItems(response) {
   if (Array.isArray(response)) {
     return response;
   }
 
   return response?.items ?? [];
+}
+
+export function getPaginationMeta(response, fallbackQuery) {
+  if (!response || Array.isArray(response)) {
+    return {
+      page: fallbackQuery.page,
+      pageSize: fallbackQuery.pageSize,
+      totalItems: Array.isArray(response) ? response.length : 0,
+      totalPages: 1,
+    };
+  }
+
+  return {
+    page: response.page ?? fallbackQuery.page,
+    pageSize: response.pageSize ?? fallbackQuery.pageSize,
+    totalItems: response.totalItems ?? response.items?.length ?? 0,
+    totalPages: response.totalPages ?? 1,
+  };
 }
 
 export function normalizeStockHistoryItems(response) {
@@ -119,7 +167,7 @@ export function getColourName(item) {
   );
 }
 
-export function buildInventorySummary(inventoryItems, lowStockItems) {
+export function buildInventorySummary(inventoryItems, lowStockItems, paginationMeta = null) {
   const productIds = new Set(
     inventoryItems
       .map((item) => firstDefined(
@@ -143,7 +191,7 @@ export function buildInventorySummary(inventoryItems, lowStockItems) {
 
   return {
     totalProducts: productIds.size,
-    totalVariants: inventoryItems.length,
+    totalVariants: paginationMeta?.totalItems ?? inventoryItems.length,
     totalStock,
     lowStockVariants: lowStockItems.length,
     outOfStockVariants,

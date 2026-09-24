@@ -6,17 +6,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { navigateTo } from '../../hooks/useLocation';
 import { useMemberOneApi } from '../../hooks/useMemberOneApi';
 import { ProductForm } from './ProductForm';
-
-const defaultQuery = {
-  search: '',
-  categoryId: '',
-  collectionId: '',
-  isActive: '',
-  sortBy: 'name',
-  sortDirection: 'asc',
-  page: 1,
-  pageSize: 10,
-};
+import {
+  buildProductQuery,
+  defaultProductQuery,
+  updatePagedQuery,
+} from './productQueryUtils';
 
 function formatDate(value) {
   if (!value) {
@@ -55,7 +49,7 @@ function normalizeError(error) {
 export function ProductsPage() {
   const api = useMemberOneApi();
   const { isStaffOrAdmin } = useAuth();
-  const [query, setQuery] = useState(defaultQuery);
+  const [query, setQuery] = useState(defaultProductQuery);
   const [productsResponse, setProductsResponse] = useState(null);
   const [categories, setCategories] = useState([]);
   const [collections, setCollections] = useState([]);
@@ -71,16 +65,7 @@ export function ProductsPage() {
   const totalPages = productsResponse?.totalPages ?? 1;
 
   const productQuery = useMemo(
-    () => ({
-      search: query.search,
-      categoryId: query.categoryId,
-      collectionId: query.collectionId,
-      isActive: query.isActive,
-      sortBy: query.sortBy,
-      sortDirection: query.sortDirection,
-      page: query.page,
-      pageSize: query.pageSize,
-    }),
+    () => buildProductQuery(query),
     [query],
   );
 
@@ -127,11 +112,7 @@ export function ProductsPage() {
   }, [loadProducts]);
 
   function updateQuery(field, value) {
-    setQuery((current) => ({
-      ...current,
-      [field]: value,
-      page: field === 'page' ? value : 1,
-    }));
+    setQuery((current) => updatePagedQuery(current, field, value));
   }
 
   async function handleView(productId) {
@@ -265,6 +246,24 @@ export function ProductsPage() {
             <option value="false">Inactive</option>
           </select>
 
+          <input
+            aria-label="Minimum product price"
+            min="0"
+            onChange={(event) => updateQuery('minPrice', event.target.value)}
+            placeholder="Min price"
+            type="number"
+            value={query.minPrice}
+          />
+
+          <input
+            aria-label="Maximum product price"
+            min="0"
+            onChange={(event) => updateQuery('maxPrice', event.target.value)}
+            placeholder="Max price"
+            type="number"
+            value={query.maxPrice}
+          />
+
           <select
             aria-label="Sort products"
             onChange={(event) => updateQuery('sortBy', event.target.value)}
@@ -282,6 +281,16 @@ export function ProductsPage() {
           >
             <option value="asc">Ascending</option>
             <option value="desc">Descending</option>
+          </select>
+
+          <select
+            aria-label="Product page size"
+            onChange={(event) => updateQuery('pageSize', Number(event.target.value))}
+            value={query.pageSize}
+          >
+            <option value={10}>10 per page</option>
+            <option value={25}>25 per page</option>
+            <option value={50}>50 per page</option>
           </select>
         </div>
 
@@ -399,7 +408,7 @@ export function ProductsPage() {
         </button>
         <span>
           Page {productsResponse?.page ?? query.page} of {totalPages || 1}
-          {' '}({productsResponse?.totalItems ?? 0} products)
+          {' '}({productsResponse?.totalItems ?? 0} products, page size {productsResponse?.pageSize ?? query.pageSize})
         </span>
         <button
           className="button-secondary"

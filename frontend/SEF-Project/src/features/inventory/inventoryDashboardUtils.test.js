@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   buildInventorySummary,
+  buildInventoryQuery,
   buildStockAdjustmentPayload,
+  defaultInventoryQuery,
   getColourName,
   getHistoryNewQuantity,
   getHistoryPreviousQuantity,
@@ -16,8 +18,10 @@ import {
   getSizeName,
   getSku,
   getVariantId,
+  getPaginationMeta,
   normalizeInventoryItems,
   normalizeStockHistoryItems,
+  updateInventoryQuery,
   validateStockAdjustment,
 } from './inventoryDashboardUtils.js';
 
@@ -27,6 +31,62 @@ describe('inventory dashboard utilities', () => {
 
     assert.deepEqual(normalizeInventoryItems(items), items);
     assert.deepEqual(normalizeInventoryItems({ items }), items);
+  });
+
+  it('resets pagination when inventory filters change', () => {
+    const query = updateInventoryQuery(
+      { ...defaultInventoryQuery, page: 4 },
+      'sku',
+      'TSH',
+    );
+
+    assert.equal(query.sku, 'TSH');
+    assert.equal(query.page, 1);
+  });
+
+  it('preserves inventory pagination when the page changes', () => {
+    const query = updateInventoryQuery(defaultInventoryQuery, 'page', 2);
+
+    assert.equal(query.page, 2);
+  });
+
+  it('passes server-side inventory query parameters through to the API', () => {
+    assert.deepEqual(
+      buildInventoryQuery({
+        ...defaultInventoryQuery,
+        product: 'shirt',
+        sku: 'TSH',
+        categoryId: 'category-1',
+        stockStatus: 'Low Stock',
+        lowStockOnly: true,
+        page: 3,
+        pageSize: 25,
+      }),
+      {
+        product: 'shirt',
+        sku: 'TSH',
+        categoryId: 'category-1',
+        stockStatus: 'Low Stock',
+        lowStockOnly: true,
+        page: 3,
+        pageSize: 25,
+      },
+    );
+  });
+
+  it('extracts pagination metadata from server responses', () => {
+    assert.deepEqual(
+      getPaginationMeta(
+        { items: [{ id: 'stock-1' }], page: 2, pageSize: 25, totalItems: 60, totalPages: 3 },
+        defaultInventoryQuery,
+      ),
+      {
+        page: 2,
+        pageSize: 25,
+        totalItems: 60,
+        totalPages: 3,
+      },
+    );
   });
 
   it('reads inventory table fields from supported response shapes', () => {
@@ -69,11 +129,12 @@ describe('inventory dashboard utilities', () => {
         { productId: 'product-2', quantityOnHand: 3 },
       ],
       [{ id: 'low-1' }, { id: 'low-2' }],
+      { totalItems: 10 },
     );
 
     assert.deepEqual(summary, {
       totalProducts: 2,
-      totalVariants: 3,
+      totalVariants: 10,
       totalStock: 13,
       lowStockVariants: 2,
       outOfStockVariants: 1,

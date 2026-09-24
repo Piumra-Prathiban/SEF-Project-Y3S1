@@ -4,8 +4,10 @@ import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
 import { useMemberOneApi } from '../../hooks/useMemberOneApi';
 import {
+  buildInventoryQuery,
   buildInventorySummary,
   buildStockAdjustmentPayload,
+  defaultInventoryQuery,
   getColourName,
   getHistoryDate,
   getHistoryNewQuantity,
@@ -16,6 +18,7 @@ import {
   getHistoryType,
   getInventoryQuantity,
   getInventoryStatus,
+  getPaginationMeta,
   getProductName,
   getReorderLevel,
   getSizeName,
@@ -24,6 +27,7 @@ import {
   normalizeInventoryItems,
   normalizeStockHistoryItems,
   STOCK_TRANSACTION_TYPES,
+  updateInventoryQuery,
   validateStockAdjustment,
 } from './inventoryDashboardUtils';
 
@@ -69,7 +73,10 @@ const initialAdjustmentForm = {
 export function InventoryDashboardPage() {
   const api = useMemberOneApi();
   const [inventoryItems, setInventoryItems] = useState([]);
+  const [inventoryResponse, setInventoryResponse] = useState(null);
   const [lowStockItems, setLowStockItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [query, setQuery] = useState(defaultInventoryQuery);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [selectedInventoryItem, setSelectedInventoryItem] = useState(null);
   const [stockHistory, setStockHistory] = useState([]);
@@ -82,9 +89,19 @@ export function InventoryDashboardPage() {
   const [message, setMessage] = useState(null);
   const [lastRefreshedAt, setLastRefreshedAt] = useState(null);
 
+  const inventoryQuery = useMemo(
+    () => buildInventoryQuery(query),
+    [query],
+  );
+
+  const paginationMeta = useMemo(
+    () => getPaginationMeta(inventoryResponse, query),
+    [inventoryResponse, query],
+  );
+
   const summary = useMemo(
-    () => buildInventorySummary(inventoryItems, lowStockItems),
-    [inventoryItems, lowStockItems],
+    () => buildInventorySummary(inventoryItems, lowStockItems, paginationMeta),
+    [inventoryItems, lowStockItems, paginationMeta],
   );
 
   const loadDashboard = useCallback(async () => {
@@ -92,11 +109,16 @@ export function InventoryDashboardPage() {
     setError(null);
 
     try {
+      const inventoryRequest = query.lowStockOnly
+        ? api.getLowStock(inventoryQuery)
+        : api.getInventory(inventoryQuery);
+
       const [inventoryResponse, lowStockResponse] = await Promise.all([
-        api.getInventory(),
+        inventoryRequest,
         api.getLowStock(),
       ]);
 
+      setInventoryResponse(inventoryResponse);
       setInventoryItems(normalizeInventoryItems(inventoryResponse));
       setLowStockItems(normalizeInventoryItems(lowStockResponse));
       setLastRefreshedAt(new Date());
@@ -104,6 +126,15 @@ export function InventoryDashboardPage() {
       setError(normalizeError(err));
     } finally {
       setIsLoading(false);
+    }
+  }, [api, inventoryQuery, query.lowStockOnly]);
+
+  const loadLookups = useCallback(async () => {
+    try {
+      const categoryResponse = await api.getCategories();
+      setCategories(categoryResponse);
+    } catch (err) {
+      setError(normalizeError(err));
     }
   }, [api]);
 
@@ -136,10 +167,21 @@ export function InventoryDashboardPage() {
 
   useEffect(() => {
     // This effect intentionally loads dashboard data when the authenticated API
-    // client changes.
+    // client or inventory query changes.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadDashboard();
   }, [loadDashboard]);
+
+  useEffect(() => {
+    // This effect intentionally loads category filter data when the
+    // authenticated API client changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadLookups();
+  }, [loadLookups]);
+
+  function updateQuery(field, value) {
+    setQuery((current) => updateInventoryQuery(current, field, value));
+  }
 
   function updateAdjustmentField(field, value) {
     setAdjustmentForm((current) => ({
@@ -219,6 +261,67 @@ export function InventoryDashboardPage() {
         </button>
       </div>
 
+      <div className="toolbar">
+        <div className="toolbar__filters">
+          <input
+            aria-label="Filter inventory by product"
+            onChange={(event) => updateQuery('product', event.target.value)}
+            placeholder="Product"
+            value={query.product}
+          />
+
+          <input
+            aria-label="Filter inventory by SKU"
+            onChange={(event) => updateQuery('sku', event.target.value)}
+            placeholder="SKU"
+            value={query.sku}
+          />
+
+          <select
+            aria-label="Filter inventory by category"
+            onChange={(event) => updateQuery('categoryId', event.target.value)}
+            value={query.categoryId}
+          >
+            <option value="">All categories</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            aria-label="Filter inventory by stock status"
+            onChange={(event) => updateQuery('stockStatus', event.target.value)}
+            value={query.stockStatus}
+          >
+            <option value="">All stock statuses</option>
+            <option value="In Stock">In Stock</option>
+            <option value="Low Stock">Low Stock</option>
+            <option value="Out of Stock">Out of Stock</option>
+          </select>
+
+          <select
+            aria-label="Inventory page size"
+            onChange={(event) => updateQuery('pageSize', Number(event.target.value))}
+            value={query.pageSize}
+          >
+            <option value={10}>10 per page</option>
+            <option value={25}>25 per page</option>
+            <option value={50}>50 per page</option>
+          </select>
+
+          <label className="checkbox-field">
+            <input
+              checked={query.lowStockOnly}
+              onChange={(event) => updateQuery('lowStockOnly', event.target.checked)}
+              type="checkbox"
+            />
+            Low-stock only
+          </label>
+        </div>
+      </div>
+
       {error && <Alert tone="danger">{error}</Alert>}
       {message && <Alert>{message}</Alert>}
 
@@ -228,15 +331,15 @@ export function InventoryDashboardPage() {
         <>
           <section className="summary-grid" aria-label="Inventory summary">
             <article className="summary-card">
-              <span>Total products</span>
+              <span>Visible products</span>
               <strong>{summary.totalProducts}</strong>
             </article>
             <article className="summary-card">
-              <span>Total variants</span>
+              <span>Total matching variants</span>
               <strong>{summary.totalVariants}</strong>
             </article>
             <article className="summary-card">
-              <span>Total stock</span>
+              <span>Visible stock</span>
               <strong>{summary.totalStock}</strong>
             </article>
             <article className="summary-card">
@@ -244,7 +347,7 @@ export function InventoryDashboardPage() {
               <strong>{summary.lowStockVariants}</strong>
             </article>
             <article className="summary-card">
-              <span>Out-of-stock variants</span>
+              <span>Visible out-of-stock variants</span>
               <strong>{summary.outOfStockVariants}</strong>
             </article>
           </section>
@@ -306,6 +409,29 @@ export function InventoryDashboardPage() {
               </table>
             </div>
           )}
+
+          <div className="pagination-bar">
+            <button
+              className="button-secondary"
+              disabled={paginationMeta.page <= 1}
+              onClick={() => updateQuery('page', paginationMeta.page - 1)}
+              type="button"
+            >
+              Previous
+            </button>
+            <span>
+              Page {paginationMeta.page} of {paginationMeta.totalPages || 1}
+              {' '}({paginationMeta.totalItems} inventory records, page size {paginationMeta.pageSize})
+            </span>
+            <button
+              className="button-secondary"
+              disabled={paginationMeta.page >= paginationMeta.totalPages}
+              onClick={() => updateQuery('page', paginationMeta.page + 1)}
+              type="button"
+            >
+              Next
+            </button>
+          </div>
 
           {selectedInventoryItem && (
             <section className="panel stock-management-panel">
