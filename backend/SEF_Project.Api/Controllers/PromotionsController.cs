@@ -14,13 +14,16 @@ public class PromotionsController : ControllerBase
 {
     private readonly IPromotionService _promotionService;
     private readonly IPromotionPricingService _promotionPricingService;
+    private readonly IPromotionOfferService _promotionOfferService;
 
     public PromotionsController(
         IPromotionService promotionService,
-        IPromotionPricingService promotionPricingService)
+        IPromotionPricingService promotionPricingService,
+        IPromotionOfferService promotionOfferService)
     {
         _promotionService = promotionService;
         _promotionPricingService = promotionPricingService;
+        _promotionOfferService = promotionOfferService;
     }
 
     /// <summary>
@@ -55,6 +58,40 @@ public class PromotionsController : ControllerBase
             CanManagePromotions(),
             id,
             cancellationToken);
+
+        return response is null ? NotFound() : Ok(response);
+    }
+
+    /// <summary>
+    /// Eligible products of a live promotion with server-calculated prices
+    /// (customer-facing). 404 when the promotion is missing or not live.
+    /// </summary>
+    [HttpGet("{id:guid}/products")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<PromotionProductsResponse>> GetPromotionProducts(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var response = await _promotionOfferService.GetPromotionProductsAsync(id, cancellationToken);
+
+        return response is null ? NotFound() : Ok(response);
+    }
+
+    /// <summary>
+    /// A product's live promotions and its variants priced with the best one
+    /// (customer-facing). 404 when the product is missing or inactive.
+    /// </summary>
+    [HttpGet("products/{productId:guid}")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ProductPromotionsResponse>> GetProductPromotions(
+        Guid productId,
+        CancellationToken cancellationToken)
+    {
+        var response = await _promotionOfferService.GetProductPromotionsAsync(productId, cancellationToken);
 
         return response is null ? NotFound() : Ok(response);
     }
