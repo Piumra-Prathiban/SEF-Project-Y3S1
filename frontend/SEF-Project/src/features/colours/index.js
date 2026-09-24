@@ -1,3 +1,5 @@
+export { ColoursPage } from './ColoursPage';
+
 export const coloursFeature = {
   area: 'Colours',
   description:

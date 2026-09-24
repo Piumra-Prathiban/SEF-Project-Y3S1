@@ -1,3 +1,5 @@
+export { SizesPage } from './SizesPage';
+
 export const sizesFeature = {
   area: 'Sizes',
   description:
