@@ -3,6 +3,7 @@ import { Alert } from '../../components/ui/Alert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
 import { useAuth } from '../../contexts/AuthContext';
+import { navigateTo } from '../../hooks/useLocation';
 import { useMemberOneApi } from '../../hooks/useMemberOneApi';
 import { ProductForm } from './ProductForm';
 
@@ -352,6 +353,13 @@ export function ProductsPage() {
                         type="button"
                       >
                         View
+                      </button>
+                      <button
+                        className="button-secondary"
+                        onClick={() => navigateTo(`/variants?productId=${encodeURIComponent(product.id)}`)}
+                        type="button"
+                      >
+                        Variants
                       </button>
                       {isStaffOrAdmin && (
                         <>

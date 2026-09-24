@@ -1,3 +1,5 @@
+export { VariantsPage } from './VariantsPage';
+
 export const variantsFeature = {
   area: 'Product Variants',
   description:

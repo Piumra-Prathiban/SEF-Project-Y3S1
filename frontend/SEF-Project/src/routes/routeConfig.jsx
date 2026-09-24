@@ -6,7 +6,7 @@ import { inventoryFeature } from '../features/inventory';
 import { inventoryAgentFeature } from '../features/inventory-agent';
 import { ProductsPage } from '../features/products';
 import { SizesPage } from '../features/sizes';
-import { variantsFeature } from '../features/variants';
+import { VariantsPage } from '../features/variants';
 import { STAFF_ROLES } from '../utils/roles';
 
 function createPlaceholder(feature) {
@@ -56,7 +56,7 @@ export const memberOneRoutes = [
   {
     path: '/variants',
     label: 'Variants',
-    element: createPlaceholder(variantsFeature),
+    element: <VariantsPage />,
     roles: STAFF_ROLES,
     showInNavigation: true,
   },
