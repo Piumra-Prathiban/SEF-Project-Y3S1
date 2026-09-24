@@ -18,6 +18,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("Jwt"));
+builder.Services.Configure<PersonalStylistAgentOptions>(
+    builder.Configuration.GetSection("PersonalStylistAgent"));
 
 var jwtSettings = builder.Configuration
     .GetSection("Jwt")
@@ -54,12 +56,18 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IProductSearchService, ProductSearchService>();
+builder.Services.AddScoped<IProductAvailabilityService, ProductAvailabilityService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
-builder.Services.AddScoped<IRecommendationCustomerTool, RecommendationCustomerTool>();
-builder.Services.AddScoped<IRecommendationCatalogTool, RecommendationCatalogTool>();
-builder.Services.AddScoped<IRecommendationOrchestrator, CatalogRecommendationOrchestrator>();
+builder.Services.AddScoped<ICustomerPreferenceTool, CustomerPreferenceTool>();
+builder.Services.AddScoped<IProductSearchTool, ProductSearchTool>();
+builder.Services.AddScoped<IWishlistTool, WishlistTool>();
+builder.Services.AddScoped<IProductAvailabilityTool, ProductAvailabilityTool>();
+builder.Services.AddScoped<IPersonalStylistRecommendationModel, GroundedPersonalStylistModel>();
+builder.Services.AddScoped<IPersonalStylistOutputValidator, PersonalStylistOutputValidator>();
+builder.Services.AddScoped<IAgentWorkflowRecorder, AgentWorkflowRecorder>();
+builder.Services.AddScoped<IPersonalStylistAgent, PersonalStylistAgent>();
 builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 
 builder.Services.AddCors(options =>

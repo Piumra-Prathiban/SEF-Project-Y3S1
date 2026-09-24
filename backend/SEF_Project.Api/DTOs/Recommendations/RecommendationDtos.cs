@@ -56,18 +56,20 @@ public class RecommendationRequest : IValidatableObject
 
 public class RecommendationResponse
 {
-    public Guid RequestId { get; set; }
+    public Guid WorkflowId { get; set; }
 
-    public string Status { get; set; } = "catalogue_candidates_ready";
+    public string Status { get; set; } = string.Empty;
 
     public DateTimeOffset CreatedAt { get; set; }
 
-    public RecommendationCustomerResponse Customer { get; set; } = new();
+    public RecommendationCustomerResponse? Customer { get; set; }
 
     public RecommendationCriteriaResponse Criteria { get; set; } = new();
 
-    public IReadOnlyList<RecommendationProductResponse> Products { get; set; } =
-        Array.Empty<RecommendationProductResponse>();
+    public IReadOnlyList<ProductRecommendationResponse> Recommendations { get; set; } =
+        Array.Empty<ProductRecommendationResponse>();
+
+    public RecommendationExecutionSummaryResponse Execution { get; set; } = new();
 
     /// <summary>
     /// Preferences that could not be enforced by the current catalogue schema.
@@ -103,39 +105,36 @@ public class RecommendationCriteriaResponse
     public string? StylePreferences { get; set; }
 }
 
-public class RecommendationProductResponse
+public class ProductRecommendationResponse
 {
     public Guid ProductId { get; set; }
 
-    public string Name { get; set; } = string.Empty;
+    public Guid VariantId { get; set; }
 
-    public string? Description { get; set; }
+    public string ProductName { get; set; } = string.Empty;
 
-    public decimal MinimumAvailablePrice { get; set; }
-
-    public IReadOnlyList<RecommendationCategoryResponse> Categories { get; set; } =
-        Array.Empty<RecommendationCategoryResponse>();
-
-    public IReadOnlyList<RecommendationVariantResponse> AvailableVariants { get; set; } =
-        Array.Empty<RecommendationVariantResponse>();
-}
-
-public class RecommendationCategoryResponse
-{
-    public Guid Id { get; set; }
-
-    public string Name { get; set; } = string.Empty;
-}
-
-public class RecommendationVariantResponse
-{
-    public Guid Id { get; set; }
+    public string VariantName { get; set; } = string.Empty;
 
     public string Sku { get; set; } = string.Empty;
-
-    public string Name { get; set; } = string.Empty;
 
     public decimal Price { get; set; }
 
     public int AvailableQuantity { get; set; }
+
+    public string Reason { get; set; } = string.Empty;
+}
+
+public class RecommendationExecutionSummaryResponse
+{
+    public string AgentName { get; set; } = string.Empty;
+
+    public string Status { get; set; } = string.Empty;
+
+    public int ToolAttempts { get; set; }
+
+    public int SuccessfulToolExecutions { get; set; }
+
+    public bool OutputValidated { get; set; }
+
+    public string? ErrorSummary { get; set; }
 }

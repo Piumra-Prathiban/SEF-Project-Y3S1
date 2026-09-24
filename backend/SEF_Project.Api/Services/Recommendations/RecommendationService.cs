@@ -5,11 +5,11 @@ namespace SEF_Project.Api.Services.Recommendations;
 
 public class RecommendationService : IRecommendationService
 {
-    private readonly IRecommendationOrchestrator _orchestrator;
+    private readonly IPersonalStylistAgent _agent;
 
-    public RecommendationService(IRecommendationOrchestrator orchestrator)
+    public RecommendationService(IPersonalStylistAgent agent)
     {
-        _orchestrator = orchestrator;
+        _agent = agent;
     }
 
     public async Task<RecommendationResponse> StartAsync(
@@ -21,20 +21,23 @@ public class RecommendationService : IRecommendationService
         ValidateRequest(request);
 
         var context = Normalize(request);
-        var result = await _orchestrator.CreateCandidatesAsync(
+        var result = await _agent.RunAsync(
             userId,
             context,
             cancellationToken);
 
         return new RecommendationResponse
         {
-            RequestId = Guid.NewGuid(),
+            WorkflowId = result.WorkflowId,
+            Status = result.Execution.Status,
             CreatedAt = DateTimeOffset.UtcNow,
-            Customer = new RecommendationCustomerResponse
-            {
-                FirstName = result.Customer.FirstName,
-                LastName = result.Customer.LastName
-            },
+            Customer = result.Customer == null
+                ? null
+                : new RecommendationCustomerResponse
+                {
+                    FirstName = result.Customer.FirstName,
+                    LastName = result.Customer.LastName
+                },
             Criteria = new RecommendationCriteriaResponse
             {
                 Occasion = context.Occasion,
@@ -43,11 +46,31 @@ public class RecommendationService : IRecommendationService
                 PreferredSize = context.PreferredSize,
                 StylePreferences = context.StylePreferences
             },
-            Products = result.Products
-                .Select(MapProduct)
+            Recommendations = result.Recommendations
+                .Select(item => new ProductRecommendationResponse
+                {
+                    ProductId = item.ProductId,
+                    VariantId = item.VariantId,
+                    ProductName = item.ProductName,
+                    VariantName = item.VariantName,
+                    Sku = item.Sku,
+                    Price = item.Price,
+                    AvailableQuantity = item.AvailableQuantity,
+                    Reason = item.Reason
+                })
                 .ToList(),
             UnappliedPreferences = result.UnappliedPreferences,
-            RelaxedCriteria = result.RelaxedCriteria
+            RelaxedCriteria = result.RelaxedCriteria,
+            Execution = new RecommendationExecutionSummaryResponse
+            {
+                AgentName = result.Execution.AgentName,
+                Status = result.Execution.Status,
+                ToolAttempts = result.Execution.ToolAttempts,
+                SuccessfulToolExecutions =
+                    result.Execution.SuccessfulToolExecutions,
+                OutputValidated = result.Execution.OutputValidated,
+                ErrorSummary = result.Execution.ErrorSummary
+            }
         };
     }
 
@@ -65,32 +88,6 @@ public class RecommendationService : IRecommendationService
             NormalizeOptional(request.PreferredSize),
             NormalizeOptional(request.StylePreferences));
     }
-
-    private static RecommendationProductResponse MapProduct(
-        RecommendationCatalogProduct product) => new()
-        {
-            ProductId = product.ProductId,
-            Name = product.Name,
-            Description = product.Description,
-            MinimumAvailablePrice = product.MinimumAvailablePrice,
-            Categories = product.Categories
-                .Select(category => new RecommendationCategoryResponse
-                {
-                    Id = category.Id,
-                    Name = category.Name
-                })
-                .ToList(),
-            AvailableVariants = product.AvailableVariants
-                .Select(variant => new RecommendationVariantResponse
-                {
-                    Id = variant.Id,
-                    Sku = variant.Sku,
-                    Name = variant.Name,
-                    Price = variant.Price,
-                    AvailableQuantity = variant.AvailableQuantity
-                })
-                .ToList()
-        };
 
     private static void ValidateRequest(RecommendationRequest request)
     {

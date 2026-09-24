@@ -24,7 +24,9 @@ public class RecommendationsController : ControllerBase
     /// come from the server-side catalogue and inventory services. This is a
     /// domain-specific recommendation endpoint, not a general chat endpoint.
     /// </remarks>
-    /// <response code="200">Returns authoritative catalogue candidates.</response>
+    /// <response code="200">
+    /// Returns catalogue-grounded recommendations or a structured safe-failure result.
+    /// </response>
     /// <response code="400">The fashion preferences are invalid.</response>
     /// <response code="401">An active authenticated customer is required.</response>
     [HttpPost]
