@@ -155,6 +155,50 @@
   font-size: 14px;
 }
 
+.order-detail__status-management {
+  margin-bottom: 24px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.status-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.status-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.status-form select {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+}
+
+.status-feedback {
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+
+.status-feedback--success {
+  color: #15803d;
+}
+
+.status-feedback--error {
+  color: #ef4444;
+}
+
 .timeline {
   display: grid;
   gap: 12px;

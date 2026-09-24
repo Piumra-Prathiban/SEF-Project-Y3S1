@@ -1,21 +1,65 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { getOrderById, PaymentMethodName } from '../../services/orderService';
+import {
+  getOrderById,
+  updateOrderStatus,
+  OrderStatus,
+  OrderStatusName,
+  PaymentMethodName,
+} from '../../services/orderService';
 import { formatCurrency, formatDateTime } from '../../utils/format';
+import { isStaff } from '../../utils/roles';
 import Loading from '../../components/Loading';
 import ErrorAlert from '../../components/ErrorAlert';
 import StatusBadge from '../../components/StatusBadge';
 import './orders.css';
 
+// Advisory only: mirrors the backend's order status state machine so the UI can
+// offer sensible next steps. The backend enforces the real transitions and a
+// rejected change surfaces as a 409. Cancellation is deliberately excluded -
+// it is owned by the dedicated POST /orders/{id}/cancel flow, which also
+// releases reserved inventory and refunds payments.
+const ALLOWED_STATUS_TRANSITIONS = {
+  [OrderStatus.Pending]: [OrderStatus.Confirmed],
+  [OrderStatus.Confirmed]: [OrderStatus.Preparing],
+  [OrderStatus.Preparing]: [OrderStatus.Ready],
+  [OrderStatus.Ready]: [OrderStatus.Completed],
+  [OrderStatus.Completed]: [OrderStatus.Refunded],
+  [OrderStatus.Cancelled]: [],
+  [OrderStatus.Refunded]: [],
+};
+
+const TERMINAL_STATUSES = [OrderStatus.Completed, OrderStatus.Refunded];
+
+function describeStatusError(error) {
+  if (error?.status === 403) {
+    return 'You do not have permission to change the order status.';
+  }
+
+  if (error?.status === 409) {
+    return 'That status change is not allowed from the current status.';
+  }
+
+  if (error?.status === 400) {
+    return error.message || 'The status change was rejected.';
+  }
+
+  return error?.message || 'The status change could not be applied.';
+}
+
 function OrderDetailPage() {
   const { id } = useParams();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [retryTick, setRetryTick] = useState(0);
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [updating, setUpdating] = useState(false);
+  const [statusError, setStatusError] = useState(null);
+  const [statusSuccess, setStatusSuccess] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,6 +91,51 @@ function OrderDetailPage() {
       cancelled = true;
     };
   }, [token, id, retryTick]);
+
+  const canManageStatus = isStaff(user);
+  const allowedStatusOptions = order
+    ? (ALLOWED_STATUS_TRANSITIONS[order.status] ?? [])
+    : [];
+
+  async function handleStatusSubmit(event) {
+    event.preventDefault();
+
+    const targetStatus = Number(selectedStatus);
+
+    if (!allowedStatusOptions.includes(targetStatus)) {
+      setStatusError({ message: 'Select one of the available statuses.' });
+      return;
+    }
+
+    if (
+      TERMINAL_STATUSES.includes(targetStatus)
+      && !window.confirm(
+        `Change the order status to ${OrderStatusName[targetStatus]}? This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    setUpdating(true);
+    setStatusError(null);
+    setStatusSuccess(null);
+
+    try {
+      const updated = await updateOrderStatus(token, id, {
+        status: targetStatus,
+      });
+
+      setOrder(updated);
+      setSelectedStatus('');
+      setStatusSuccess(
+        `Order status updated to ${OrderStatusName[targetStatus]}.`,
+      );
+    } catch (err) {
+      setStatusError(err);
+    } finally {
+      setUpdating(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -97,6 +186,52 @@ function OrderDetailPage() {
         <StatusBadge status={order.status} />
         <span>Placed {formatDateTime(order.placedAt)}</span>
       </div>
+
+      {canManageStatus && (
+        <section className="order-detail__status-management">
+          <h2>Update status</h2>
+
+          {allowedStatusOptions.length === 0 ? (
+            <p className="order-detail__empty">
+              No further status changes are available for this order.
+            </p>
+          ) : (
+            <form className="status-form" onSubmit={handleStatusSubmit}>
+              <label htmlFor="order-status-select">
+                New status
+                <select
+                  id="order-status-select"
+                  value={selectedStatus}
+                  onChange={(event) => setSelectedStatus(event.target.value)}
+                >
+                  <option value="">Select a status…</option>
+                  {allowedStatusOptions.map((statusOption) => (
+                    <option key={statusOption} value={statusOption}>
+                      {OrderStatusName[statusOption]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <button type="submit" disabled={updating || selectedStatus === ''}>
+                {updating ? 'Updating…' : 'Update status'}
+              </button>
+            </form>
+          )}
+
+          {statusSuccess && (
+            <p className="status-feedback status-feedback--success" role="status">
+              {statusSuccess}
+            </p>
+          )}
+
+          {statusError && (
+            <p className="status-feedback status-feedback--error" role="alert">
+              {describeStatusError(statusError)}
+            </p>
+          )}
+        </section>
+      )}
 
       <section className="order-detail__items">
         <h2>Items</h2>

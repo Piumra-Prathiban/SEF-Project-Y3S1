@@ -1,9 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import OrderDetailPage from './OrderDetailPage';
-import { getOrderById } from '../../services/orderService';
+import {
+  getOrderById,
+  updateOrderStatus,
+  OrderStatus,
+} from '../../services/orderService';
 
 vi.mock('../../services/orderService', async (importOriginal) => {
   const actual = await importOriginal();
@@ -11,6 +15,7 @@ vi.mock('../../services/orderService', async (importOriginal) => {
   return {
     ...actual,
     getOrderById: vi.fn(),
+    updateOrderStatus: vi.fn(),
   };
 });
 
@@ -90,6 +95,24 @@ const ORDER = {
   ],
 };
 
+function makeOrder(overrides) {
+  return { ...ORDER, ...overrides };
+}
+
+const ORDER_PENDING = makeOrder({
+  status: OrderStatus.Pending,
+  payments: [],
+  shipments: [],
+  statusHistory: [
+    {
+      id: 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh',
+      status: OrderStatus.Pending,
+      changedAt: '2026-09-20T10:00:00Z',
+      note: 'Order placed',
+    },
+  ],
+});
+
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={[`/orders/${ORDER_ID}`]}>
@@ -113,7 +136,13 @@ beforeEach(() => {
     fetchCurrentUser: vi.fn(),
   };
 
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
+
   getOrderById.mockResolvedValue(ORDER);
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe('OrderDetailPage', () => {
@@ -183,5 +212,203 @@ describe('OrderDetailPage', () => {
     expect(
       await screen.findByRole('heading', { name: 'Order ORD-1001' }),
     ).toBeInTheDocument();
+  });
+
+  it('offers staff only the next allowed order statuses', async () => {
+    getOrderById.mockResolvedValue(ORDER_PENDING);
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    const options = within(screen.getByLabelText('New status'))
+      .getAllByRole('option')
+      .map((option) => option.textContent);
+
+    expect(options).toEqual(['Select a status…', 'Confirmed']);
+  });
+
+  it('hides the status controls from customers', async () => {
+    mockAuth.user = { ...mockAuth.user, role: 'Customer' };
+    getOrderById.mockResolvedValue(ORDER_PENDING);
+
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    expect(screen.queryByLabelText('New status')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Update status' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('updates the order status for staff', async () => {
+    getOrderById.mockResolvedValue(ORDER_PENDING);
+    updateOrderStatus.mockResolvedValue(
+      makeOrder({ status: OrderStatus.Confirmed }),
+    );
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    await user.selectOptions(
+      screen.getByLabelText('New status'),
+      String(OrderStatus.Confirmed),
+    );
+    await user.click(screen.getByRole('button', { name: 'Update status' }));
+
+    await waitFor(() => {
+      expect(updateOrderStatus).toHaveBeenCalledWith('test-token', ORDER_ID, {
+        status: OrderStatus.Confirmed,
+      });
+    });
+
+    expect(
+      await screen.findByText('Order status updated to Confirmed.'),
+    ).toBeInTheDocument();
+  });
+
+  it('refreshes the order and status history after a successful update', async () => {
+    getOrderById.mockResolvedValue(ORDER_PENDING);
+    updateOrderStatus.mockResolvedValue(
+      makeOrder({
+        status: OrderStatus.Confirmed,
+        statusHistory: [
+          ...ORDER_PENDING.statusHistory,
+          {
+            id: 'iiiiiiii-iiii-iiii-iiii-iiiiiiiiiiii',
+            status: OrderStatus.Confirmed,
+            changedAt: '2026-09-24T09:00:00Z',
+            note: 'Confirmed by staff',
+          },
+        ],
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    expect(
+      within(
+        screen.getByRole('list', { name: 'Status history timeline' }),
+      ).getAllByRole('listitem'),
+    ).toHaveLength(1);
+
+    await user.selectOptions(
+      screen.getByLabelText('New status'),
+      String(OrderStatus.Confirmed),
+    );
+    await user.click(screen.getByRole('button', { name: 'Update status' }));
+
+    await waitFor(() => {
+      expect(
+        within(
+          screen.getByRole('list', { name: 'Status history timeline' }),
+        ).getAllByRole('listitem'),
+      ).toHaveLength(2);
+    });
+
+    const timeline = screen.getByRole('list', {
+      name: 'Status history timeline',
+    });
+
+    expect(within(timeline).getByText('Confirmed')).toBeInTheDocument();
+    expect(within(timeline).getByText('Confirmed by staff')).toBeInTheDocument();
+  });
+
+  it('surfaces a permission error when the backend rejects the change', async () => {
+    getOrderById.mockResolvedValue(ORDER_PENDING);
+    updateOrderStatus.mockRejectedValue(
+      Object.assign(new Error('Only staff can change order status.'), {
+        status: 403,
+        data: null,
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    await user.selectOptions(
+      screen.getByLabelText('New status'),
+      String(OrderStatus.Confirmed),
+    );
+    await user.click(screen.getByRole('button', { name: 'Update status' }));
+
+    expect(
+      await screen.findByText(
+        'You do not have permission to change the order status.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the current status when a transition is rejected', async () => {
+    getOrderById.mockResolvedValue(ORDER_PENDING);
+    updateOrderStatus.mockRejectedValue(
+      Object.assign(
+        new Error("Transition from 'Pending' to 'Confirmed' is not allowed."),
+        { status: 409, data: null },
+      ),
+    );
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    await user.selectOptions(
+      screen.getByLabelText('New status'),
+      String(OrderStatus.Confirmed),
+    );
+    await user.click(screen.getByRole('button', { name: 'Update status' }));
+
+    expect(
+      await screen.findByText(
+        'That status change is not allowed from the current status.',
+      ),
+    ).toBeInTheDocument();
+
+    expect(
+      within(
+        screen.getByRole('list', { name: 'Status history timeline' }),
+      ).getAllByRole('listitem'),
+    ).toHaveLength(1);
+    expect(screen.queryByText(/Order status updated/)).not.toBeInTheDocument();
+  });
+
+  it('asks for confirmation before applying a terminal status', async () => {
+    getOrderById.mockResolvedValue(
+      makeOrder({
+        status: OrderStatus.Ready,
+        statusHistory: [
+          {
+            id: 'kkkkkkkk-kkkk-kkkk-kkkk-kkkkkkkkkkkk',
+            status: OrderStatus.Ready,
+            changedAt: '2026-09-24T08:00:00Z',
+            note: null,
+          },
+        ],
+      }),
+    );
+
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Order ORD-1001' });
+
+    await user.selectOptions(
+      screen.getByLabelText('New status'),
+      String(OrderStatus.Completed),
+    );
+    await user.click(screen.getByRole('button', { name: 'Update status' }));
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(updateOrderStatus).not.toHaveBeenCalled();
   });
 });
