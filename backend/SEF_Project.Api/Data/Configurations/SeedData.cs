@@ -7,6 +7,10 @@ public static class SeedData
     public static readonly Guid CategoryBeverages = new("00000000-0000-0000-0000-000000000003");
     public static readonly Guid CategoryDesserts = new("00000000-0000-0000-0000-000000000004");
 
+    public static readonly Guid CollectionClassic = new("00000000-0000-0000-0000-000000000005");
+    public static readonly Guid CollectionSignature = new("00000000-0000-0000-0000-000000000006");
+    public static readonly Guid CollectionDrinksAndDesserts = new("00000000-0000-0000-0000-000000000007");
+
     public static readonly Guid SupplierFreshFoods = new("00000000-0000-0000-0000-000000000011");
     public static readonly Guid SupplierBeverageCo = new("00000000-0000-0000-0000-000000000012");
 
@@ -23,6 +27,15 @@ public static class SeedData
     public static readonly Guid VariantCarbonaraRegular = new("00000000-0000-0000-0000-000000000035");
     public static readonly Guid VariantCola330 = new("00000000-0000-0000-0000-000000000036");
     public static readonly Guid VariantTiramisuSingle = new("00000000-0000-0000-0000-000000000037");
+
+    public static readonly Guid SizeSmall = new("00000000-0000-0000-0000-000000000038");
+    public static readonly Guid SizeMedium = new("00000000-0000-0000-0000-000000000039");
+    public static readonly Guid SizeLarge = new("00000000-0000-0000-0000-00000000003a");
+    public static readonly Guid SizeRegular = new("00000000-0000-0000-0000-00000000003b");
+    public static readonly Guid SizeSingle = new("00000000-0000-0000-0000-00000000003c");
+    public static readonly Guid Size330Ml = new("00000000-0000-0000-0000-00000000003d");
+
+    public static readonly Guid ColourDefault = new("00000000-0000-0000-0000-00000000003e");
 
     public static readonly Guid CampaignSummer = new("00000000-0000-0000-0000-000000000051");
     public static readonly Guid PromotionPizza20 = new("00000000-0000-0000-0000-000000000052");

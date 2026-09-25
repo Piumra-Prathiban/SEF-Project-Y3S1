@@ -2,7 +2,7 @@ using SEF_Project.Api.Models.Enums;
 
 namespace SEF_Project.Api.Models.Catalog;
 
-public class InventoryTransaction : GuidEntity
+public class StockTransaction : GuidEntity
 {
     public Guid ProductVariantId { get; set; }
 
@@ -12,7 +12,13 @@ public class InventoryTransaction : GuidEntity
 
     public int QuantityChange { get; set; }
 
+    public int QuantityOnHandBefore { get; set; }
+
     public int QuantityOnHandAfter { get; set; }
+
+    public int? PerformedByUserId { get; set; }
+
+    public User? PerformedByUser { get; set; }
 
     public string? Reference { get; set; }
 

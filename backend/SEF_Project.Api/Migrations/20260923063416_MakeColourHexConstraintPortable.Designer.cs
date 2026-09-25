@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SEF_Project.Api.Data;
@@ -11,9 +12,11 @@ using SEF_Project.Api.Data;
 namespace SEF_Project.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260923063416_MakeColourHexConstraintPortable")]
+    partial class MakeColourHexConstraintPortable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -310,9 +313,6 @@ namespace SEF_Project.Api.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ResultJson")
-                        .HasColumnType("jsonb");
 
                     b.Property<DateTime?>("StartedAt")
                         .HasColumnType("timestamp with time zone");
@@ -795,7 +795,7 @@ namespace SEF_Project.Api.Migrations
 
                     b.ToTable("ProductVariants", null, t =>
                         {
-                            t.HasCheckConstraint("CK_ProductVariants_Price", "\"Price\" >= 0");
+                            t.HasCheckConstraint("CK_ProductVariants_Price", "\"Price\" > 0");
                         });
 
                     b.HasData(
@@ -996,9 +996,6 @@ namespace SEF_Project.Api.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<int?>("PerformedByUserId")
-                        .HasColumnType("integer");
-
                     b.Property<Guid>("ProductVariantId")
                         .HasColumnType("uuid");
 
@@ -1006,9 +1003,6 @@ namespace SEF_Project.Api.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("QuantityOnHandAfter")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("QuantityOnHandBefore")
                         .HasColumnType("integer");
 
                     b.Property<string>("Reference")
@@ -1027,8 +1021,6 @@ namespace SEF_Project.Api.Migrations
 
                     b.HasIndex("CreatedAt");
 
-                    b.HasIndex("PerformedByUserId");
-
                     b.HasIndex("ProductVariantId");
 
                     b.ToTable("StockTransactions", null, t =>
@@ -1036,8 +1028,6 @@ namespace SEF_Project.Api.Migrations
                             t.HasCheckConstraint("CK_StockTransactions_QuantityChange", "\"QuantityChange\" <> 0");
 
                             t.HasCheckConstraint("CK_StockTransactions_QuantityOnHandAfter", "\"QuantityOnHandAfter\" >= 0");
-
-                            t.HasCheckConstraint("CK_StockTransactions_QuantityOnHandBefore", "\"QuantityOnHandBefore\" >= 0");
                         });
                 });
 
@@ -1978,18 +1968,11 @@ namespace SEF_Project.Api.Migrations
 
             modelBuilder.Entity("SEF_Project.Api.Models.Catalog.StockTransaction", b =>
                 {
-                    b.HasOne("SEF_Project.Api.Models.User", "PerformedByUser")
-                        .WithMany()
-                        .HasForeignKey("PerformedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("SEF_Project.Api.Models.Catalog.ProductVariant", "ProductVariant")
                         .WithMany("StockTransactions")
                         .HasForeignKey("ProductVariantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("PerformedByUser");
 
                     b.Navigation("ProductVariant");
                 });

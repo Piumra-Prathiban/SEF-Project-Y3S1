@@ -37,6 +37,8 @@ public enum ShipmentStatus
 public enum InventoryTransactionType
 {
     Adjustment,
+    StockIn,
+    StockOut,
     Receipt,
     Sale,
     Reservation,
@@ -90,5 +92,6 @@ public enum ApprovalStatus
 {
     Pending,
     Approved,
-    Rejected
+    Rejected,
+    RevisionRequested
 }

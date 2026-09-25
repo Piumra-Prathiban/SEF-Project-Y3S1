@@ -1,6 +1,6 @@
 namespace SEF_Project.Api.Models.Catalog;
 
-public class Inventory : GuidEntity
+public class InventoryStock : GuidEntity
 {
     public Guid ProductVariantId { get; set; }
 

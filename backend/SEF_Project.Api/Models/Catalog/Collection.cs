@@ -1,6 +1,6 @@
 namespace SEF_Project.Api.Models.Catalog;
 
-public class Category : GuidEntity
+public class Collection : GuidEntity
 {
     public string Name { get; set; } = string.Empty;
 
