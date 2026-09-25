@@ -1,15 +1,19 @@
 import { useState } from 'react';
+import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
+import { PageShell } from '../../components/ui/PageShell';
 import { useAuth } from '../../contexts/AuthContext';
-import ErrorAlert from '../../components/ErrorAlert';
+import { navigateTo } from '../../hooks/useLocation';
+import { normalizeApiError } from '../../utils/apiErrorUtils';
 import './LoginPage.css';
 
-function LoginPage() {
+export function LoginPage() {
   const { isAuthenticated, login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (isAuthenticated) {
     return <Navigate to="/orders" replace />;
@@ -19,55 +23,58 @@ function LoginPage() {
     event.preventDefault();
 
     setError(null);
-    setSubmitting(true);
+    setIsSubmitting(true);
 
     try {
       await login(email, password);
+      navigateTo('/products');
     } catch (err) {
-      setError({
-        status: err.status,
-        message: err.message,
-        data: err.data,
-      });
+      setError(normalizeApiError(err));
     } finally {
-      setSubmitting(false);
+      setIsSubmitting(false);
+    }
+  }
     }
   }
 
   return (
-    <div className="login-page">
-      <h1>Login</h1>
+    <main className="auth-page">
+      <PageShell
+        eyebrow="SE3090 Group Project"
+        title="Sign in"
+        description="Use your existing project account to access Member 1 product and inventory tools."
+      >
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <label>
+            Email
+            <input
+              autoComplete="email"
+              onChange={(event) => setEmail(event.target.value)}
+              required
+              type="email"
+              value={email}
+            />
+          </label>
 
-      <form onSubmit={handleSubmit}>
-        <label>
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-            autoComplete="email"
-          />
-        </label>
+          <label>
+            Password
+            <input
+              autoComplete="current-password"
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              type="password"
+              value={password}
+            />
+          </label>
 
-        <label>
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-            autoComplete="current-password"
-          />
-        </label>
+          <button disabled={isSubmitting} type="submit">
+            {isSubmitting ? 'Signing in...' : 'Login'}
+          </button>
+        </form>
 
-        <button type="submit" disabled={submitting}>
-          {submitting ? 'Logging in…' : 'Login'}
-        </button>
-      </form>
-
-      {error && <ErrorAlert error={error} />}
-    </div>
+        <ApiErrorAlert message={error} />
+      </PageShell>
+    </main>
   );
 }
 
