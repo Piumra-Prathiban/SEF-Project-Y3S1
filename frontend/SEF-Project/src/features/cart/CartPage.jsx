@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency } from '../../utils/format';
+import { resolveImageUrl } from '../../utils/images';
 import { useCart } from './CartContext';
 import '../storefront/storefront.css';
 import './cart.css';
@@ -14,6 +15,20 @@ function getInitials(name) {
     .map((word) => word[0])
     .join('')
     .toUpperCase();
+}
+
+function CartItemMedia({ imageUrl, productName }) {
+  const resolvedUrl = resolveImageUrl(imageUrl);
+
+  return (
+    <div aria-hidden="true" className="cart-item__media">
+      {resolvedUrl ? (
+        <img alt="" src={resolvedUrl} />
+      ) : (
+        <span>{getInitials(productName)}</span>
+      )}
+    </div>
+  );
 }
 
 function CartQuantityInput({ item, onUpdate }) {
@@ -83,13 +98,10 @@ export function CartPage() {
             <ul className="cart-list">
               {items.map((item) => (
                 <li className="cart-item" key={item.variantId}>
-                  <div aria-hidden="true" className="cart-item__media">
-                    {item.imageUrl ? (
-                      <img alt="" src={item.imageUrl} />
-                    ) : (
-                      <span>{getInitials(item.productName)}</span>
-                    )}
-                  </div>
+                  <CartItemMedia
+                    imageUrl={item.imageUrl}
+                    productName={item.productName}
+                  />
 
                   <div className="cart-item__details">
                     <Link

@@ -118,8 +118,8 @@ public class AnalyticsServiceTests
     }
 
     /// <summary>
-    /// In range [10-01, 10-11): A (Confirmed) 2x Margherita S + 1x Cola = 2700;
-    /// B (Completed) 1x Pepperoni L = 2600. Excluded: C Cancelled, D Pending,
+    /// In range [10-01, 10-11): A (Confirmed) 2x T-Shirt XS + 1x Boots = 2700;
+    /// B (Completed) 1x Hoodie L = 2600. Excluded: C Cancelled, D Pending,
     /// F Refunded. E (Completed, 09-25) is outside the range but inside the
     /// previous window.
     /// </summary>
@@ -128,18 +128,18 @@ public class AnalyticsServiceTests
         var customerId = await SeedCustomerAsync(context);
 
         var a = AddOrder(context, customerId, OrderStatus.Confirmed, Utc(2026, 10, 2, 10), 0m,
-            (SeedData.VariantMargheritaSmall, 2, 1200m),
-            (SeedData.VariantCola330, 1, 300m));
+            (SeedData.VariantTShirtXs, 2, 1200m),
+            (SeedData.VariantBootsOneSize, 1, 300m));
         AddOrder(context, customerId, OrderStatus.Completed, Utc(2026, 10, 5, 9), 0m,
-            (SeedData.VariantPepperoniLarge, 1, 2600m));
+            (SeedData.VariantHoodieL, 1, 2600m));
         AddOrder(context, customerId, OrderStatus.Cancelled, Utc(2026, 10, 3), 0m,
-            (SeedData.VariantTiramisuSingle, 5, 900m));
+            (SeedData.VariantJeansM, 5, 900m));
         AddOrder(context, customerId, OrderStatus.Pending, Utc(2026, 10, 4), 0m,
-            (SeedData.VariantCarbonaraRegular, 1, 1800m));
+            (SeedData.VariantJacketL, 1, 1800m));
         AddOrder(context, customerId, OrderStatus.Completed, Utc(2026, 9, 25), 0m,
-            (SeedData.VariantMargheritaSmall, 4, 1200m));
+            (SeedData.VariantTShirtXs, 4, 1200m));
         AddOrder(context, customerId, OrderStatus.Refunded, Utc(2026, 10, 6), 0m,
-            (SeedData.VariantCola330, 3, 300m));
+            (SeedData.VariantBootsOneSize, 3, 300m));
 
         await context.SaveChangesAsync();
 
@@ -301,15 +301,15 @@ public class AnalyticsServiceTests
             To = RangeTo
         });
 
-        Assert.Equal(5, result.TotalCount);
+        Assert.Equal(5, result.TotalItems);
         Assert.Equal(
-            new[] { "Margherita Pizza", "Cola", "Pepperoni Pizza", "Spaghetti Carbonara", "Tiramisu" },
+            new[] { "Classic Cotton T-Shirt", "Fleece Pullover Hoodie", "Leather Ankle Boots", "Quilted Field Jacket", "Slim Fit Denim Jeans" },
             result.Items.Select(i => i.ProductName));
 
-        var margherita = result.Items[0];
-        Assert.Equal(2, margherita.UnitsSold);
-        Assert.Equal(1, margherita.OrderCount);
-        Assert.Equal(2400m, margherita.Revenue);
+        var tshirt = result.Items[0];
+        Assert.Equal(2, tshirt.UnitsSold);
+        Assert.Equal(1, tshirt.OrderCount);
+        Assert.Equal(2400m, tshirt.Revenue);
     }
 
     [Fact]
@@ -344,10 +344,10 @@ public class AnalyticsServiceTests
             PageSize = 2
         });
 
-        // Cancelled Tiramisu and pending Carbonara orders do not count.
-        Assert.Equal(new[] { "Spaghetti Carbonara", "Tiramisu" }, result.Items.Select(i => i.ProductName));
+        // Cancelled jeans and pending jacket orders do not count.
+        Assert.Equal(new[] { "Quilted Field Jacket", "Slim Fit Denim Jeans" }, result.Items.Select(i => i.ProductName));
         Assert.All(result.Items, i => Assert.Equal(0, i.UnitsSold));
-        Assert.Equal(5, result.TotalCount);
+        Assert.Equal(5, result.TotalItems);
     }
 
     [Fact]
@@ -365,18 +365,18 @@ public class AnalyticsServiceTests
         });
 
         Assert.Equal(2, result.Page);
-        Assert.Equal(new[] { "Pepperoni Pizza", "Spaghetti Carbonara" }, result.Items.Select(i => i.ProductName));
+        Assert.Equal(new[] { "Leather Ankle Boots", "Quilted Field Jacket" }, result.Items.Select(i => i.ProductName));
     }
 
     // ---- Inventory -----------------------------------------------------------
 
     private static async Task AdjustInventoryAsync(AppDbContext context)
     {
-        var cola = await context.Inventory.SingleAsync(i => i.ProductVariantId == SeedData.VariantCola330);
-        cola.ReservedQuantity = cola.QuantityOnHand; // available 0 -> out of stock
+        var boots = await context.Inventory.SingleAsync(i => i.ProductVariantId == SeedData.VariantBootsOneSize);
+        boots.ReservedQuantity = boots.QuantityOnHand; // available 0 -> out of stock
 
-        var tiramisu = await context.Inventory.SingleAsync(i => i.ProductVariantId == SeedData.VariantTiramisuSingle);
-        tiramisu.QuantityOnHand = 4; // reorder level 5 -> low stock
+        var jeans = await context.Inventory.SingleAsync(i => i.ProductVariantId == SeedData.VariantJeansM);
+        jeans.QuantityOnHand = 4; // reorder level 10 -> low stock
 
         await context.SaveChangesAsync();
     }
@@ -393,8 +393,8 @@ public class AnalyticsServiceTests
         Assert.Equal(1, summary.OutOfStockCount);
         Assert.Equal(1, summary.LowStockCount);
         Assert.Equal(5, summary.InStockCount);
-        Assert.Equal(50 + 30 + 40 + 25 + 35 + 200 + 4, summary.TotalQuantityOnHand);
-        Assert.Equal(200, summary.TotalReservedQuantity);
+        Assert.Equal(50 + 30 + 40 + 25 + 4 + 200 + 20, summary.TotalQuantityOnHand);
+        Assert.Equal(20, summary.TotalReservedQuantity);
     }
 
     [Fact]
@@ -405,17 +405,17 @@ public class AnalyticsServiceTests
 
         var result = await db.Service.GetInventoryStockAsync(new InventoryStockQuery());
 
-        Assert.Equal("BEV-COLA-330", result.Items[0].Sku);
+        Assert.Equal("BTS-ANK-OS", result.Items[0].Sku);
         Assert.Equal(0, result.Items[0].AvailableQuantity);
         Assert.Equal(StockStatus.OutOfStock, result.Items[0].StockStatus);
-        Assert.Equal("DES-TIRA-S", result.Items[1].Sku);
+        Assert.Equal("JEA-SLM-M", result.Items[1].Sku);
         Assert.Equal(StockStatus.LowStock, result.Items[1].StockStatus);
         Assert.Equal(StockStatus.InStock, result.Items[^1].StockStatus);
     }
 
     [Theory]
-    [InlineData(StockStatus.LowStock, "DES-TIRA-S")]
-    [InlineData(StockStatus.OutOfStock, "BEV-COLA-330")]
+    [InlineData(StockStatus.LowStock, "JEA-SLM-M")]
+    [InlineData(StockStatus.OutOfStock, "BTS-ANK-OS")]
     public async Task GetInventoryStockAsync_ShouldFilterByStockStatus(
         StockStatus status,
         string expectedSku)
@@ -436,16 +436,18 @@ public class AnalyticsServiceTests
 
         db.Context.ProductVariants.Add(new ProductVariant
         {
-            ProductId = SeedData.ProductCarbonara,
-            Sku = "PST-CARB-L",
-            Name = "Large",
-            Price = 2400m,
+            ProductId = SeedData.ProductJacket,
+            SizeId = SeedData.SizeXl,
+            ColourId = SeedData.ColourNavy,
+            Sku = "JKT-QFD-XL",
+            Name = "XL / Navy",
+            Price = 12500m,
             IsActive = true
         });
         await db.Context.SaveChangesAsync();
 
         var result = await db.Service.GetInventoryStockAsync(
-            new InventoryStockQuery { Search = "carb-l" });
+            new InventoryStockQuery { Search = "jkt-qfd-xl" });
 
         var item = Assert.Single(result.Items);
         Assert.False(item.HasInventoryRecord);
@@ -458,7 +460,7 @@ public class AnalyticsServiceTests
         await using var db = await CreateDbAsync();
 
         var variant = await db.Context.ProductVariants
-            .SingleAsync(v => v.Id == SeedData.VariantMargheritaLarge);
+            .SingleAsync(v => v.Id == SeedData.VariantTShirtM);
         variant.IsActive = false;
         await db.Context.SaveChangesAsync();
 
@@ -466,8 +468,8 @@ public class AnalyticsServiceTests
         var all = await db.Service.GetInventoryStockAsync(
             new InventoryStockQuery { IncludeInactive = true });
 
-        Assert.Equal(6, active.TotalCount);
-        Assert.Equal(7, all.TotalCount);
+        Assert.Equal(6, active.TotalItems);
+        Assert.Equal(7, all.TotalItems);
     }
 
     // ---- Promotion performance ----------------------------------------------
@@ -479,9 +481,9 @@ public class AnalyticsServiceTests
         var customerId = await SeedCustomerAsync(db.Context);
 
         var redeemedOrder = AddOrder(db.Context, customerId, OrderStatus.Completed, Utc(2026, 10, 2), 480m,
-            (SeedData.VariantMargheritaSmall, 2, 1200m));
+            (SeedData.VariantTShirtXs, 2, 1200m));
         var cancelledOrder = AddOrder(db.Context, customerId, OrderStatus.Cancelled, Utc(2026, 10, 3), 0m,
-            (SeedData.VariantPepperoniLarge, 1, 2600m));
+            (SeedData.VariantHoodieL, 1, 2600m));
         await db.Context.SaveChangesAsync();
 
         db.Context.CouponRedemptions.AddRange(
@@ -514,25 +516,25 @@ public class AnalyticsServiceTests
             To = RangeTo
         });
 
-        Assert.Equal(4, result.TotalCount);
+        Assert.Equal(4, result.TotalItems);
         Assert.Equal(3, result.LivePromotionCount);
         Assert.Equal(2, result.TotalRedemptions);
 
-        var pizza = result.Items[0];
-        Assert.Equal(SeedData.PromotionPizza20, pizza.PromotionId);
-        Assert.True(pizza.IsLive);
-        Assert.Equal(1, pizza.CouponCount);
-        Assert.Equal(2, pizza.Redemptions);
-        Assert.Equal(1, pizza.UniqueCustomers);
-        Assert.Equal(1, pizza.RedeemedOrderCount);       // cancelled order excluded
-        Assert.Equal(1920m, pizza.RedeemedOrderRevenue);  // 2400 - 480
-        Assert.Equal(480m, pizza.DiscountAmount);
+        var tops = result.Items[0];
+        Assert.Equal(SeedData.PromotionTops20, tops.PromotionId);
+        Assert.True(tops.IsLive);
+        Assert.Equal(1, tops.CouponCount);
+        Assert.Equal(2, tops.Redemptions);
+        Assert.Equal(1, tops.UniqueCustomers);
+        Assert.Equal(1, tops.RedeemedOrderCount);       // cancelled order excluded
+        Assert.Equal(1920m, tops.RedeemedOrderRevenue);  // 2400 - 480
+        Assert.Equal(480m, tops.DiscountAmount);
 
         var freeDelivery = result.Items.Single(i => i.PromotionId == SeedData.PromotionFreeDelivery);
         Assert.Equal(0, freeDelivery.Redemptions);
 
-        var cola = result.Items.Single(i => i.PromotionId == SeedData.PromotionColaFixed);
-        Assert.False(cola.IsLive);
+        var denim = result.Items.Single(i => i.PromotionId == SeedData.PromotionDenimFixed);
+        Assert.False(denim.IsLive);
     }
 
     [Fact]
@@ -547,7 +549,7 @@ public class AnalyticsServiceTests
             LiveOnly = true
         });
 
-        Assert.Equal(3, result.TotalCount);
+        Assert.Equal(3, result.TotalItems);
         Assert.All(result.Items, i => Assert.True(i.IsLive));
         Assert.All(result.Items, i => Assert.Equal(0, i.Redemptions));
     }
@@ -560,11 +562,11 @@ public class AnalyticsServiceTests
         await using var db = await CreateDbAsync();
         var (customerId, _) = await SeedStandardOrdersAsync(db.Context);
 
-        // Cola: 1 unit in the previous window, 1 + 2 = 3 in the current one.
+        // Boots: 1 unit in the previous window, 1 + 2 = 3 in the current one.
         AddOrder(db.Context, customerId, OrderStatus.Completed, Utc(2026, 9, 22), 0m,
-            (SeedData.VariantCola330, 1, 300m));
+            (SeedData.VariantBootsOneSize, 1, 300m));
         AddOrder(db.Context, customerId, OrderStatus.Confirmed, Utc(2026, 10, 8), 0m,
-            (SeedData.VariantCola330, 2, 300m));
+            (SeedData.VariantBootsOneSize, 2, 300m));
         await db.Context.SaveChangesAsync();
 
         var result = await db.Service.GetDemandInsightsAsync(new DemandQuery
@@ -573,31 +575,31 @@ public class AnalyticsServiceTests
             To = RangeTo
         });
 
-        Assert.Equal(7, result.TotalCount);
+        Assert.Equal(7, result.TotalItems);
         Assert.Equal(
-            new[] { "BEV-COLA-330", "PIZ-MARG-S", "PIZ-PEP-L" },
+            new[] { "BTS-ANK-OS", "TSH-CLS-XS", "HOD-FLC-L" },
             result.Items.Take(3).Select(i => i.Sku));
 
-        var cola = result.Items[0];
-        Assert.Equal(3, cola.UnitsSold);
-        Assert.Equal(1, cola.PreviousUnitsSold);
-        Assert.Equal(0.3m, cola.UnitsPerDay);
-        Assert.Equal(200m, cola.TrendPercent);
-        Assert.Equal(DemandTrend.Rising, cola.Trend);
-        Assert.Equal(666.7m, cola.DaysOfCover); // 200 available / 0.3 per day
+        var boots = result.Items[0];
+        Assert.Equal(3, boots.UnitsSold);
+        Assert.Equal(1, boots.PreviousUnitsSold);
+        Assert.Equal(0.3m, boots.UnitsPerDay);
+        Assert.Equal(200m, boots.TrendPercent);
+        Assert.Equal(DemandTrend.Rising, boots.Trend);
+        Assert.Equal(66.7m, boots.DaysOfCover); // 20 available / 0.3 per day
 
-        var margherita = result.Items[1];
-        Assert.Equal(2, margherita.UnitsSold);
-        Assert.Equal(4, margherita.PreviousUnitsSold);
-        Assert.Equal(-50m, margherita.TrendPercent);
-        Assert.Equal(DemandTrend.Falling, margherita.Trend);
-        Assert.Equal(250m, margherita.DaysOfCover); // 50 / 0.2
+        var tshirt = result.Items[1];
+        Assert.Equal(2, tshirt.UnitsSold);
+        Assert.Equal(4, tshirt.PreviousUnitsSold);
+        Assert.Equal(-50m, tshirt.TrendPercent);
+        Assert.Equal(DemandTrend.Falling, tshirt.Trend);
+        Assert.Equal(250m, tshirt.DaysOfCover); // 50 / 0.2
 
-        var pepperoni = result.Items[2];
-        Assert.Equal(DemandTrend.New, pepperoni.Trend);
-        Assert.Null(pepperoni.TrendPercent);
+        var hoodie = result.Items[2];
+        Assert.Equal(DemandTrend.New, hoodie.Trend);
+        Assert.Null(hoodie.TrendPercent);
 
-        var unsold = result.Items.Single(i => i.Sku == "DES-TIRA-S");
+        var unsold = result.Items.Single(i => i.Sku == "JEA-SLM-M");
         Assert.Equal(DemandTrend.NoSales, unsold.Trend);
         Assert.Equal(0m, unsold.UnitsPerDay);
         Assert.Null(unsold.DaysOfCover);
@@ -610,9 +612,9 @@ public class AnalyticsServiceTests
         var (customerId, _) = await SeedStandardOrdersAsync(db.Context);
 
         AddOrder(db.Context, customerId, OrderStatus.Completed, Utc(2026, 9, 22), 0m,
-            (SeedData.VariantCola330, 1, 300m));
+            (SeedData.VariantBootsOneSize, 1, 300m));
         AddOrder(db.Context, customerId, OrderStatus.Confirmed, Utc(2026, 10, 8), 0m,
-            (SeedData.VariantCola330, 2, 300m));
+            (SeedData.VariantBootsOneSize, 2, 300m));
         await db.Context.SaveChangesAsync();
 
         var result = await db.Service.GetDemandInsightsAsync(new DemandQuery
@@ -622,7 +624,7 @@ public class AnalyticsServiceTests
             SortBy = "trend"
         });
 
-        Assert.Equal(new[] { "BEV-COLA-330", "PIZ-MARG-S" }, result.Items.Take(2).Select(i => i.Sku));
+        Assert.Equal(new[] { "BTS-ANK-OS", "TSH-CLS-XS" }, result.Items.Take(2).Select(i => i.Sku));
         Assert.All(result.Items.Skip(2), i => Assert.Null(i.TrendPercent));
     }
 
@@ -638,7 +640,7 @@ public class AnalyticsServiceTests
             SortDirection = "asc"
         });
 
-        Assert.Equal(7, result.TotalCount);
+        Assert.Equal(7, result.TotalItems);
         Assert.All(result.Items, i => Assert.Equal(DemandTrend.NoSales, i.Trend));
     }
 

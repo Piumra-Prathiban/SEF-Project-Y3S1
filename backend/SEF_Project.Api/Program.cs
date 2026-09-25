@@ -110,6 +110,8 @@ builder.Services.AddScoped<IInventoryAgentToolRegistry, InventoryAgentToolRegist
 builder.Services.AddScoped<IInventoryAnalysisModelClient, LocalInventoryAnalysisModelClient>();
 builder.Services.AddScoped<IInventoryAnalysisAgentService, InventoryAnalysisAgentService>();
 builder.Services.AddScoped<IInventoryAgentWorkflowService, InventoryAgentWorkflowService>();
+builder.Services.AddScoped<ISupplierService, SupplierService>();
+builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IStorefrontService, StorefrontService>();
 builder.Services.AddScoped<IProductSearchService, ProductSearchService>();
@@ -117,6 +119,7 @@ builder.Services.AddScoped<IProductAvailabilityService, ProductAvailabilityServi
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ICustomerPreferenceTool, CustomerPreferenceTool>();
 builder.Services.AddScoped<IProductSearchTool, ProductSearchTool>();
 builder.Services.AddScoped<IWishlistTool, WishlistTool>();
@@ -247,6 +250,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Serves the authored product imagery in wwwroot/images/products.
+app.UseStaticFiles();
 
 app.UseCors("FrontendPolicy");
 

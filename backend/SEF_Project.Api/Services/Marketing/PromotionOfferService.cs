@@ -42,7 +42,7 @@ public class PromotionOfferService : IPromotionOfferService
         var products = await ActiveProducts()
             .Where(p =>
                 productIds.Contains(p.Id)
-                || p.ProductCategories.Any(pc => categoryIds.Contains(pc.CategoryId)))
+                || categoryIds.Contains(p.CategoryId))
             .OrderBy(p => p.Name)
             .ToListAsync(cancellationToken);
 
@@ -78,7 +78,7 @@ public class PromotionOfferService : IPromotionOfferService
             return null;
         }
 
-        var categoryIds = product.ProductCategories.Select(pc => pc.CategoryId).ToList();
+        var categoryIds = new List<Guid> { product.CategoryId };
 
         // Deterministic order: soonest-ending first, then id (used for ties).
         var promotions = await LivePromotions(now)
@@ -124,7 +124,7 @@ public class PromotionOfferService : IPromotionOfferService
     private IQueryable<Product> ActiveProducts() =>
         _context.Products
             .AsNoTracking()
-            .Include(p => p.ProductCategories)
+            .Include(p => p.Category)
             .Include(p => p.Variants.Where(v => v.IsActive))
             .Where(p => p.IsActive);
 

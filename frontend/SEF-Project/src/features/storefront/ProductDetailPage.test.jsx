@@ -105,6 +105,22 @@ describe('ProductDetailPage', () => {
     expect(screen.getByText('In stock')).toBeInTheDocument();
   });
 
+  it('resolves a relative product image against the API origin', async () => {
+    getStorefrontProduct.mockResolvedValue({
+      ...PRODUCT,
+      imageUrl: '/images/products/classic-cotton-tshirt.svg',
+    });
+
+    const { container } = renderDetail();
+
+    await screen.findByRole('heading', { name: 'Classic Cotton T-Shirt' });
+
+    expect(container.querySelector('.product-detail__media img')).toHaveAttribute(
+      'src',
+      'http://localhost:5193/images/products/classic-cotton-tshirt.svg',
+    );
+  });
+
   it('updates the colour options and price when the size changes', async () => {
     const user = userEvent.setup();
 

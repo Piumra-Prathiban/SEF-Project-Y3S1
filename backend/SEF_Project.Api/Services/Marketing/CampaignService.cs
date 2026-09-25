@@ -60,7 +60,7 @@ public class CampaignService : ICampaignService
         return new PagedResponse<CampaignResponse>
         {
             Items = items,
-            TotalCount = totalCount,
+            TotalItems = totalCount,
             Page = page,
             PageSize = pageSize
         };

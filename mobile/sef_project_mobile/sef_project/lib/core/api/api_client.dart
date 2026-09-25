@@ -14,12 +14,11 @@ import 'api_exception.dart';
 /// * Converts transport and HTTP failures into [ApiException]s.
 class ApiClient {
   ApiClient({
-    required Uri baseUri,
+    required this._baseUri,
     http.Client? httpClient,
     TokenStore? tokenStore,
     this.timeout = const Duration(seconds: 15),
-  })  : _baseUri = baseUri,
-        _http = httpClient ?? http.Client(),
+  })  : _http = httpClient ?? http.Client(),
         _tokenStore = tokenStore ?? InMemoryTokenStore();
 
   static const Set<String> localHosts = {'localhost', '127.0.0.1', '10.0.2.2'};

@@ -20,10 +20,10 @@ export default function MarketingOverviewPage() {
     ]);
 
     return {
-      promotions: promotions.totalCount,
+      promotions: promotions.totalItems,
       livePromotions: performance.livePromotionCount,
-      campaigns: campaigns.totalCount,
-      activeCampaigns: activeCampaigns.totalCount,
+      campaigns: campaigns.totalItems,
+      activeCampaigns: activeCampaigns.totalItems,
     };
   }, [token]);
 

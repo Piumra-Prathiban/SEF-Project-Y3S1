@@ -29,6 +29,9 @@ public class AppDbContext : DbContext
     public DbSet<InventoryStock> Inventory => Set<InventoryStock>();
     public DbSet<StockTransaction> InventoryTransactions => Set<StockTransaction>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
+    public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+    public DbSet<PurchaseOrderItem> PurchaseOrderItems => Set<PurchaseOrderItem>();
+    public DbSet<Review> Reviews => Set<Review>();
 
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<CartItem> CartItems => Set<CartItem>();

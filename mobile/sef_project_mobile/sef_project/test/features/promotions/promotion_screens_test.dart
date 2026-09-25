@@ -33,12 +33,12 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.text('Loading promotions…'), findsOneWidget);
 
-      pending.complete([pizzaPromotion, freeDelivery]);
+      pending.complete([topsPromotion, freeDelivery]);
       await tester.pumpAndSettle();
 
-      expect(find.text('Pizza 20% Off'), findsOneWidget);
+      expect(find.text('Tops 20% Off'), findsOneWidget);
       expect(find.text('20% off'), findsOneWidget);
-      expect(find.text('20% off all pizzas.'), findsOneWidget);
+      expect(find.text('20% off all tops.'), findsOneWidget);
       expect(find.text('Free delivery'), findsOneWidget);
       expect(find.text('Valid 1 Sep – 31 Dec 2026'), findsNWidgets(2));
     });
@@ -59,7 +59,7 @@ void main() {
         if (attempts == 1) {
           throw const ApiException.network('Could not reach the server.');
         }
-        return [pizzaPromotion];
+        return [topsPromotion];
       };
 
       await tester.pumpWidget(app(PromotionsScreen(repository: repository)));
@@ -70,7 +70,7 @@ void main() {
       await tester.tap(find.text('Try again'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Pizza 20% Off'), findsOneWidget);
+      expect(find.text('Tops 20% Off'), findsOneWidget);
       expect(attempts, 2);
     });
 
@@ -92,7 +92,7 @@ void main() {
       await tester.pumpWidget(app(PromotionsScreen(repository: repository)));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Pizza 20% Off'));
+      await tester.tap(find.text('Tops 20% Off'));
       await tester.pumpAndSettle();
 
       expect(find.byType(PromotionDetailScreen), findsOneWidget);
@@ -107,17 +107,23 @@ void main() {
       await tester.pumpWidget(app(PromotionDetailScreen(repository: repository, promotionId: 'promo-1')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Pizza 20% Off'), findsOneWidget);
+      expect(find.text('Tops 20% Off'), findsOneWidget);
       expect(find.text('Part of Summer Launch'), findsOneWidget);
-      expect(find.text('Margherita Pizza'), findsOneWidget);
-      expect(find.text('Garlic Bread'), findsOneWidget);
+      expect(find.text('Classic Cotton T-Shirt'), findsOneWidget);
+      expect(find.text('Fleece Pullover Hoodie'), findsOneWidget);
 
       // Prices come straight from the API response.
-      expect(find.text('LKR 960.00'), findsOneWidget);
-      final original = tester.widget<Text>(find.text('LKR 1,200.00'));
+      expect(find.text('LKR 2,000.00'), findsOneWidget);
+      final original = tester.widget<Text>(find.text('LKR 2,500.00'));
       expect(original.style?.decoration, TextDecoration.lineThrough);
-      expect(find.bySemanticsLabel('Now LKR 960.00, was LKR 1,200.00'), findsOneWidget);
-      expect(find.text('LKR 500.00'), findsOneWidget);
+      expect(find.text('LKR 6,500.00'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(
+          'Classic Cotton T-Shirt\nOn promotion\nXS / Black\nTSH-CLS-XS\nTops 20% Off applied\n'
+          'Now LKR 2,000.00, was LKR 2,500.00',
+        ),
+        findsOneWidget,
+      );
 
       // Only the discounted product carries the indicator.
       expect(find.text('On promotion'), findsOneWidget);
@@ -148,7 +154,7 @@ void main() {
       await tester.pumpWidget(app(PromotionDetailScreen(repository: repository, promotionId: 'promo-1')));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Margherita Pizza'));
+      await tester.tap(find.text('Classic Cotton T-Shirt'));
       await tester.pumpAndSettle();
 
       expect(find.byType(ProductDetailScreen), findsOneWidget);
@@ -161,20 +167,20 @@ void main() {
       await tester.pumpWidget(app(ProductDetailScreen(repository: repository, productId: 'prod-1')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Margherita Pizza'), findsOneWidget);
+      expect(find.text('Classic Cotton T-Shirt'), findsOneWidget);
       expect(find.text('On promotion'), findsOneWidget);
-      expect(find.text('LKR 960.00'), findsOneWidget);
-      expect(find.text('Pizza 20% Off applied'), findsOneWidget);
-      expect(find.widgetWithText(ListTile, 'Pizza 20% Off'), findsOneWidget);
+      expect(find.text('LKR 2,000.00'), findsOneWidget);
+      expect(find.text('Tops 20% Off applied'), findsOneWidget);
+      expect(find.widgetWithText(ListTile, 'Tops 20% Off'), findsOneWidget);
     });
 
     testWidgets('shows the full price without an indicator when no promotion applies', (tester) async {
       await tester.pumpWidget(app(ProductDetailScreen(repository: repository, productId: 'prod-3')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Spaghetti Carbonara'), findsOneWidget);
+      expect(find.text('Quilted Field Jacket'), findsOneWidget);
       expect(find.text('On promotion'), findsNothing);
-      expect(find.text('LKR 1,800.00'), findsOneWidget);
+      expect(find.text('LKR 12,500.00'), findsOneWidget);
       expect(find.text('No active promotions for this product.'), findsOneWidget);
     });
 
@@ -182,7 +188,7 @@ void main() {
       await tester.pumpWidget(app(ProductDetailScreen(repository: repository, productId: 'prod-1')));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(ListTile, 'Pizza 20% Off'));
+      await tester.tap(find.widgetWithText(ListTile, 'Tops 20% Off'));
       await tester.pumpAndSettle();
 
       expect(find.byType(PromotionDetailScreen), findsOneWidget);

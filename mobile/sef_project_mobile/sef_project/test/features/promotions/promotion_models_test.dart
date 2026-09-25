@@ -5,10 +5,10 @@ import '../../support/fixtures.dart';
 
 void main() {
   test('Promotion.fromJson reads the API promotion', () {
-    final promotion = Promotion.fromJson(pizzaPromotionJson);
+    final promotion = Promotion.fromJson(topsPromotionJson);
 
     expect(promotion.id, 'promo-1');
-    expect(promotion.name, 'Pizza 20% Off');
+    expect(promotion.name, 'Tops 20% Off');
     expect(promotion.type, PromotionType.percentageDiscount);
     expect(promotion.discountValue, 20);
     expect(promotion.startDate, DateTime.utc(2026, 9, 1));
@@ -24,17 +24,17 @@ void main() {
   });
 
   test('VariantOffer keeps the server prices', () {
-    final offer = VariantOffer.fromJson(margheritaSmallOfferJson);
+    final offer = VariantOffer.fromJson(tShirtXsOfferJson);
 
-    expect(offer.originalPrice, 1200);
-    expect(offer.discountAmount, 240);
-    expect(offer.finalPrice, 960);
+    expect(offer.originalPrice, 2500);
+    expect(offer.discountAmount, 500);
+    expect(offer.finalPrice, 2000);
     expect(offer.isDiscounted, isTrue);
-    expect(VariantOffer.fromJson(garlicBreadOfferJson).isDiscounted, isFalse);
+    expect(VariantOffer.fromJson(hoodieMOfferJson).isDiscounted, isFalse);
   });
 
   test('PromotionProducts and ProductOffer parse nested products', () {
-    final offers = PromotionProducts.fromJson(pizzaPromotionProductsJson);
+    final offers = PromotionProducts.fromJson(topsPromotionProductsJson);
 
     expect(offers.hasPriceDiscount, isTrue);
     expect(offers.products, hasLength(2));
@@ -43,10 +43,10 @@ void main() {
   });
 
   test('ProductPromotions parses promotions and variants', () {
-    final product = ProductPromotions.fromJson(margheritaPromotionsJson);
+    final product = ProductPromotions.fromJson(tShirtPromotionsJson);
 
     expect(product.hasActivePromotion, isTrue);
-    expect(product.promotions.single.name, 'Pizza 20% Off');
-    expect(product.variants.single.finalPrice, 960);
+    expect(product.promotions.single.name, 'Tops 20% Off');
+    expect(product.variants.single.finalPrice, 2000);
   });
 }

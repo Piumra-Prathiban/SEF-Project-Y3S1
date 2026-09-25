@@ -11,11 +11,11 @@ namespace SEF_Project.Api.Tests;
 
 public class PromotionPricingServiceTests
 {
-    // Inside the seeded "Pizza 20% Off" and "Dessert Week 10% Off" windows.
+    // Inside the seeded "Tops 20% Off" and "Footwear Week 10% Off" windows.
     private static readonly DateTime October2026 =
         new(2026, 10, 15, 12, 0, 0, DateTimeKind.Utc);
 
-    // Inside the seeded "Cola Rs. 50 Off" window.
+    // Inside the seeded "Denim Rs. 50 Off" window.
     private static readonly DateTime February2027 =
         new(2027, 2, 1, 12, 0, 0, DateTimeKind.Utc);
 
@@ -67,17 +67,17 @@ public class PromotionPricingServiceTests
 
         var result = await CreateService(context, October2026)
             .CalculatePromotionDiscountAsync(
-                SeedData.PromotionPizza20,
-                Request(SeedData.VariantMargheritaSmall));
+                SeedData.PromotionTops20,
+                Request(SeedData.VariantTShirtXs));
 
         Assert.NotNull(result);
-        Assert.Equal(SeedData.PromotionPizza20, result.PromotionId);
-        Assert.Equal(SeedData.VariantMargheritaSmall, result.ProductVariantId);
-        Assert.Equal(SeedData.ProductMargherita, result.ProductId);
-        Assert.Equal("PIZ-MARG-S", result.Sku);
-        Assert.Equal(1200m, result.OriginalPrice);
-        Assert.Equal(240m, result.DiscountAmount);
-        Assert.Equal(960m, result.FinalPrice);
+        Assert.Equal(SeedData.PromotionTops20, result.PromotionId);
+        Assert.Equal(SeedData.VariantTShirtXs, result.ProductVariantId);
+        Assert.Equal(SeedData.ProductTShirt, result.ProductId);
+        Assert.Equal("TSH-CLS-XS", result.Sku);
+        Assert.Equal(2500m, result.OriginalPrice);
+        Assert.Equal(500m, result.DiscountAmount);
+        Assert.Equal(2000m, result.FinalPrice);
         Assert.Equal("LKR", result.Currency);
         Assert.Equal(October2026, result.CalculatedAt);
     }
@@ -91,13 +91,13 @@ public class PromotionPricingServiceTests
 
         var result = await CreateService(context, October2026)
             .CalculatePromotionDiscountAsync(
-                SeedData.PromotionDessert10,
-                Request(SeedData.VariantTiramisuSingle));
+                SeedData.PromotionFootwear10,
+                Request(SeedData.VariantBootsOneSize));
 
         Assert.NotNull(result);
-        Assert.Equal(900m, result.OriginalPrice);
-        Assert.Equal(90m, result.DiscountAmount);
-        Assert.Equal(810m, result.FinalPrice);
+        Assert.Equal(8900m, result.OriginalPrice);
+        Assert.Equal(890m, result.DiscountAmount);
+        Assert.Equal(8010m, result.FinalPrice);
     }
 
     [Fact]
@@ -114,13 +114,13 @@ public class PromotionPricingServiceTests
 
         var result = await CreateService(context, February2027)
             .CalculatePromotionDiscountAsync(
-                SeedData.PromotionColaFixed,
-                Request(SeedData.VariantCola330));
+                SeedData.PromotionDenimFixed,
+                Request(SeedData.VariantJeansM));
 
         Assert.NotNull(result);
-        Assert.Equal(300m, result.OriginalPrice);
+        Assert.Equal(7500m, result.OriginalPrice);
         Assert.Equal(50m, result.DiscountAmount);
-        Assert.Equal(250m, result.FinalPrice);
+        Assert.Equal(7450m, result.FinalPrice);
     }
 
     [Fact]
@@ -134,8 +134,8 @@ public class PromotionPricingServiceTests
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             CreateService(context, February2027)
                 .CalculatePromotionDiscountAsync(
-                    SeedData.PromotionColaFixed,
-                    Request(SeedData.VariantCola330)));
+                    SeedData.PromotionDenimFixed,
+                    Request(SeedData.VariantJeansM)));
 
         Assert.Contains("campaign is not active", ex.Message);
     }
@@ -150,8 +150,8 @@ public class PromotionPricingServiceTests
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             CreateService(context, October2026)
                 .CalculatePromotionDiscountAsync(
-                    SeedData.PromotionPizza20,
-                    Request(SeedData.VariantCarbonaraRegular)));
+                    SeedData.PromotionTops20,
+                    Request(SeedData.VariantJacketL)));
 
         Assert.Contains("does not apply", ex.Message);
     }
@@ -166,8 +166,8 @@ public class PromotionPricingServiceTests
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             CreateService(context, new DateTime(2027, 1, 1, 0, 0, 0, DateTimeKind.Utc))
                 .CalculatePromotionDiscountAsync(
-                    SeedData.PromotionPizza20,
-                    Request(SeedData.VariantMargheritaSmall)));
+                    SeedData.PromotionTops20,
+                    Request(SeedData.VariantTShirtXs)));
 
         Assert.Equal("Promotion has expired.", ex.Message);
     }
@@ -182,8 +182,8 @@ public class PromotionPricingServiceTests
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             CreateService(context, new DateTime(2026, 8, 31, 23, 59, 59, DateTimeKind.Utc))
                 .CalculatePromotionDiscountAsync(
-                    SeedData.PromotionPizza20,
-                    Request(SeedData.VariantMargheritaSmall)));
+                    SeedData.PromotionTops20,
+                    Request(SeedData.VariantTShirtXs)));
 
         Assert.Equal("Promotion has not started yet.", ex.Message);
     }
@@ -196,15 +196,15 @@ public class PromotionPricingServiceTests
         await using var __ = context;
 
         var promotion = await context.Promotions
-            .SingleAsync(p => p.Id == SeedData.PromotionPizza20);
+            .SingleAsync(p => p.Id == SeedData.PromotionTops20);
         promotion.IsActive = false;
         await context.SaveChangesAsync();
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             CreateService(context, October2026)
                 .CalculatePromotionDiscountAsync(
-                    SeedData.PromotionPizza20,
-                    Request(SeedData.VariantMargheritaSmall)));
+                    SeedData.PromotionTops20,
+                    Request(SeedData.VariantTShirtXs)));
 
         Assert.Equal("Promotion is not active.", ex.Message);
     }
@@ -217,15 +217,15 @@ public class PromotionPricingServiceTests
         await using var __ = context;
 
         var variant = await context.ProductVariants
-            .SingleAsync(v => v.Id == SeedData.VariantMargheritaSmall);
+            .SingleAsync(v => v.Id == SeedData.VariantTShirtXs);
         variant.Price = 0m;
         await context.SaveChangesAsync();
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             CreateService(context, October2026)
                 .CalculatePromotionDiscountAsync(
-                    SeedData.PromotionPizza20,
-                    Request(SeedData.VariantMargheritaSmall)));
+                    SeedData.PromotionTops20,
+                    Request(SeedData.VariantTShirtXs)));
 
         Assert.Equal("Product variant has an invalid price.", ex.Message);
     }
@@ -238,15 +238,15 @@ public class PromotionPricingServiceTests
         await using var __ = context;
 
         var variant = await context.ProductVariants
-            .SingleAsync(v => v.Id == SeedData.VariantMargheritaSmall);
+            .SingleAsync(v => v.Id == SeedData.VariantTShirtXs);
         variant.IsActive = false;
         await context.SaveChangesAsync();
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             CreateService(context, October2026)
                 .CalculatePromotionDiscountAsync(
-                    SeedData.PromotionPizza20,
-                    Request(SeedData.VariantMargheritaSmall)));
+                    SeedData.PromotionTops20,
+                    Request(SeedData.VariantTShirtXs)));
 
         Assert.Contains("is not available", ex.Message);
     }
@@ -261,7 +261,7 @@ public class PromotionPricingServiceTests
         var result = await CreateService(context, October2026)
             .CalculatePromotionDiscountAsync(
                 Guid.NewGuid(),
-                Request(SeedData.VariantMargheritaSmall));
+                Request(SeedData.VariantTShirtXs));
 
         Assert.Null(result);
     }
@@ -275,7 +275,7 @@ public class PromotionPricingServiceTests
 
         var result = await CreateService(context, October2026)
             .CalculatePromotionDiscountAsync(
-                SeedData.PromotionPizza20,
+                SeedData.PromotionTops20,
                 Request(Guid.NewGuid()));
 
         Assert.Null(result);
@@ -297,12 +297,12 @@ public class PromotionPricingServiceTests
                 context,
                 new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Utc))
             .CalculatePromotionDiscountAsync(
-                SeedData.PromotionPizza20,
-                Request(SeedData.VariantPepperoniLarge));
+                SeedData.PromotionTops20,
+                Request(SeedData.VariantHoodieL));
 
         Assert.NotNull(result);
-        Assert.Equal(2600m, result.OriginalPrice);
-        Assert.Equal(520m, result.DiscountAmount);
-        Assert.Equal(2080m, result.FinalPrice);
+        Assert.Equal(6900m, result.OriginalPrice);
+        Assert.Equal(1380m, result.DiscountAmount);
+        Assert.Equal(5520m, result.FinalPrice);
     }
 }

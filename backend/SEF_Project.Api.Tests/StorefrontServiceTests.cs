@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using SEF_Project.Api.Controllers;
 using SEF_Project.Api.Data;
 using SEF_Project.Api.DTOs.Storefront;
+using SEF_Project.Api.Models;
+using SEF_Project.Api.Models.Catalog;
 using SEF_Project.Api.Services.Storefront;
 
 namespace SEF_Project.Api.Tests;
@@ -81,7 +83,52 @@ public class StorefrontServiceTests
         Assert.Equal("Summer Essentials", tShirt.CollectionName);
         Assert.Equal(new[] { "XS", "M" }, tShirt.Sizes.ToArray());
         Assert.True(tShirt.InStock);
-        Assert.Null(tShirt.ImageUrl);
+        Assert.EndsWith(".svg", tShirt.ImageUrl);
+        Assert.Equal(0, tShirt.ReviewCount);
+        Assert.Equal(0m, tShirt.AverageRating);
+    }
+
+    [Fact]
+    public async Task GetProductsAsync_ShouldIncludePublishedReviewAggregates()
+    {
+        var (connection, context) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        var tShirtId = await context.Products
+            .Where(p => p.Name == "Classic Cotton T-Shirt")
+            .Select(p => p.Id)
+            .SingleAsync();
+
+        var customerA = await AddCustomerAsync(context, "a@test.com", "Asha", "Perera");
+        var customerB = await AddCustomerAsync(context, "b@test.com", "Bimal", "Silva");
+        var customerC = await AddCustomerAsync(context, "c@test.com", "Chloe", "Fernando");
+
+        context.Reviews.AddRange(
+            new Review { ProductId = tShirtId, CustomerId = customerA, Rating = 5 },
+            new Review { ProductId = tShirtId, CustomerId = customerB, Rating = 4 },
+            new Review
+            {
+                ProductId = tShirtId,
+                CustomerId = customerC,
+                Rating = 1,
+                IsPublished = false
+            });
+        await context.SaveChangesAsync();
+
+        var service = new StorefrontService(context);
+
+        var product = await service.GetProductByIdAsync(tShirtId);
+
+        Assert.NotNull(product);
+        Assert.Equal(2, product!.ReviewCount);
+        Assert.Equal(4.5m, product.AverageRating);
+
+        var list = await service.GetProductsAsync(Query());
+        var tShirt = list.Single(p => p.Name == "Classic Cotton T-Shirt");
+
+        Assert.Equal(2, tShirt.ReviewCount);
+        Assert.Equal(4.5m, tShirt.AverageRating);
     }
 
     [Fact]
@@ -270,6 +317,30 @@ public class StorefrontServiceTests
         await context.SaveChangesAsync();
 
         Assert.Null(await service.GetProductByIdAsync(boots.Id));
+    }
+
+    private static async Task<int> AddCustomerAsync(
+        AppDbContext context,
+        string email,
+        string firstName,
+        string lastName)
+    {
+        var customer = new Customer
+        {
+            User = new User
+            {
+                Email = email,
+                PasswordHash = "test-only-password-hash",
+                FirstName = firstName,
+                LastName = lastName,
+                RoleId = 1,
+                IsActive = true
+            }
+        };
+
+        context.Customers.Add(customer);
+        await context.SaveChangesAsync();
+        return customer.Id;
     }
 
     [Fact]

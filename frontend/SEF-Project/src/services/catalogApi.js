@@ -83,6 +83,32 @@ export function deleteCategory(id, options) {
   return deleteRequest(`/categories/${id}`, options);
 }
 
+export function getSuppliers(options) {
+  return apiRequest('/suppliers', {
+    ...options,
+    method: 'GET',
+  });
+}
+
+export function getSupplier(id, options) {
+  return apiRequest(`/suppliers/${id}`, {
+    ...options,
+    method: 'GET',
+  });
+}
+
+export function createSupplier(supplier, options) {
+  return jsonRequest('/suppliers', 'POST', supplier, options);
+}
+
+export function updateSupplier(id, supplier, options) {
+  return jsonRequest(`/suppliers/${id}`, 'PUT', supplier, options);
+}
+
+export function deleteSupplier(id, options) {
+  return deleteRequest(`/suppliers/${id}`, options);
+}
+
 export function getCollections(options) {
   return apiRequest('/collections', {
     ...options,

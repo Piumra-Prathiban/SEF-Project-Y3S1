@@ -105,3 +105,11 @@ public enum ApprovalStatus
     Rejected,
     RevisionRequested
 }
+
+public enum PurchaseOrderStatus
+{
+    Draft,
+    Submitted,
+    Received,
+    Cancelled
+}

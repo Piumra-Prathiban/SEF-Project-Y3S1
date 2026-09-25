@@ -36,7 +36,7 @@ void main() {
   test('fetchActivePromotions calls GET /api/promotions sorted by end date', () async {
     final repository = repositoryWith({
       '/api/promotions': {
-        'items': [pizzaPromotionJson, freeDeliveryJson],
+        'items': [topsPromotionJson, freeDeliveryJson],
         'totalCount': 2,
         'page': 1,
         'pageSize': 100,
@@ -45,7 +45,7 @@ void main() {
 
     final promotions = await repository.fetchActivePromotions();
 
-    expect(promotions.map((p) => p.name), ['Pizza 20% Off', 'Free Delivery']);
+    expect(promotions.map((p) => p.name), ['Tops 20% Off', 'Free Delivery']);
     expect(requests.single.queryParameters, {
       'pageSize': '100',
       'sortBy': 'endDate',
@@ -55,17 +55,17 @@ void main() {
 
   test('fetchPromotionProducts calls GET /api/promotions/{id}/products', () async {
     final repository = repositoryWith({
-      '/api/promotions/promo-1/products': pizzaPromotionProductsJson,
+      '/api/promotions/promo-1/products': topsPromotionProductsJson,
     });
 
     final offers = await repository.fetchPromotionProducts('promo-1');
 
-    expect(offers.products.first.variants.single.finalPrice, 960);
+    expect(offers.products.first.variants.single.finalPrice, 2000);
   });
 
   test('fetchProductPromotions calls GET /api/promotions/products/{id}', () async {
     final repository = repositoryWith({
-      '/api/promotions/products/prod-1': margheritaPromotionsJson,
+      '/api/promotions/products/prod-1': tShirtPromotionsJson,
     });
 
     final product = await repository.fetchProductPromotions('prod-1');

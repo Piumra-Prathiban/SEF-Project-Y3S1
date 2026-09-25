@@ -166,7 +166,7 @@ export default function CampaignListPage() {
           <Pagination
             page={data.page}
             pageSize={data.pageSize}
-            totalCount={data.totalCount}
+            totalCount={data.totalItems}
             onPageChange={(page) => setQuery({ page })}
           />
         </>

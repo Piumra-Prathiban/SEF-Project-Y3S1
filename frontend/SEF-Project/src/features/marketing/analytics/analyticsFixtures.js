@@ -59,7 +59,7 @@ export const topProducts = {
     product('p2', 'Margherita Pizza', 2, 2400),
     product('p3', 'Cola', 1, 300),
   ],
-  totalCount: 5, page: 1, pageSize: 10,
+  totalItems: 5, page: 1, pageSize: 10,
 };
 
 export const lowProducts = {
@@ -68,12 +68,12 @@ export const lowProducts = {
     product('p5', 'Tiramisu', 0, 0),
     product('p3', 'Cola', 1, 300),
   ],
-  totalCount: 5, page: 1, pageSize: 10,
+  totalItems: 5, page: 1, pageSize: 10,
 };
 
 export const noSalesProducts = {
   items: [product('p4', 'Spaghetti Carbonara', 0, 0)],
-  totalCount: 1, page: 1, pageSize: 10,
+  totalItems: 1, page: 1, pageSize: 10,
 };
 
 export const inventorySummary = {
@@ -104,15 +104,15 @@ function stockItem(id, name, sku, available, reorderLevel, stockStatus) {
 
 export const outOfStockPage = {
   items: [stockItem('v1', 'Cola', 'BEV-COLA-330', 0, 50, 2)],
-  totalCount: 1, page: 1, pageSize: 10,
+  totalItems: 1, page: 1, pageSize: 10,
 };
 
 export const lowStockPage = {
   items: [stockItem('v2', 'Tiramisu', 'DES-TIRA-S', 4, 5, 1)],
-  totalCount: 1, page: 1, pageSize: 10,
+  totalItems: 1, page: 1, pageSize: 10,
 };
 
-export const emptyStockPage = { items: [], totalCount: 0, page: 1, pageSize: 10 };
+export const emptyStockPage = { items: [], totalItems: 0, page: 1, pageSize: 10 };
 
 export const promotionPerformance = {
   from: '2026-10-01T00:00:00Z',
@@ -135,7 +135,7 @@ export const promotionPerformance = {
       discountAmount: 480,
     },
   ],
-  totalCount: 1, page: 1, pageSize: 20,
+  totalItems: 1, page: 1, pageSize: 20,
 };
 
 export const demand = {
@@ -156,7 +156,7 @@ export const demand = {
       availableQuantity: 4, daysOfCover: null,
     },
   ],
-  totalCount: 7, page: 1, pageSize: 10,
+  totalItems: 7, page: 1, pageSize: 10,
 };
 
 // Intl currency output uses a no-break space; DOM text matchers normalise it to ' '.

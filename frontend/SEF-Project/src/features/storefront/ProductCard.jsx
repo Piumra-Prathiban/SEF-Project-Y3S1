@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '../../utils/format';
+import { resolveImageUrl } from '../../utils/images';
 
 function getInitials(name) {
   return name
@@ -29,6 +30,7 @@ export function ProductCard({ product }) {
     : formatCurrency(product.priceFrom, 'LKR');
 
   const colours = product.colours ?? [];
+  const imageUrl = resolveImageUrl(product.imageUrl);
 
   return (
     <article className="product-card">
@@ -39,8 +41,8 @@ export function ProductCard({ product }) {
           background: `linear-gradient(140deg, hsl(${hue} 72% 93%), hsl(${hue} 52% 78%))`,
         }}
       >
-        {product.imageUrl ? (
-          <img alt="" className="product-card__image" src={product.imageUrl} />
+        {imageUrl ? (
+          <img alt="" className="product-card__image" src={imageUrl} />
         ) : (
           <span className="product-card__initials">
             {getInitials(product.name)}

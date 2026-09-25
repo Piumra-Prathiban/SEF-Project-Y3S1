@@ -36,24 +36,24 @@ public class CatalogServiceTests
 
         var created = await service.CreateCategoryAsync(new CategoryCreateDto
         {
-            Name = "  Accessories  ",
+            Name = "  Loungewear  ",
             Description = "  Fashion add-ons  "
         });
 
         var read = await service.GetCategoryByIdAsync(created.Id);
         var updated = await service.UpdateCategoryAsync(created.Id, new CategoryUpdateDto
         {
-            Name = "Bags and Accessories",
+            Name = "Loungewear and Sleepwear",
             Description = "Updated",
             IsActive = true
         });
         var deleted = await service.DeleteCategoryAsync(created.Id);
         var stored = await context.Categories.SingleAsync(c => c.Id == created.Id);
 
-        Assert.Equal("Accessories", created.Name);
+        Assert.Equal("Loungewear", created.Name);
         Assert.Equal("Fashion add-ons", created.Description);
         Assert.NotNull(read);
-        Assert.Equal("Bags and Accessories", updated?.Name);
+        Assert.Equal("Loungewear and Sleepwear", updated?.Name);
         Assert.True(deleted);
         Assert.False(stored.IsActive);
     }

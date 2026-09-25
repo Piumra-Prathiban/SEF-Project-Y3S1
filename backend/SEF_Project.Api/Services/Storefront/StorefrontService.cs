@@ -97,7 +97,13 @@ public class StorefrontService : IStorefrontService
             .Take(take)
             .ToListAsync(cancellationToken);
 
-        return products.Select(Map).ToList();
+        var reviewSummaries = await LoadReviewSummariesAsync(
+            products.Select(p => p.Id),
+            cancellationToken);
+
+        return products
+            .Select(p => Map(p, reviewSummaries.GetValueOrDefault(p.Id)))
+            .ToList();
     }
 
     public async Task<StorefrontProductResponseDto?> GetProductByIdAsync(
@@ -107,7 +113,50 @@ public class StorefrontService : IStorefrontService
         var product = await StorefrontQuery()
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
-        return product is null ? null : Map(product);
+        if (product is null)
+        {
+            return null;
+        }
+
+        var reviewSummaries = await LoadReviewSummariesAsync(
+            new[] { product.Id },
+            cancellationToken);
+
+        return Map(product, reviewSummaries.GetValueOrDefault(product.Id));
+    }
+
+    private async Task<Dictionary<Guid, ReviewSummary>> LoadReviewSummariesAsync(
+        IEnumerable<Guid> productIds,
+        CancellationToken cancellationToken)
+    {
+        var ids = productIds.Distinct().ToList();
+
+        if (ids.Count == 0)
+        {
+            return new Dictionary<Guid, ReviewSummary>();
+        }
+
+        var rows = await _context.Reviews
+            .AsNoTracking()
+            .Where(review =>
+                review.IsPublished && ids.Contains(review.ProductId))
+            .GroupBy(review => review.ProductId)
+            .Select(group => new
+            {
+                ProductId = group.Key,
+                Count = group.Count(),
+                Average = group.Average(review => (double)review.Rating)
+            })
+            .ToListAsync(cancellationToken);
+
+        return rows.ToDictionary(
+            row => row.ProductId,
+            row => new ReviewSummary(
+                row.Count,
+                Math.Round(
+                    (decimal)row.Average,
+                    1,
+                    MidpointRounding.AwayFromZero)));
     }
 
     private IQueryable<Product> StorefrontQuery() =>
@@ -124,7 +173,9 @@ public class StorefrontService : IStorefrontService
             .Include(p => p.Variants)
                 .ThenInclude(v => v.InventoryStock);
 
-    private static StorefrontProductResponseDto Map(Product product)
+    private static StorefrontProductResponseDto Map(
+        Product product,
+        ReviewSummary reviewSummary)
     {
         var variants = product.Variants
             .Where(v => v.IsActive)
@@ -179,7 +230,17 @@ public class StorefrontService : IStorefrontService
             InStock = variants.Any(v =>
                 v.InventoryStock is not null
                 && v.InventoryStock.QuantityOnHand
-                    > v.InventoryStock.ReservedQuantity)
+                    > v.InventoryStock.ReservedQuantity),
+            ReviewCount = reviewSummary.Count,
+            AverageRating = reviewSummary.AverageRating
         };
     }
+
+    /// <summary>
+    /// Published review aggregate for a single product used to decorate the
+    /// storefront payload.
+    /// </summary>
+    private readonly record struct ReviewSummary(
+        int Count,
+        decimal AverageRating);
 }

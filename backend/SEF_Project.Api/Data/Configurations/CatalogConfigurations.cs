@@ -22,7 +22,21 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             new Category { Id = SeedData.CategoryTops, Name = "Tops", IsActive = true },
             new Category { Id = SeedData.CategoryBottoms, Name = "Bottoms", IsActive = true },
             new Category { Id = SeedData.CategoryOuterwear, Name = "Outerwear", IsActive = true },
-            new Category { Id = SeedData.CategoryFootwear, Name = "Footwear", IsActive = true });
+            new Category { Id = SeedData.CategoryFootwear, Name = "Footwear", IsActive = true },
+            new Category
+            {
+                Id = SeedData.CategoryDresses,
+                Name = "Dresses",
+                Description = "Dresses and occasion wear.",
+                IsActive = true
+            },
+            new Category
+            {
+                Id = SeedData.CategoryAccessories,
+                Name = "Accessories",
+                Description = "Bags, belts and finishing touches.",
+                IsActive = true
+            });
     }
 }
 
@@ -108,7 +122,10 @@ public class ColourConfiguration : IEntityTypeConfiguration<Colour>
         builder.HasData(
             new Colour { Id = SeedData.ColourBlack, Name = "Black", HexCode = "#000000", IsActive = true },
             new Colour { Id = SeedData.ColourWhite, Name = "White", HexCode = "#ffffff", IsActive = true },
-            new Colour { Id = SeedData.ColourNavy, Name = "Navy", HexCode = "#001f3f", IsActive = true });
+            new Colour { Id = SeedData.ColourNavy, Name = "Navy", HexCode = "#001f3f", IsActive = true },
+            new Colour { Id = SeedData.ColourBeige, Name = "Beige", HexCode = "#d9c7a7", IsActive = true },
+            new Colour { Id = SeedData.ColourOlive, Name = "Olive", HexCode = "#4b5d3a", IsActive = true },
+            new Colour { Id = SeedData.ColourBurgundy, Name = "Burgundy", HexCode = "#6d1f2c", IsActive = true });
     }
 }
 
@@ -149,6 +166,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
                 Id = SeedData.ProductTShirt,
                 Name = "Classic Cotton T-Shirt",
                 Description = "Soft combed cotton crew-neck tee.",
+                ImageUrl = "/images/products/classic-cotton-tshirt.svg",
                 CategoryId = SeedData.CategoryTops,
                 CollectionId = SeedData.CollectionSummerEssentials,
                 SupplierId = SeedData.SupplierAtlasTextiles,
@@ -159,6 +177,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
                 Id = SeedData.ProductHoodie,
                 Name = "Fleece Pullover Hoodie",
                 Description = "Brushed fleece hoodie with a kangaroo pocket.",
+                ImageUrl = "/images/products/fleece-pullover-hoodie.svg",
                 CategoryId = SeedData.CategoryTops,
                 CollectionId = SeedData.CollectionNewArrivals,
                 SupplierId = SeedData.SupplierAtlasTextiles,
@@ -169,6 +188,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
                 Id = SeedData.ProductJeans,
                 Name = "Slim Fit Denim Jeans",
                 Description = "Mid-rise slim jeans in stretch denim.",
+                ImageUrl = "/images/products/slim-fit-denim-jeans.svg",
                 CategoryId = SeedData.CategoryBottoms,
                 CollectionId = SeedData.CollectionSummerEssentials,
                 SupplierId = SeedData.SupplierAtlasTextiles,
@@ -179,6 +199,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
                 Id = SeedData.ProductJacket,
                 Name = "Quilted Field Jacket",
                 Description = "Lightly quilted jacket for layering.",
+                ImageUrl = "/images/products/quilted-field-jacket.svg",
                 CategoryId = SeedData.CategoryOuterwear,
                 CollectionId = SeedData.CollectionSignature,
                 SupplierId = SeedData.SupplierAtlasTextiles,
@@ -189,6 +210,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
                 Id = SeedData.ProductBoots,
                 Name = "Leather Ankle Boots",
                 Description = "Full-grain leather boots with a block heel.",
+                ImageUrl = "/images/products/leather-ankle-boots.svg",
                 CategoryId = SeedData.CategoryFootwear,
                 CollectionId = SeedData.CollectionSignature,
                 SupplierId = SeedData.SupplierNordicFootwear,

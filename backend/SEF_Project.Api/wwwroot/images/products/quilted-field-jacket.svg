@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000" role="img" aria-label="Quilted field jacket illustration">
+  <title>Quilted field jacket</title>
+  <rect width="800" height="1000" fill="#f7f4ee"/>
+  <circle cx="400" cy="520" r="310" fill="#e4eee8"/>
+  <path d="M262 392C214 470 196 600 196 720" fill="none" stroke="#001f3f" stroke-width="92" stroke-linecap="round"/>
+  <path d="M538 392C586 470 604 600 604 720" fill="none" stroke="#001f3f" stroke-width="92" stroke-linecap="round"/>
+  <path d="M300 320C330 300 470 300 500 320L560 400 560 800C470 826 330 826 240 800L240 400Z" fill="#001f3f"/>
+  <path d="M250 472C330 492 470 492 550 472M250 542C330 562 470 562 550 542M250 612C330 632 470 632 550 612M250 682C330 702 470 702 550 682" fill="none" stroke="#0b2f52" stroke-width="6"/>
+  <path d="M296 318L400 350 504 318 548 372 400 346 252 372Z" fill="#0b2f52"/>
+  <path d="M400 350V806" fill="none" stroke="#0b2f52" stroke-width="16"/>
+  <circle cx="400" cy="430" r="12" fill="#ded8ce"/>
+  <circle cx="400" cy="530" r="12" fill="#ded8ce"/>
+  <circle cx="400" cy="630" r="12" fill="#ded8ce"/>
+  <circle cx="400" cy="730" r="12" fill="#ded8ce"/>
+  <rect x="288" y="446" width="82" height="92" rx="10" fill="#0b2f52"/>
+  <rect x="430" y="446" width="82" height="92" rx="10" fill="#0b2f52"/>
+  <path d="M288 446H370V480H288Z" fill="#123f63"/>
+  <path d="M430 446H512V480H430Z" fill="#123f63"/>
+  <rect x="276" y="628" width="100" height="116" rx="12" fill="#0b2f52"/>
+  <rect x="428" y="628" width="100" height="116" rx="12" fill="#0b2f52"/>
+  <path d="M276 628H376V664H276Z" fill="#123f63"/>
+  <path d="M428 628H528V664H428Z" fill="#123f63"/>
+  <path d="M240 800C330 826 470 826 560 800L560 844C470 870 330 870 240 844Z" fill="#0b2f52"/>
+  <rect x="154" y="694" width="92" height="54" rx="22" fill="#0b2f52"/>
+  <rect x="554" y="694" width="92" height="54" rx="22" fill="#0b2f52"/>
+  <circle cx="400" cy="912" r="22" fill="#2e5944"/>
+  <circle cx="410" cy="912" r="15" fill="#f7f4ee"/>
+</svg>

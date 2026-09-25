@@ -411,6 +411,24 @@ namespace SEF_Project.Api.Migrations
                             IsActive = true,
                             Name = "Footwear",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000008"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Dresses and occasion wear.",
+                            IsActive = true,
+                            Name = "Dresses",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000009"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Bags, belts and finishing touches.",
+                            IsActive = true,
+                            Name = "Accessories",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
 
@@ -535,6 +553,33 @@ namespace SEF_Project.Api.Migrations
                             HexCode = "#001f3f",
                             IsActive = true,
                             Name = "Navy",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000041"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            HexCode = "#d9c7a7",
+                            IsActive = true,
+                            Name = "Beige",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000042"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            HexCode = "#4b5d3a",
+                            IsActive = true,
+                            Name = "Olive",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000043"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            HexCode = "#6d1f2c",
+                            IsActive = true,
+                            Name = "Burgundy",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
@@ -709,6 +754,7 @@ namespace SEF_Project.Api.Migrations
                             CollectionId = new Guid("00000000-0000-0000-0000-000000000005"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Soft combed cotton crew-neck tee.",
+                            ImageUrl = "/images/products/classic-cotton-tshirt.svg",
                             IsActive = true,
                             Name = "Classic Cotton T-Shirt",
                             SupplierId = new Guid("00000000-0000-0000-0000-000000000011"),
@@ -721,6 +767,7 @@ namespace SEF_Project.Api.Migrations
                             CollectionId = new Guid("00000000-0000-0000-0000-000000000007"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Brushed fleece hoodie with a kangaroo pocket.",
+                            ImageUrl = "/images/products/fleece-pullover-hoodie.svg",
                             IsActive = true,
                             Name = "Fleece Pullover Hoodie",
                             SupplierId = new Guid("00000000-0000-0000-0000-000000000011"),
@@ -733,6 +780,7 @@ namespace SEF_Project.Api.Migrations
                             CollectionId = new Guid("00000000-0000-0000-0000-000000000005"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Mid-rise slim jeans in stretch denim.",
+                            ImageUrl = "/images/products/slim-fit-denim-jeans.svg",
                             IsActive = true,
                             Name = "Slim Fit Denim Jeans",
                             SupplierId = new Guid("00000000-0000-0000-0000-000000000011"),
@@ -745,6 +793,7 @@ namespace SEF_Project.Api.Migrations
                             CollectionId = new Guid("00000000-0000-0000-0000-000000000006"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Lightly quilted jacket for layering.",
+                            ImageUrl = "/images/products/quilted-field-jacket.svg",
                             IsActive = true,
                             Name = "Quilted Field Jacket",
                             SupplierId = new Guid("00000000-0000-0000-0000-000000000011"),
@@ -757,6 +806,7 @@ namespace SEF_Project.Api.Migrations
                             CollectionId = new Guid("00000000-0000-0000-0000-000000000006"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Full-grain leather boots with a block heel.",
+                            ImageUrl = "/images/products/leather-ankle-boots.svg",
                             IsActive = true,
                             Name = "Leather Ankle Boots",
                             SupplierId = new Guid("00000000-0000-0000-0000-000000000012"),
@@ -912,6 +962,136 @@ namespace SEF_Project.Api.Migrations
                             SizeId = new Guid("00000000-0000-0000-0000-00000000003d"),
                             Sku = "BTS-ANK-OS",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        });
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.PurchaseOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ExpectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("OrderNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("ReceivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique();
+
+                    b.HasIndex("SupplierId", "Status");
+
+                    b.ToTable("PurchaseOrders", (string)null);
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.PurchaseOrderItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ProductVariantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PurchaseOrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("PurchaseOrderId");
+
+                    b.ToTable("PurchaseOrderItems", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_PurchaseOrderItems_Quantity", "\"Quantity\" > 0");
+
+                            t.HasCheckConstraint("CK_PurchaseOrderItems_UnitCost", "\"UnitCost\" >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Review", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsPublished")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("ProductId", "CustomerId")
+                        .IsUnique();
+
+                    b.HasIndex("ProductId", "IsPublished");
+
+                    b.ToTable("Reviews", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Reviews_Rating", "\"Rating\" BETWEEN 1 AND 5");
                         });
                 });
 
@@ -1415,11 +1595,11 @@ namespace SEF_Project.Api.Migrations
                             Id = new Guid("00000000-0000-0000-0000-000000000056"),
                             CampaignId = new Guid("00000000-0000-0000-0000-000000000051"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "10% off every dessert.",
+                            Description = "10% off every footwear style.",
                             DiscountValue = 10m,
                             EndDate = new DateTime(2026, 10, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
-                            Name = "Dessert Week 10% Off",
+                            Name = "Footwear Week 10% Off",
                             StartDate = new DateTime(2026, 10, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Type = "PercentageDiscount",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
@@ -1429,11 +1609,11 @@ namespace SEF_Project.Api.Migrations
                             Id = new Guid("00000000-0000-0000-0000-000000000055"),
                             CampaignId = new Guid("00000000-0000-0000-0000-000000000054"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Rs. 50 off each cola.",
+                            Description = "Rs. 50 off every pair of jeans.",
                             DiscountValue = 50m,
                             EndDate = new DateTime(2027, 3, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
-                            Name = "Cola Rs. 50 Off",
+                            Name = "Denim Rs. 50 Off",
                             StartDate = new DateTime(2027, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Type = "FixedAmountDiscount",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
@@ -1503,7 +1683,7 @@ namespace SEF_Project.Api.Migrations
                         new
                         {
                             PromotionId = new Guid("00000000-0000-0000-0000-000000000055"),
-                            ProductId = new Guid("00000000-0000-0000-0000-000000000024")
+                            ProductId = new Guid("00000000-0000-0000-0000-000000000023")
                         });
                 });
 
@@ -2152,6 +2332,55 @@ namespace SEF_Project.Api.Migrations
                     b.Navigation("Size");
                 });
 
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.PurchaseOrder", b =>
+                {
+                    b.HasOne("SEF_Project.Api.Models.Catalog.Supplier", "Supplier")
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Supplier");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.PurchaseOrderItem", b =>
+                {
+                    b.HasOne("SEF_Project.Api.Models.Catalog.ProductVariant", "ProductVariant")
+                        .WithMany()
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SEF_Project.Api.Models.Catalog.PurchaseOrder", "PurchaseOrder")
+                        .WithMany("Items")
+                        .HasForeignKey("PurchaseOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ProductVariant");
+
+                    b.Navigation("PurchaseOrder");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Review", b =>
+                {
+                    b.HasOne("SEF_Project.Api.Models.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SEF_Project.Api.Models.Catalog.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("SEF_Project.Api.Models.Catalog.StockTransaction", b =>
                 {
                     b.HasOne("SEF_Project.Api.Models.User", "PerformedByUser")
@@ -2458,6 +2687,11 @@ namespace SEF_Project.Api.Migrations
                     b.Navigation("InventoryStock");
 
                     b.Navigation("StockTransactions");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.PurchaseOrder", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Size", b =>

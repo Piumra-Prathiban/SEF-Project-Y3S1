@@ -218,7 +218,7 @@ public sealed class GetInventoryTool : IPromotionAgentTool
 
             items.AddRange(stock.Items.Where(item => productIds.Contains(item.ProductId)));
 
-            if (page * PageSize >= stock.TotalCount)
+            if (page * PageSize >= stock.TotalItems)
             {
                 break;
             }

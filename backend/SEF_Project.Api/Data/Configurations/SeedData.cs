@@ -6,6 +6,8 @@ public static class SeedData
     public static readonly Guid CategoryBottoms = new("00000000-0000-0000-0000-000000000002");
     public static readonly Guid CategoryOuterwear = new("00000000-0000-0000-0000-000000000003");
     public static readonly Guid CategoryFootwear = new("00000000-0000-0000-0000-000000000004");
+    public static readonly Guid CategoryDresses = new("00000000-0000-0000-0000-000000000008");
+    public static readonly Guid CategoryAccessories = new("00000000-0000-0000-0000-000000000009");
 
     public static readonly Guid CollectionSummerEssentials = new("00000000-0000-0000-0000-000000000005");
     public static readonly Guid CollectionSignature = new("00000000-0000-0000-0000-000000000006");
@@ -38,6 +40,9 @@ public static class SeedData
     public static readonly Guid ColourBlack = new("00000000-0000-0000-0000-00000000003e");
     public static readonly Guid ColourWhite = new("00000000-0000-0000-0000-00000000003f");
     public static readonly Guid ColourNavy = new("00000000-0000-0000-0000-000000000040");
+    public static readonly Guid ColourBeige = new("00000000-0000-0000-0000-000000000041");
+    public static readonly Guid ColourOlive = new("00000000-0000-0000-0000-000000000042");
+    public static readonly Guid ColourBurgundy = new("00000000-0000-0000-0000-000000000043");
 
     public static readonly Guid CampaignSummer = new("00000000-0000-0000-0000-000000000051");
     public static readonly Guid PromotionTops20 = new("00000000-0000-0000-0000-000000000052");

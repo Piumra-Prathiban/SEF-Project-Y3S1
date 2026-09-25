@@ -169,7 +169,7 @@ function ProductReport({ top, all, hasSales }) {
 }
 
 function InventoryReport({ outOfStock, lowStock }) {
-  const nothingToReport = outOfStock.totalCount === 0 && lowStock.totalCount === 0;
+  const nothingToReport = outOfStock.totalItems === 0 && lowStock.totalItems === 0;
 
   return (
     <ReportCard id="report-inventory" title="Inventory status (current)">
@@ -186,14 +186,14 @@ function InventoryReport({ outOfStock, lowStock }) {
 }
 
 function StockList({ title, page }) {
-  if (page.totalCount === 0) {
+  if (page.totalItems === 0) {
     return null;
   }
 
   return (
     <>
       <p>
-        {title}: <strong>{page.totalCount}</strong>
+        {title}: <strong>{page.totalItems}</strong>
       </p>
       <ul>
         {page.items.map((item) => (

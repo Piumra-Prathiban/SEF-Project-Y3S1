@@ -29,8 +29,8 @@ const promotion = {
   categoryIds: [],
 };
 
-function page(items, totalCount = items.length) {
-  return { items, totalCount, page: 1, pageSize: 10 };
+function page(items, totalItems = items.length) {
+  return { items, totalItems, page: 1, pageSize: 10 };
 }
 
 function renderPage() {

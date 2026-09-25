@@ -1,5 +1,6 @@
 /// Display formatting only. Prices and discounts shown in the app always come
 /// from the API; nothing here calculates them.
+library;
 
 const List<String> _months = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',

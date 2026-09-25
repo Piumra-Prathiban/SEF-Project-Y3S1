@@ -98,7 +98,7 @@ export default function InventorySection({ token, refreshKey }) {
               <Pagination
                 page={data.stock.page}
                 pageSize={data.stock.pageSize}
-                totalCount={data.stock.totalCount}
+                totalCount={data.stock.totalItems}
                 onPageChange={setPage}
               />
             </>

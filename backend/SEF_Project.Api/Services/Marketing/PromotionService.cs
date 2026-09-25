@@ -77,7 +77,7 @@ public class PromotionService : IPromotionService
         return new PagedResponse<PromotionResponse>
         {
             Items = items,
-            TotalCount = totalCount,
+            TotalItems = totalCount,
             Page = page,
             PageSize = pageSize
         };

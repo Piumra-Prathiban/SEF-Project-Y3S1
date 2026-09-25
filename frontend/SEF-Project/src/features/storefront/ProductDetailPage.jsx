@@ -5,8 +5,10 @@ import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency } from '../../utils/format';
+import { resolveImageUrl } from '../../utils/images';
 import { useCart } from '../cart/CartContext';
 import { addWishlistItem } from '../wishlist/wishlistService';
+import { ProductReviewsSection } from '../reviews';
 import { getStorefrontProduct } from './storefrontService';
 import './storefront.css';
 import './productDetail.css';
@@ -199,6 +201,7 @@ export function ProductDetailPage() {
 
   const hue = getHue(product.name);
   const price = selectedVariant?.price ?? product.priceFrom;
+  const imageUrl = resolveImageUrl(product.imageUrl);
 
   return (
     <div className="storefront">
@@ -209,8 +212,8 @@ export function ProductDetailPage() {
 
         <article className="product-detail">
           <div className="product-detail__media">
-            {product.imageUrl ? (
-              <img alt={product.name} src={product.imageUrl} />
+            {imageUrl ? (
+              <img alt={product.name} src={imageUrl} />
             ) : (
               <div
                 aria-hidden="true"
@@ -328,6 +331,8 @@ export function ProductDetailPage() {
             </div>
           </div>
         </article>
+
+        <ProductReviewsSection productId={product.id} />
       </div>
     </div>
   );

@@ -29,7 +29,7 @@ public class PromotionsApiTests : IClassFixture<MarketingApiFactory>
             EndDate = new DateTime(2026, 11, 30, 0, 0, 0, DateTimeKind.Utc),
             IsActive = true,
             CampaignId = SeedData.CampaignSummer,
-            ProductIds = new List<Guid> { SeedData.ProductCarbonara }
+            ProductIds = new List<Guid> { SeedData.ProductJacket }
         };
 
     private async Task<PromotionResponse> CreateAsStaffAsync(PromotionRequest request)
@@ -54,10 +54,10 @@ public class PromotionsApiTests : IClassFixture<MarketingApiFactory>
         var page = await response.Content.ReadFromJsonAsync<PagedResponse<PromotionResponse>>();
         var ids = page!.Items.Select(p => p.Id).ToList();
 
-        Assert.Contains(SeedData.PromotionPizza20, ids);
+        Assert.Contains(SeedData.PromotionTops20, ids);
         Assert.Contains(SeedData.PromotionFreeDelivery, ids);
         // 2027 promotion in a Scheduled campaign is hidden from customers.
-        Assert.DoesNotContain(SeedData.PromotionColaFixed, ids);
+        Assert.DoesNotContain(SeedData.PromotionDenimFixed, ids);
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class PromotionsApiTests : IClassFixture<MarketingApiFactory>
 
         var page = await response.Content.ReadFromJsonAsync<PagedResponse<PromotionResponse>>();
 
-        Assert.Contains(page!.Items, p => p.Id == SeedData.PromotionColaFixed);
+        Assert.Contains(page!.Items, p => p.Id == SeedData.PromotionDenimFixed);
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public class PromotionsApiTests : IClassFixture<MarketingApiFactory>
         Assert.Equal(1, page!.Page);
         Assert.Equal(2, page.PageSize);
         Assert.Equal(2, page.Items.Count);
-        Assert.True(page.TotalCount >= 4);
+        Assert.True(page.TotalItems >= 4);
         Assert.True(string.CompareOrdinal(page.Items[0].Name, page.Items[1].Name) <= 0);
     }
 
@@ -109,22 +109,22 @@ public class PromotionsApiTests : IClassFixture<MarketingApiFactory>
     public async Task GetPromotionById_ShouldReturnPromotion_WhenLive()
     {
         var response = await _factory.CreateClientAs(null)
-            .GetAsync($"{Url}/{SeedData.PromotionPizza20}");
+            .GetAsync($"{Url}/{SeedData.PromotionTops20}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var promotion = await response.Content.ReadFromJsonAsync<PromotionResponse>();
 
-        Assert.Equal("Pizza 20% Off", promotion!.Name);
+        Assert.Equal("Tops 20% Off", promotion!.Name);
         Assert.Equal("Summer Launch", promotion.CampaignName);
-        Assert.Contains(SeedData.ProductMargherita, promotion.ProductIds);
+        Assert.Contains(SeedData.ProductTShirt, promotion.ProductIds);
     }
 
     [Fact]
     public async Task GetPromotionById_ShouldReturnNotFound_WhenNotLiveForCustomer()
     {
         var response = await _factory.CreateClientAs("Customer")
-            .GetAsync($"{Url}/{SeedData.PromotionColaFixed}");
+            .GetAsync($"{Url}/{SeedData.PromotionDenimFixed}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -145,8 +145,8 @@ public class PromotionsApiTests : IClassFixture<MarketingApiFactory>
             .GetFromJsonAsync<PromotionTargetsResponse>($"{Url}/targets");
 
         Assert.Equal(5, targets!.Products.Count);
-        Assert.Equal(4, targets.Categories.Count);
-        Assert.Contains(targets.Products, p => p.Id == SeedData.ProductMargherita);
+        Assert.Equal(6, targets.Categories.Count);
+        Assert.Contains(targets.Products, p => p.Id == SeedData.ProductTShirt);
     }
 
     [Theory]
@@ -179,7 +179,7 @@ public class PromotionsApiTests : IClassFixture<MarketingApiFactory>
         Assert.NotEqual(Guid.Empty, created!.Id);
         Assert.Equal($"{role} Promotion", created.Name);
         Assert.Equal(15m, created.DiscountValue);
-        Assert.Equal(new[] { SeedData.ProductCarbonara }, created.ProductIds);
+        Assert.Equal(new[] { SeedData.ProductJacket }, created.ProductIds);
     }
 
     [Fact]
@@ -205,9 +205,9 @@ public class PromotionsApiTests : IClassFixture<MarketingApiFactory>
         var client = _factory.CreateClientAs("Customer");
 
         var update = await client.PutAsJsonAsync(
-            $"{Url}/{SeedData.PromotionPizza20}",
+            $"{Url}/{SeedData.PromotionTops20}",
             ValidRequest());
-        var delete = await client.DeleteAsync($"{Url}/{SeedData.PromotionPizza20}");
+        var delete = await client.DeleteAsync($"{Url}/{SeedData.PromotionTops20}");
 
         Assert.Equal(HttpStatusCode.Forbidden, update.StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, delete.StatusCode);
@@ -291,7 +291,7 @@ public class PromotionsApiTests : IClassFixture<MarketingApiFactory>
 
         var update = ValidRequest("After Update");
         update.DiscountValue = 25m;
-        update.ProductIds = new List<Guid> { SeedData.ProductCarbonara, SeedData.ProductTiramisu };
+        update.ProductIds = new List<Guid> { SeedData.ProductJacket, SeedData.ProductJeans };
 
         var response = await _factory.CreateClientAs("Staff")
             .PutAsJsonAsync($"{Url}/{created.Id}", update);
@@ -338,9 +338,9 @@ public class PromotionsApiTests : IClassFixture<MarketingApiFactory>
     [Fact]
     public async Task DeletePromotion_ShouldReturnConflict_WhenPromotionHasCoupons()
     {
-        // Seeded SUMMER20 coupon belongs to "Pizza 20% Off".
+        // Seeded SUMMER20 coupon belongs to "Tops 20% Off".
         var response = await _factory.CreateClientAs("Staff")
-            .DeleteAsync($"{Url}/{SeedData.PromotionPizza20}");
+            .DeleteAsync($"{Url}/{SeedData.PromotionTops20}");
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
@@ -351,49 +351,49 @@ public class PromotionsApiTests : IClassFixture<MarketingApiFactory>
     public async Task CalculateDiscount_ShouldReturnDiscount_WhenCustomer()
     {
         var response = await _factory.CreateClientAs("Customer").PostAsJsonAsync(
-            $"{Url}/{SeedData.PromotionPizza20}/calculate-discount",
+            $"{Url}/{SeedData.PromotionTops20}/calculate-discount",
             new CalculatePromotionDiscountRequest
             {
-                ProductVariantId = SeedData.VariantMargheritaSmall
+                ProductVariantId = SeedData.VariantTShirtXs
             });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var result = await response.Content.ReadFromJsonAsync<PromotionDiscountResponse>();
 
-        Assert.Equal(SeedData.PromotionPizza20, result!.PromotionId);
-        Assert.Equal(SeedData.VariantMargheritaSmall, result.ProductVariantId);
-        Assert.Equal(1200m, result.OriginalPrice);
-        Assert.Equal(240m, result.DiscountAmount);
-        Assert.Equal(960m, result.FinalPrice);
+        Assert.Equal(SeedData.PromotionTops20, result!.PromotionId);
+        Assert.Equal(SeedData.VariantTShirtXs, result.ProductVariantId);
+        Assert.Equal(2500m, result.OriginalPrice);
+        Assert.Equal(500m, result.DiscountAmount);
+        Assert.Equal(2000m, result.FinalPrice);
     }
 
     [Fact]
     public async Task CalculateDiscount_ShouldIgnoreClientSuppliedPrice()
     {
         var response = await _factory.CreateClientAs("Customer").PostAsJsonAsync(
-            $"{Url}/{SeedData.PromotionPizza20}/calculate-discount",
+            $"{Url}/{SeedData.PromotionTops20}/calculate-discount",
             new
             {
-                productVariantId = SeedData.VariantMargheritaSmall,
+                productVariantId = SeedData.VariantTShirtXs,
                 price = 1m,
                 discountAmount = 1000m
             });
 
         var result = await response.Content.ReadFromJsonAsync<PromotionDiscountResponse>();
 
-        Assert.Equal(1200m, result!.OriginalPrice);
-        Assert.Equal(960m, result.FinalPrice);
+        Assert.Equal(2500m, result!.OriginalPrice);
+        Assert.Equal(2000m, result.FinalPrice);
     }
 
     [Fact]
     public async Task CalculateDiscount_ShouldReturnConflict_WhenProductIsNotIncluded()
     {
         var response = await _factory.CreateClientAs("Customer").PostAsJsonAsync(
-            $"{Url}/{SeedData.PromotionPizza20}/calculate-discount",
+            $"{Url}/{SeedData.PromotionTops20}/calculate-discount",
             new CalculatePromotionDiscountRequest
             {
-                ProductVariantId = SeedData.VariantCola330
+                ProductVariantId = SeedData.VariantBootsOneSize
             });
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
@@ -406,7 +406,7 @@ public class PromotionsApiTests : IClassFixture<MarketingApiFactory>
             $"{Url}/{Guid.NewGuid()}/calculate-discount",
             new CalculatePromotionDiscountRequest
             {
-                ProductVariantId = SeedData.VariantMargheritaSmall
+                ProductVariantId = SeedData.VariantTShirtXs
             });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -416,7 +416,7 @@ public class PromotionsApiTests : IClassFixture<MarketingApiFactory>
     public async Task CalculateDiscount_ShouldReturnBadRequest_WhenVariantIdIsEmpty()
     {
         var response = await _factory.CreateClientAs("Customer").PostAsJsonAsync(
-            $"{Url}/{SeedData.PromotionPizza20}/calculate-discount",
+            $"{Url}/{SeedData.PromotionTops20}/calculate-discount",
             new CalculatePromotionDiscountRequest());
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -426,10 +426,10 @@ public class PromotionsApiTests : IClassFixture<MarketingApiFactory>
     public async Task CalculateDiscount_ShouldReturnUnauthorized_WhenAnonymous()
     {
         var response = await _factory.CreateClientAs(null).PostAsJsonAsync(
-            $"{Url}/{SeedData.PromotionPizza20}/calculate-discount",
+            $"{Url}/{SeedData.PromotionTops20}/calculate-discount",
             new CalculatePromotionDiscountRequest
             {
-                ProductVariantId = SeedData.VariantMargheritaSmall
+                ProductVariantId = SeedData.VariantTShirtXs
             });
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);

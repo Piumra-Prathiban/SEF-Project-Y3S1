@@ -3,12 +3,12 @@ import 'package:sef_project/features/promotions/models/promotion_models.dart';
 
 // JSON shaped exactly like the ASP.NET Core Marketing API responses.
 
-const Map<String, dynamic> pizzaPromotionJson = {
+const Map<String, dynamic> topsPromotionJson = {
   'id': 'promo-1',
   'campaignId': 'camp-1',
   'campaignName': 'Summer Launch',
-  'name': 'Pizza 20% Off',
-  'description': '20% off all pizzas.',
+  'name': 'Tops 20% Off',
+  'description': '20% off all tops.',
   'type': 0,
   'discountValue': 20.0,
   'startDate': '2026-09-01T00:00:00Z',
@@ -37,46 +37,46 @@ const Map<String, dynamic> freeDeliveryJson = {
   'updatedAt': '2026-09-01T00:00:00Z',
 };
 
-const Map<String, dynamic> margheritaSmallOfferJson = {
+const Map<String, dynamic> tShirtXsOfferJson = {
   'productVariantId': 'var-1',
-  'sku': 'PIZ-MARG-S',
-  'name': 'Small',
-  'originalPrice': 1200.0,
-  'discountAmount': 240.0,
-  'finalPrice': 960.0,
+  'sku': 'TSH-CLS-XS',
+  'name': 'XS / Black',
+  'originalPrice': 2500.0,
+  'discountAmount': 500.0,
+  'finalPrice': 2000.0,
   'promotionId': 'promo-1',
-  'promotionName': 'Pizza 20% Off',
+  'promotionName': 'Tops 20% Off',
   'currency': 'LKR',
 };
 
-const Map<String, dynamic> garlicBreadOfferJson = {
-  'productVariantId': 'var-9',
-  'sku': 'SID-GARL-R',
-  'name': 'Regular',
-  'originalPrice': 500.0,
+const Map<String, dynamic> hoodieMOfferJson = {
+  'productVariantId': 'var-2',
+  'sku': 'HOD-FLC-M',
+  'name': 'M / Navy',
+  'originalPrice': 6500.0,
   'discountAmount': 0.0,
-  'finalPrice': 500.0,
+  'finalPrice': 6500.0,
   'promotionId': null,
   'promotionName': null,
   'currency': 'LKR',
 };
 
-const Map<String, dynamic> pizzaPromotionProductsJson = {
+const Map<String, dynamic> topsPromotionProductsJson = {
   'promotionId': 'promo-1',
-  'promotionName': 'Pizza 20% Off',
+  'promotionName': 'Tops 20% Off',
   'hasPriceDiscount': true,
   'products': [
     {
       'productId': 'prod-1',
-      'productName': 'Margherita Pizza',
-      'description': 'Classic tomato, mozzarella and basil.',
-      'variants': [margheritaSmallOfferJson],
+      'productName': 'Classic Cotton T-Shirt',
+      'description': 'Soft combed cotton crew-neck tee.',
+      'variants': [tShirtXsOfferJson],
     },
     {
-      'productId': 'prod-9',
-      'productName': 'Garlic Bread',
+      'productId': 'prod-2',
+      'productName': 'Fleece Pullover Hoodie',
       'description': null,
-      'variants': [garlicBreadOfferJson],
+      'variants': [hoodieMOfferJson],
     },
   ],
 };
@@ -88,39 +88,39 @@ const Map<String, dynamic> freeDeliveryProductsJson = {
   'products': <Map<String, dynamic>>[],
 };
 
-const Map<String, dynamic> margheritaPromotionsJson = {
+const Map<String, dynamic> tShirtPromotionsJson = {
   'productId': 'prod-1',
-  'productName': 'Margherita Pizza',
-  'description': 'Classic tomato, mozzarella and basil.',
+  'productName': 'Classic Cotton T-Shirt',
+  'description': 'Soft combed cotton crew-neck tee.',
   'hasActivePromotion': true,
   'promotions': [
     {
       'id': 'promo-1',
-      'name': 'Pizza 20% Off',
-      'description': '20% off all pizzas.',
+      'name': 'Tops 20% Off',
+      'description': '20% off all tops.',
       'type': 0,
       'discountValue': 20.0,
       'startDate': '2026-09-01T00:00:00Z',
       'endDate': '2026-12-31T00:00:00Z',
     },
   ],
-  'variants': [margheritaSmallOfferJson],
+  'variants': [tShirtXsOfferJson],
 };
 
-const Map<String, dynamic> carbonaraPromotionsJson = {
+const Map<String, dynamic> jacketPromotionsJson = {
   'productId': 'prod-3',
-  'productName': 'Spaghetti Carbonara',
-  'description': 'Creamy pasta with pancetta.',
+  'productName': 'Quilted Field Jacket',
+  'description': 'Lightly quilted jacket for layering.',
   'hasActivePromotion': false,
   'promotions': <Map<String, dynamic>>[],
   'variants': [
     {
       'productVariantId': 'var-3',
-      'sku': 'PST-CARB-R',
-      'name': 'Regular',
-      'originalPrice': 1800.0,
+      'sku': 'JKT-QFD-L',
+      'name': 'L / Navy',
+      'originalPrice': 12500.0,
       'discountAmount': 0.0,
-      'finalPrice': 1800.0,
+      'finalPrice': 12500.0,
       'promotionId': null,
       'promotionName': null,
       'currency': 'LKR',
@@ -128,26 +128,26 @@ const Map<String, dynamic> carbonaraPromotionsJson = {
   ],
 };
 
-Promotion get pizzaPromotion => Promotion.fromJson(pizzaPromotionJson);
+Promotion get topsPromotion => Promotion.fromJson(topsPromotionJson);
 Promotion get freeDelivery => Promotion.fromJson(freeDeliveryJson);
 
 /// In-memory [PromotionRepository] for widget tests. Each handler can be
 /// replaced per test (e.g. to throw or to wait on a Completer).
 class FakePromotionRepository implements PromotionRepository {
   Future<List<Promotion>> Function() onFetchActive =
-      () async => [pizzaPromotion, freeDelivery];
+      () async => [topsPromotion, freeDelivery];
 
   Future<Promotion> Function(String id) onFetchPromotion = (id) async =>
-      id == 'promo-2' ? freeDelivery : pizzaPromotion;
+      id == 'promo-2' ? freeDelivery : topsPromotion;
 
   Future<PromotionProducts> Function(String id) onFetchPromotionProducts = (id) async =>
       PromotionProducts.fromJson(
-        id == 'promo-2' ? freeDeliveryProductsJson : pizzaPromotionProductsJson,
+        id == 'promo-2' ? freeDeliveryProductsJson : topsPromotionProductsJson,
       );
 
   Future<ProductPromotions> Function(String productId) onFetchProductPromotions =
       (productId) async => ProductPromotions.fromJson(
-            productId == 'prod-3' ? carbonaraPromotionsJson : margheritaPromotionsJson,
+            productId == 'prod-3' ? jacketPromotionsJson : tShirtPromotionsJson,
           );
 
   int activeCalls = 0;

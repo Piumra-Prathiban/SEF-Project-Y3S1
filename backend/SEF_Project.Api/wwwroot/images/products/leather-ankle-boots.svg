@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000" role="img" aria-label="Leather ankle boots illustration">
+  <title>Leather ankle boots</title>
+  <rect width="800" height="1000" fill="#f7f4ee"/>
+  <circle cx="400" cy="540" r="300" fill="#e4eee8"/>
+  <path d="M300 334C300 300 318 292 332 292" fill="none" stroke="#2e5944" stroke-width="14" stroke-linecap="round"/>
+  <path d="M300 330H430L452 548C500 590 566 646 614 690 640 718 632 758 604 758H252C240 758 234 744 238 722L242 548Z" fill="#25221f"/>
+  <ellipse cx="365" cy="332" rx="64" ry="15" fill="#191612"/>
+  <path d="M420 400L466 414M424 436L470 450M428 472L474 486M432 508L478 522" fill="none" stroke="#ded8ce" stroke-width="8" stroke-linecap="round"/>
+  <rect x="234" y="700" width="396" height="64" rx="26" fill="#191612"/>
+  <rect x="248" y="756" width="96" height="46" rx="12" fill="#191612"/>
+  <path d="M474 606C522 640 566 672 600 700" fill="none" stroke="#3a352f" stroke-width="4"/>
+  <circle cx="400" cy="912" r="22" fill="#2e5944"/>
+  <circle cx="410" cy="912" r="15" fill="#f7f4ee"/>
+</svg>

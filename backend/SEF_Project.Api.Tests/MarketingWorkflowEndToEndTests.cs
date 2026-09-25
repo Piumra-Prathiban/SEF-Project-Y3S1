@@ -84,13 +84,13 @@ public class MarketingWorkflowEndToEndTests : IClassFixture<MarketingApiFactory>
 
         await db.SaveChangesAsync();
 
-        // Spaghetti Carbonara sold well in September, then fell sharply in
+        // The Quilted Field Jacket sold well in September, then fell sharply in
         // October: exactly the "declining demand" signal the objective asks
         // the agent to find. Same seeded product/variant and dates used
         // throughout this test suite, so this reproduces deterministically.
-        AddCompletedOrder(db, shopper.Id, SeedData.VariantCarbonaraRegular, quantity: 4, unitPrice: 1800m,
+        AddCompletedOrder(db, shopper.Id, SeedData.VariantJacketL, quantity: 4, unitPrice: 1800m,
             placedAt: new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc));
-        AddCompletedOrder(db, shopper.Id, SeedData.VariantCarbonaraRegular, quantity: 3, unitPrice: 1800m,
+        AddCompletedOrder(db, shopper.Id, SeedData.VariantJacketL, quantity: 3, unitPrice: 1800m,
             placedAt: new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc));
 
         await db.SaveChangesAsync();
@@ -207,7 +207,7 @@ public class MarketingWorkflowEndToEndTests : IClassFixture<MarketingApiFactory>
         // declining product, and deterministic validation checked it.
         // ---------------------------------------------------------------
         var proposal = Assert.Single(afterStart.Proposal!.Proposals);
-        Assert.Equal(SeedData.ProductCarbonara, proposal.ProductId);
+        Assert.Equal(SeedData.ProductJacket, proposal.ProductId);
         Assert.Equal("PercentageDiscount", proposal.PromotionType);
         Assert.Equal(15m, proposal.DiscountValue); // 4 -> 3 units is a 25% decline
         Assert.NotEmpty(afterStart.ValidationResults);
@@ -277,7 +277,7 @@ public class MarketingWorkflowEndToEndTests : IClassFixture<MarketingApiFactory>
 
             Assert.True(storedPromotion.IsActive);
             Assert.Equal(15m, storedPromotion.DiscountValue);
-            Assert.Equal(SeedData.ProductCarbonara, Assert.Single(storedPromotion.PromotionProducts).ProductId);
+            Assert.Equal(SeedData.ProductJacket, Assert.Single(storedPromotion.PromotionProducts).ProductId);
 
             var storedWorkflow = await db.AgentWorkflows.SingleAsync(w => w.Id == afterStart.WorkflowId);
             Assert.Equal(AgentWorkflowStatus.Completed, storedWorkflow.Status);
@@ -304,18 +304,18 @@ public class MarketingWorkflowEndToEndTests : IClassFixture<MarketingApiFactory>
         Assert.NotNull(promotionOffer);
         Assert.True(promotionOffer!.HasPriceDiscount);
         var offeredVariant = Assert.Single(Assert.Single(promotionOffer.Products).Variants);
-        Assert.Equal(1800m, offeredVariant.OriginalPrice);
-        Assert.Equal(270m, offeredVariant.DiscountAmount);
-        Assert.Equal(1530m, offeredVariant.FinalPrice);
+        Assert.Equal(12500m, offeredVariant.OriginalPrice);
+        Assert.Equal(1875m, offeredVariant.DiscountAmount);
+        Assert.Equal(10625m, offeredVariant.FinalPrice);
 
         var productView = await customerFacingClient.GetFromJsonAsync<ProductPromotionsResponse>(
-            $"/api/promotions/products/{SeedData.ProductCarbonara}");
+            $"/api/promotions/products/{SeedData.ProductJacket}");
         Assert.NotNull(productView);
         Assert.True(productView!.HasActivePromotion);
         Assert.Contains(productView.Promotions, p => p.Id == createdPromotionId);
         var customerVisiblePrice = Assert.Single(productView.Variants);
         Assert.Equal(createdPromotionId, customerVisiblePrice.PromotionId);
-        Assert.Equal(1530m, customerVisiblePrice.FinalPrice);
+        Assert.Equal(10625m, customerVisiblePrice.FinalPrice);
         Print("Step 15-16: what a customer (Flutter/React) now sees for this product", productView);
     }
 }

@@ -36,6 +36,15 @@ public class StorefrontProductResponseDto
     public List<StorefrontVariantResponseDto> Variants { get; set; } = new();
 
     public bool InStock { get; set; }
+
+    /// <summary>Number of published reviews for this product.</summary>
+    public int ReviewCount { get; set; }
+
+    /// <summary>
+    /// Average published rating rounded to one decimal (0 when there are no
+    /// published reviews).
+    /// </summary>
+    public decimal AverageRating { get; set; }
 }
 
 public class StorefrontColourResponseDto

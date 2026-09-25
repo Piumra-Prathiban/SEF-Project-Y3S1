@@ -203,7 +203,7 @@ public class AnalyticsService : IAnalyticsService
             To = to,
             Page = page,
             PageSize = pageSize,
-            TotalCount = totalCount,
+            TotalItems = totalCount,
             Items = pageRows.Select(r => new ProductPerformanceItem
             {
                 ProductId = r.ProductId,
@@ -263,7 +263,7 @@ public class AnalyticsService : IAnalyticsService
         {
             Page = page,
             PageSize = pageSize,
-            TotalCount = totalCount,
+            TotalItems = totalCount,
             Items = pageRows.Select(r =>
             {
                 var available = r.QuantityOnHand - r.ReservedQuantity;
@@ -398,7 +398,7 @@ public class AnalyticsService : IAnalyticsService
             To = to,
             Page = page,
             PageSize = pageSize,
-            TotalCount = totalCount,
+            TotalItems = totalCount,
             LivePromotionCount = livePromotionCount,
             TotalRedemptions = totalRedemptions,
             Items = pageRows.Select(r => new PromotionPerformanceItem
@@ -450,9 +450,9 @@ public class AnalyticsService : IAnalyticsService
             PreviousUnitsSold = previous
                 .Where(i => i.ProductVariantId == v.Id)
                 .Sum(i => (int?)i.Quantity) ?? 0,
-            AvailableQuantity = v.Inventory == null
+            AvailableQuantity = v.InventoryStock == null
                 ? 0
-                : v.Inventory.QuantityOnHand - v.Inventory.ReservedQuantity
+                : v.InventoryStock.QuantityOnHand - v.InventoryStock.ReservedQuantity
         });
 
         var descending = IsDescending(query.SortDirection, defaultDescending: true);
@@ -485,7 +485,7 @@ public class AnalyticsService : IAnalyticsService
             To = to,
             Page = page,
             PageSize = pageSize,
-            TotalCount = totalCount,
+            TotalItems = totalCount,
             Items = pageRows.Select(r => ToDemandItem(r, days)).ToList()
         };
     }
@@ -533,10 +533,10 @@ public class AnalyticsService : IAnalyticsService
             Sku = v.Sku,
             VariantName = v.Name,
             IsActive = v.IsActive && v.Product.IsActive,
-            HasInventoryRecord = v.Inventory != null,
-            QuantityOnHand = v.Inventory == null ? 0 : v.Inventory.QuantityOnHand,
-            ReservedQuantity = v.Inventory == null ? 0 : v.Inventory.ReservedQuantity,
-            ReorderLevel = v.Inventory == null ? 0 : v.Inventory.ReorderLevel
+            HasInventoryRecord = v.InventoryStock != null,
+            QuantityOnHand = v.InventoryStock == null ? 0 : v.InventoryStock.QuantityOnHand,
+            ReservedQuantity = v.InventoryStock == null ? 0 : v.InventoryStock.ReservedQuantity,
+            ReorderLevel = v.InventoryStock == null ? 0 : v.InventoryStock.ReorderLevel
         });
     }
 

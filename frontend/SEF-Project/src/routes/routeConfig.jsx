@@ -7,7 +7,10 @@ import { InventoryAgentPage } from '../features/inventory-agent';
 import OrdersListPage from '../features/orders/OrdersListPage';
 import { ProfilePage } from '../features/profile';
 import { ProductsPage } from '../features/products';
+import { PurchaseOrdersPage } from '../features/purchase-orders';
+import { ReviewsModerationPage } from '../features/reviews';
 import { SizesPage } from '../features/sizes';
+import { SuppliersPage } from '../features/suppliers';
 import { VariantsPage } from '../features/variants';
 import { WishlistPage } from '../features/wishlist';
 import { STAFF_ROLES } from '../utils/roles';
@@ -47,6 +50,26 @@ export const memberOneRoutes = [
     showInNavigation: true,
   },
   {
+    path: '/marketing',
+    label: 'Marketing',
+    roles: STAFF_ROLES,
+    showInNavigation: true,
+  },
+  {
+    path: '/purchase-orders',
+    label: 'Purchase Orders',
+    element: <PurchaseOrdersPage />,
+    roles: STAFF_ROLES,
+    showInNavigation: true,
+  },
+  {
+    path: '/reviews',
+    label: 'Reviews',
+    element: <ReviewsModerationPage />,
+    roles: STAFF_ROLES,
+    showInNavigation: true,
+  },
+  {
     path: '/categories',
     label: 'Categories',
     element: <CategoriesPage />,
@@ -71,6 +94,13 @@ export const memberOneRoutes = [
     path: '/colours',
     label: 'Colours',
     element: <ColoursPage />,
+    roles: STAFF_ROLES,
+    showInNavigation: true,
+  },
+  {
+    path: '/suppliers',
+    label: 'Suppliers',
+    element: <SuppliersPage />,
     roles: STAFF_ROLES,
     showInNavigation: true,
   },

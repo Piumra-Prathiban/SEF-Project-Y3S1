@@ -1,21 +1,26 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { PageShell } from '../../components/ui/PageShell';
 import { useAuth } from '../../contexts/AuthContext';
+import { isStaff } from '../../utils/roles';
 import { normalizeApiError } from '../../utils/apiErrorUtils';
 import './LoginPage.css';
 
 export function LoginPage() {
   const { isAuthenticated, login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = location.state?.from
+    ? `${location.state.from.pathname}${location.state.from.search ?? ''}`
+    : null;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (isAuthenticated) {
-    return <Navigate to="/orders" replace />;
+    return <Navigate to={returnTo ?? '/orders'} replace />;
   }
 
   async function handleSubmit(event) {
@@ -25,8 +30,10 @@ export function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      await login(email, password);
-      navigate('/products');
+      const response = await login(email, password);
+      const landing = isStaff(response?.user) ? '/products' : '/orders';
+
+      navigate(returnTo ?? landing, { replace: true });
     } catch (err) {
       setError(normalizeApiError(err));
     } finally {

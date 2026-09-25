@@ -73,6 +73,24 @@ describe('CartPage', () => {
     expect(within(summary).getByText('LKR 5,000.00')).toBeInTheDocument();
   });
 
+  it('resolves a relative product image against the API origin', async () => {
+    window.localStorage.setItem(
+      'clothic.cart',
+      JSON.stringify([
+        { ...ITEM, imageUrl: '/images/products/classic-cotton-tshirt.svg' },
+      ]),
+    );
+
+    const { container } = renderCart();
+
+    await screen.findByRole('link', { name: 'Classic Cotton T-Shirt' });
+
+    expect(container.querySelector('.cart-item__media img')).toHaveAttribute(
+      'src',
+      'http://localhost:5193/images/products/classic-cotton-tshirt.svg',
+    );
+  });
+
   it('recalculates the subtotal when the quantity changes', async () => {
     window.localStorage.setItem('clothic.cart', JSON.stringify([ITEM]));
 

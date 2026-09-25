@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import FlashMessage from '../../components/FlashMessage';
+import '../../styles/ui.css';
 
 export default function MarketingLayout() {
   return (

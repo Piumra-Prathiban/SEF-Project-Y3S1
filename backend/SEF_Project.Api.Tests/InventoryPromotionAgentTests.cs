@@ -165,15 +165,15 @@ public class InventoryPromotionAgentTests
         }
 
         /// <summary>
-        /// Carbonara declines (previous window vs last 30 days). Margherita
-        /// declines too but already has the live "Pizza 20% Off" promotion.
+        /// The field jacket declines (previous window vs last 30 days). The
+        /// T-shirt declines too but already has the live "Tops 20% Off" promotion.
         /// </summary>
-        public async Task SeedDecliningSalesAsync(int carbonaraPrevious, int carbonaraCurrent)
+        public async Task SeedDecliningSalesAsync(int jacketPrevious, int jacketCurrent)
         {
-            await AddSaleAsync(SeedData.VariantCarbonaraRegular, carbonaraPrevious, 1800m, new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc));
-            await AddSaleAsync(SeedData.VariantCarbonaraRegular, carbonaraCurrent, 1800m, new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc));
-            await AddSaleAsync(SeedData.VariantMargheritaSmall, 10, 1200m, new DateTime(2026, 9, 2, 0, 0, 0, DateTimeKind.Utc));
-            await AddSaleAsync(SeedData.VariantMargheritaSmall, 2, 1200m, new DateTime(2026, 10, 2, 0, 0, 0, DateTimeKind.Utc));
+            await AddSaleAsync(SeedData.VariantJacketL, jacketPrevious, 1800m, new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc));
+            await AddSaleAsync(SeedData.VariantJacketL, jacketCurrent, 1800m, new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc));
+            await AddSaleAsync(SeedData.VariantTShirtXs, 10, 1200m, new DateTime(2026, 9, 2, 0, 0, 0, DateTimeKind.Utc));
+            await AddSaleAsync(SeedData.VariantTShirtXs, 2, 1200m, new DateTime(2026, 10, 2, 0, 0, 0, DateTimeKind.Utc));
         }
 
         public TimeProvider Clock { get; } = new FixedTimeProvider();
@@ -249,8 +249,8 @@ public class InventoryPromotionAgentTests
             }
         }, AgentJson.Options);
 
-    private static string CarbonaraProposal(decimal discount = 15m, int available = 35) =>
-        ProposalJson(SeedData.ProductCarbonara, "Spaghetti Carbonara", discount, 3, 4, available);
+    private static string JacketProposal(decimal discount = 15m, int available = 200) =>
+        ProposalJson(SeedData.ProductJacket, "Quilted Field Jacket", discount, 3, 4, available);
 
     // ---- Happy path --------------------------------------------------------------
 
@@ -258,7 +258,7 @@ public class InventoryPromotionAgentTests
     public async Task StartAsync_ShouldProposeValidatedPromotion_ForDecliningProduct()
     {
         await using var h = await Harness.CreateAsync();
-        await h.SeedDecliningSalesAsync(carbonaraPrevious: 4, carbonaraCurrent: 3);
+        await h.SeedDecliningSalesAsync(jacketPrevious: 4, jacketCurrent: 3);
 
         var result = await h.Agent().StartAsync(StartRequest());
 
@@ -267,19 +267,19 @@ public class InventoryPromotionAgentTests
         Assert.NotEmpty(result.Plan);
         Assert.Empty(result.Errors);
 
-        // Margherita also declined but already has a live promotion, so only Carbonara is proposed.
+        // The T-shirt also declined but already has a live promotion, so only the jacket is proposed.
         var proposal = Assert.Single(result.Proposal!.Proposals);
-        Assert.Equal(SeedData.ProductCarbonara, proposal.ProductId);
+        Assert.Equal(SeedData.ProductJacket, proposal.ProductId);
         Assert.Equal("PercentageDiscount", proposal.PromotionType);
         Assert.Equal(15m, proposal.DiscountValue);                 // 25% decline -> 15%
         Assert.Equal(Tomorrow, proposal.StartDate);
         Assert.Equal(Tomorrow.AddDays(14), proposal.EndDate);
-        Assert.Equal((3, 4, 35), (proposal.Evidence.UnitsSold, proposal.Evidence.PreviousUnitsSold, proposal.Evidence.AvailableQuantity));
+        Assert.Equal((3, 4, 200), (proposal.Evidence.UnitsSold, proposal.Evidence.PreviousUnitsSold, proposal.Evidence.AvailableQuantity));
         Assert.Equal(PromotionImpactLevel.Low, result.ImpactLevel);
 
         var price = Assert.Single(Assert.Single(result.Pricing).Variants);
-        Assert.Equal(1800m, price.OriginalPrice);
-        Assert.Equal(1530m, price.FinalPrice);
+        Assert.Equal(12500m, price.OriginalPrice);
+        Assert.Equal(10625m, price.FinalPrice);
 
         Assert.All(result.ValidationResults, v => Assert.True(v.IsValid, v.Message));
         Assert.Contains(result.ValidationResults, v => v.ValidatorName == "NoConflict");
@@ -355,29 +355,29 @@ public class InventoryPromotionAgentTests
         switch (scenario)
         {
             case "insufficient inventory":
-                var stock = await h.Context.Inventory.SingleAsync(i => i.ProductVariantId == SeedData.VariantCarbonaraRegular);
-                stock.ReservedQuantity = 30; // 35 on hand -> 5 available, reorder level 10
+                var stock = await h.Context.Inventory.SingleAsync(i => i.ProductVariantId == SeedData.VariantJacketL);
+                stock.ReservedQuantity = 195; // 200 on hand -> 5 available, reorder level 50
                 await h.Context.SaveChangesAsync();
-                output = CarbonaraProposal(available: 5);
+                output = JacketProposal(available: 5);
                 break;
             case "invalid product":
-                output = ProposalJson(Guid.NewGuid(), "Imaginary Pizza", 10m, 0, 0, 0);
+                output = ProposalJson(Guid.NewGuid(), "Imaginary Jacket", 10m, 0, 0, 0);
                 break;
             case "invalid discount":
-                output = CarbonaraProposal(discount: 80m);
+                output = JacketProposal(discount: 80m);
                 break;
             case "fixed discount above limit":
-                output = ProposalJson(SeedData.ProductCarbonara, "Spaghetti Carbonara", 900m, 3, 4, 35, "FixedAmountDiscount");
+                output = ProposalJson(SeedData.ProductJacket, "Quilted Field Jacket", 4500m, 3, 4, 200, "FixedAmountDiscount");
                 break;
             case "conflicting promotion":
-                output = ProposalJson(SeedData.ProductMargherita, "Margherita Pizza", 10m, 2, 10, 80);
+                output = ProposalJson(SeedData.ProductTShirt, "Classic Cotton T-Shirt", 10m, 2, 10, 80);
                 break;
             case "fabricated evidence":
-                output = ProposalJson(SeedData.ProductCarbonara, "Spaghetti Carbonara", 15m, 1, 99, 35);
+                output = ProposalJson(SeedData.ProductJacket, "Quilted Field Jacket", 15m, 1, 99, 200);
                 break;
             default: // free item: 100% passes the % limit only if the limit allows it
                 h.AgentOptions.HighImpactDiscountPercent = 20;
-                output = ProposalJson(SeedData.ProductCarbonara, "Spaghetti Carbonara", 1800m, 3, 4, 35, "FixedAmountDiscount");
+                output = ProposalJson(SeedData.ProductJacket, "Quilted Field Jacket", 12500m, 3, 4, 200, "FixedAmountDiscount");
                 break;
         }
 
@@ -394,11 +394,11 @@ public class InventoryPromotionAgentTests
     // ---- Malformed model output -------------------------------------------------
 
     [Theory]
-    [InlineData("Sure! I recommend 20% off Carbonara because sales dropped.")]
+    [InlineData("Sure! I recommend 20% off the quilted field jacket because sales dropped.")]
     [InlineData("")]
     [InlineData("{}")]
     [InlineData("{\"schemaVersion\":\"1.0\",\"summary\":\"x\",\"proposals\":[],\"reasoning\":\"step by step...\"}")]
-    [InlineData("{\"schemaVersion\":\"1.0\",\"summary\":\"x\",\"proposals\":[{\"productId\":\"00000000-0000-0000-0000-000000000023\",\"productName\":\"Carbonara\",\"promotionType\":\"FreeMoney\",\"discountValue\":10,\"startDate\":\"2026-10-16T00:00:00Z\",\"endDate\":\"2026-10-30T00:00:00Z\",\"rationale\":\"Sales declined recently.\",\"evidence\":{\"unitsSold\":3,\"previousUnitsSold\":4,\"availableQuantity\":35}}]}")]
+    [InlineData("{\"schemaVersion\":\"1.0\",\"summary\":\"x\",\"proposals\":[{\"productId\":\"00000000-0000-0000-0000-000000000023\",\"productName\":\"Slim Fit Denim Jeans\",\"promotionType\":\"FreeMoney\",\"discountValue\":10,\"startDate\":\"2026-10-16T00:00:00Z\",\"endDate\":\"2026-10-30T00:00:00Z\",\"rationale\":\"Sales declined recently.\",\"evidence\":{\"unitsSold\":3,\"previousUnitsSold\":4,\"availableQuantity\":35}}]}")]
     public async Task StartAsync_ShouldRejectMalformedModelOutput_WithoutStoringIt(string output)
     {
         await using var h = await Harness.CreateAsync();
@@ -561,7 +561,7 @@ public class InventoryPromotionAgentTests
 
         var ex = await Assert.ThrowsAsync<PromotionAgentToolException>(() =>
             h.Registry(wrongShape).ExecuteAsync(step, "GetInventory",
-                new JsonObject { ["productIds"] = new JsonArray(SeedData.ProductCarbonara.ToString()) },
+                new JsonObject { ["productIds"] = new JsonArray(SeedData.ProductJacket.ToString()) },
                 CancellationToken.None));
 
         Assert.True(ex.IsRejected);
@@ -571,7 +571,7 @@ public class InventoryPromotionAgentTests
     public void JsonRedactor_ShouldRemoveSecretsAtAnyDepth()
     {
         var node = JsonNode.Parse("""
-            {"apiKey":"k","nested":{"password":"p","ok":1},"list":[{"accessToken":"t","sku":"PIZ"}]}
+            {"apiKey":"k","nested":{"password":"p","ok":1},"list":[{"accessToken":"t","sku":"TSH"}]}
             """);
 
         var redacted = JsonRedactor.Redact(node)!.ToJsonString();
@@ -579,7 +579,7 @@ public class InventoryPromotionAgentTests
         Assert.DoesNotContain("\"k\"", redacted);
         Assert.DoesNotContain("\"p\"", redacted);
         Assert.DoesNotContain("\"t\"", redacted);
-        Assert.Contains("PIZ", redacted);
+        Assert.Contains("TSH", redacted);
         Assert.Contains(JsonRedactor.Placeholder, redacted);
     }
 
@@ -603,12 +603,12 @@ public class InventoryPromotionAgentTests
 
         var promotionId = Assert.Single(result.CreatedPromotionIds);
         var promotion = await h.Context.Promotions.Include(p => p.PromotionProducts).SingleAsync(p => p.Id == promotionId);
-        Assert.Equal("Spaghetti Carbonara 15% off", promotion.Name);
+        Assert.Equal("Quilted Field Jacket 15% off", promotion.Name);
         Assert.Equal(PromotionType.PercentageDiscount, promotion.Type);
         Assert.Equal(15m, promotion.DiscountValue);
         Assert.Equal(Tomorrow, promotion.StartDate);
         Assert.True(promotion.IsActive);
-        Assert.Equal(SeedData.ProductCarbonara, Assert.Single(promotion.PromotionProducts).ProductId);
+        Assert.Equal(SeedData.ProductJacket, Assert.Single(promotion.PromotionProducts).ProductId);
 
         Assert.Contains(result.Steps, s => s.Title.StartsWith("Re-validate") && s.Status == AgentStepStatus.Completed);
         Assert.Contains(result.Steps, s => s.AgentName == PromotionAgentConstants.ExecutorName);
@@ -619,7 +619,7 @@ public class InventoryPromotionAgentTests
     public async Task ApproveAsync_ShouldRequireAdministrator_ForHighImpactProposal()
     {
         await using var h = await Harness.CreateAsync();
-        await h.SeedDecliningSalesAsync(carbonaraPrevious: 10, carbonaraCurrent: 2); // 80% decline -> 20%
+        await h.SeedDecliningSalesAsync(jacketPrevious: 10, jacketCurrent: 2); // 80% decline -> 20%
         var agent = h.Agent();
         var started = await agent.StartAsync(StartRequest());
 
@@ -672,7 +672,7 @@ public class InventoryPromotionAgentTests
         Assert.Equal(AgentWorkflowStatus.AwaitingApproval, result!.Status);
         Assert.Equal(10m, result.Proposal!.Proposals.Single().DiscountValue);
         Assert.Equal(PromotionImpactLevel.Low, result.ImpactLevel);
-        Assert.Equal(1530m + 90m, result.Pricing.Single().Variants.Single().FinalPrice); // 1800 - 10%
+        Assert.Equal(12500m - 1250m, result.Pricing.Single().Variants.Single().FinalPrice); // 12500 - 10%
 
         Assert.Equal(
             new[] { ApprovalStatus.RevisionRequested, ApprovalStatus.Pending },
@@ -691,8 +691,8 @@ public class InventoryPromotionAgentTests
 
         var result = await agent.ReviseAsync(started.WorkflowId, h.StaffUserId, new RevisePromotionAgentRequest
         {
-            Comment = "Do not discount Carbonara.",
-            ExcludeProductIds = new List<Guid> { SeedData.ProductCarbonara }
+            Comment = "Do not discount the field jacket.",
+            ExcludeProductIds = new List<Guid> { SeedData.ProductJacket }
         });
 
         Assert.Equal(AgentWorkflowStatus.Completed, result!.Status);
@@ -740,16 +740,16 @@ public class InventoryPromotionAgentTests
         var agent = h.Agent();
         var started = await agent.StartAsync(StartRequest());
 
-        // Someone launches a Carbonara promotion before the proposal is approved.
+        // Someone launches a field jacket promotion before the proposal is approved.
         await h.PromotionService().CreatePromotionAsync(new PromotionRequest
         {
-            Name = "Manual pasta deal",
+            Name = "Manual jacket deal",
             Type = PromotionType.PercentageDiscount,
             DiscountValue = 5m,
             StartDate = Now.AddDays(-1),
             EndDate = Now.AddDays(10),
             IsActive = true,
-            ProductIds = new List<Guid> { SeedData.ProductCarbonara }
+            ProductIds = new List<Guid> { SeedData.ProductJacket }
         });
 
         var result = await agent.ApproveAsync(started.WorkflowId, h.StaffUserId, false, null);

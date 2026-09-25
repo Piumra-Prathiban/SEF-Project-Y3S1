@@ -1,5 +1,6 @@
 /// Models for the Marketing API. Field names and enum numbers match the
 /// ASP.NET Core DTOs; money values are the server's authoritative figures.
+library;
 
 enum PromotionType {
   percentageDiscount,

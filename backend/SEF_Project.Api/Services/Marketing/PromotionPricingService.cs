@@ -38,7 +38,7 @@ public class PromotionPricingService : IPromotionPricingService
         var variant = await _context.ProductVariants
             .AsNoTracking()
             .Include(v => v.Product)
-                .ThenInclude(p => p.ProductCategories)
+                .ThenInclude(p => p.Category)
             .FirstOrDefaultAsync(v => v.Id == request.ProductVariantId, cancellationToken);
 
         if (promotion is null || variant is null)
@@ -63,8 +63,7 @@ public class PromotionPricingService : IPromotionPricingService
         // or one of the product's categories. Untargeted promotions apply to nothing.
         var targetsProduct = promotion.PromotionProducts
             .Any(pp => pp.ProductId == variant.ProductId);
-        var productCategoryIds = variant.Product.ProductCategories
-            .Select(pc => pc.CategoryId);
+        var productCategoryIds = new List<Guid> { variant.Product.CategoryId };
         var targetsCategory = promotion.PromotionCategories
             .Any(pc => productCategoryIds.Contains(pc.CategoryId));
 

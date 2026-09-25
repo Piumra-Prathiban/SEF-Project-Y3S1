@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000" role="img" aria-label="Classic cotton t-shirt illustration">
+  <title>Classic cotton t-shirt</title>
+  <rect width="800" height="1000" fill="#f7f4ee"/>
+  <circle cx="400" cy="486" r="300" fill="#e4eee8"/>
+  <path d="M320 252C352 294 448 294 480 252L556 288 648 366 610 470 522 452 516 438 560 792C470 816 330 816 240 792L284 438 278 452 190 470 152 366 244 288Z" fill="#fffdfa" stroke="#ded8ce" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M320 252C352 294 448 294 480 252" fill="none" stroke="#c9c2b6" stroke-width="14" stroke-linecap="round"/>
+  <path d="M338 266C362 292 438 292 462 266" fill="none" stroke="#ded8ce" stroke-width="4"/>
+  <path d="M516 438L522 452M284 438L278 452M590 470L512 456M288 456L210 470" fill="none" stroke="#ded8ce" stroke-width="4"/>
+  <circle cx="400" cy="912" r="22" fill="#2e5944"/>
+  <circle cx="410" cy="912" r="15" fill="#f7f4ee"/>
+</svg>

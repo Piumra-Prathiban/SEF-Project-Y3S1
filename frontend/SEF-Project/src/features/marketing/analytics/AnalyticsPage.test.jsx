@@ -89,10 +89,10 @@ describe('AnalyticsPage', () => {
     vi.mocked(getSalesOverTime).mockResolvedValue(overTimeEmpty);
     vi.mocked(getProductPerformance).mockResolvedValue({
       items: [{ productId: 'p1', productName: 'Cola', unitsSold: 0, revenue: 0, orderCount: 0 }],
-      totalCount: 1, page: 1, pageSize: 10,
+      totalItems: 1, page: 1, pageSize: 10,
     });
     vi.mocked(getPromotionPerformance).mockResolvedValue({
-      ...promotionPerformance, items: [], totalCount: 0, livePromotionCount: 0, totalRedemptions: 0,
+      ...promotionPerformance, items: [], totalItems: 0, livePromotionCount: 0, totalRedemptions: 0,
     });
     vi.mocked(getInventoryStock).mockResolvedValue(emptyStockPage);
 

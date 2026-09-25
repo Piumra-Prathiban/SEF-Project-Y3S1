@@ -40,6 +40,17 @@ public class ClientBoundaryTests
         "node_modules", "dist", "build", ".dart_tool", ".git", "coverage",
     };
 
+    // The Flutter client transport layer: the shopping feature's client plus
+    // the retained orders/customer stacks, each of which owns one http.Client.
+    // Every screen, widget, repository and controller must go through one of
+    // these rather than the http package directly.
+    private static readonly string[] FlutterHttpClientLayer =
+    {
+        Path.Combine("core", "api", "api_client.dart"),
+        Path.Combine("services", "api_client.dart"),
+        Path.Combine("services", "customer_api.dart"),
+    };
+
     private static string RepoRoot { get; } = FindRepoRoot();
 
     private static string FindRepoRoot()
@@ -132,16 +143,20 @@ public class ClientBoundaryTests
     [Fact]
     public void FlutterSource_ShouldSendEveryRequestThroughTheSingleApiClient()
     {
-        // api_client.dart is the Dart equivalent of api.js: the one place
-        // allowed to construct an http.Client and talk to the network.
+        // The shopping screens go through core/api/api_client.dart; the retained
+        // orders and customer stacks bring their own clients in services/. Every
+        // other file must go through one of those clients rather than calling
+        // the http package itself, so the client transport layer stays the only
+        // place that ever leaves the app for the network.
         var offenders = SourceFiles("mobile/sef_project_mobile/sef_project/lib", "*.dart")
-            .Where(file => !file.EndsWith(Path.Combine("core", "api", "api_client.dart"), StringComparison.Ordinal))
+            .Where(file => !FlutterHttpClientLayer.Any(layer => file.EndsWith(layer, StringComparison.Ordinal)))
             .Where(file => Regex.IsMatch(File.ReadAllText(file), @"\bhttp\.(get|post|put|delete|patch|Client)\s*\("))
             .Select(file => Path.GetRelativePath(RepoRoot, file))
             .ToList();
 
         Assert.True(offenders.Count == 0,
-            "Only core/api/api_client.dart may call the http package directly; found it in:\n"
+            "Only the Flutter client transport layer (core/api/api_client.dart, services/api_client.dart, "
+            + "services/customer_api.dart) may call the http package directly; found it in:\n"
             + string.Join("\n", offenders));
     }
 }

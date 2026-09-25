@@ -133,13 +133,13 @@ public class MarketingDatabaseModelTests
         Assert.Equal(CampaignStatus.Active, summer.Status);
         Assert.Equal(2, summer.Promotions.Count);
 
-        var dessert = await context.Promotions
+        var footwear = await context.Promotions
             .Include(p => p.PromotionCategories)
-            .SingleAsync(p => p.Id == SeedData.PromotionDessert10);
+            .SingleAsync(p => p.Id == SeedData.PromotionFootwear10);
 
         Assert.Contains(
-            dessert.PromotionCategories,
-            pc => pc.CategoryId == SeedData.CategoryDesserts);
+            footwear.PromotionCategories,
+            pc => pc.CategoryId == SeedData.CategoryFootwear);
 
         var freeDelivery = await context.Promotions
             .SingleAsync(p => p.Id == SeedData.PromotionFreeDelivery);
