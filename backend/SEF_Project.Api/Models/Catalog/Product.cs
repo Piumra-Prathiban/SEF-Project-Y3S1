@@ -6,6 +6,16 @@ public class Product : GuidEntity
 
     public string? Description { get; set; }
 
+    public string? ImageUrl { get; set; }
+
+    public Guid CategoryId { get; set; }
+
+    public Category Category { get; set; } = null!;
+
+    public Guid CollectionId { get; set; }
+
+    public Collection Collection { get; set; } = null!;
+
     public Guid? SupplierId { get; set; }
 
     public Supplier? Supplier { get; set; }
@@ -14,7 +24,4 @@ public class Product : GuidEntity
 
     public ICollection<ProductVariant> Variants { get; set; } =
         new List<ProductVariant>();
-
-    public ICollection<ProductCategory> ProductCategories { get; set; } =
-        new List<ProductCategory>();
 }

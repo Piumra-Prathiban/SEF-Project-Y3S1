@@ -1,5 +1,5 @@
 {
-  "name": "sef-project",
+  "name": "clothic-web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "test": "NODE_ENV=test vitest run",
+    "test:watch": "vitest",
     "preview": "vite preview"
   },
   "dependencies": {

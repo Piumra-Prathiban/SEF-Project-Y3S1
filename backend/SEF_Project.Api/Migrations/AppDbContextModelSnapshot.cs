@@ -311,6 +311,9 @@ namespace SEF_Project.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("ResultJson")
+                        .HasColumnType("jsonb");
+
                     b.Property<DateTime?>("StartedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -382,7 +385,7 @@ namespace SEF_Project.Api.Migrations
                             Id = new Guid("00000000-0000-0000-0000-000000000001"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Pizza",
+                            Name = "Tops",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
@@ -390,7 +393,7 @@ namespace SEF_Project.Api.Migrations
                             Id = new Guid("00000000-0000-0000-0000-000000000002"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Pasta",
+                            Name = "Bottoms",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
@@ -398,7 +401,7 @@ namespace SEF_Project.Api.Migrations
                             Id = new Guid("00000000-0000-0000-0000-000000000003"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Beverages",
+                            Name = "Outerwear",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
@@ -406,12 +409,182 @@ namespace SEF_Project.Api.Migrations
                             Id = new Guid("00000000-0000-0000-0000-000000000004"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Desserts",
+                            Name = "Footwear",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000008"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Dresses and occasion wear.",
+                            IsActive = true,
+                            Name = "Dresses",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000009"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Bags, belts and finishing touches.",
+                            IsActive = true,
+                            Name = "Accessories",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
 
-            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Inventory", b =>
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Collection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Collections", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000005"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Lightweight staples for the warm season.",
+                            IsActive = true,
+                            Name = "Summer Essentials",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000006"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Featured pieces from the signature line.",
+                            IsActive = true,
+                            Name = "Signature Selection",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000007"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "The latest additions to the catalogue.",
+                            IsActive = true,
+                            Name = "New Arrivals",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        });
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Colour", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("HexCode")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Colours", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Colours_HexCode_Format", "\"HexCode\" IS NULL OR (length(\"HexCode\") = 7 AND substr(\"HexCode\", 1, 1) = '#')");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-00000000003e"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            HexCode = "#000000",
+                            IsActive = true,
+                            Name = "Black",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-00000000003f"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            HexCode = "#ffffff",
+                            IsActive = true,
+                            Name = "White",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000040"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            HexCode = "#001f3f",
+                            IsActive = true,
+                            Name = "Navy",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000041"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            HexCode = "#d9c7a7",
+                            IsActive = true,
+                            Name = "Beige",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000042"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            HexCode = "#4b5d3a",
+                            IsActive = true,
+                            Name = "Olive",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000043"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            HexCode = "#6d1f2c",
+                            IsActive = true,
+                            Name = "Burgundy",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        });
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.InventoryStock", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -440,13 +613,15 @@ namespace SEF_Project.Api.Migrations
                     b.HasIndex("ProductVariantId")
                         .IsUnique();
 
-                    b.ToTable("Inventory", null, t =>
+                    b.ToTable("InventoryStocks", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Inventory_QuantityOnHand", "\"QuantityOnHand\" >= 0");
+                            t.HasCheckConstraint("CK_InventoryStocks_AvailableQuantity", "\"QuantityOnHand\" >= \"ReservedQuantity\"");
 
-                            t.HasCheckConstraint("CK_Inventory_ReorderLevel", "\"ReorderLevel\" >= 0");
+                            t.HasCheckConstraint("CK_InventoryStocks_QuantityOnHand", "\"QuantityOnHand\" >= 0");
 
-                            t.HasCheckConstraint("CK_Inventory_ReservedQuantity", "\"ReservedQuantity\" >= 0");
+                            t.HasCheckConstraint("CK_InventoryStocks_ReorderLevel", "\"ReorderLevel\" >= 0");
+
+                            t.HasCheckConstraint("CK_InventoryStocks_ReservedQuantity", "\"ReservedQuantity\" >= 0");
                         });
 
                     b.HasData(
@@ -522,53 +697,16 @@ namespace SEF_Project.Api.Migrations
                         });
                 });
 
-            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.InventoryTransaction", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<Guid>("ProductVariantId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("QuantityChange")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("QuantityOnHandAfter")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Reference")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedAt");
-
-                    b.HasIndex("ProductVariantId");
-
-                    b.ToTable("InventoryTransactions", (string)null);
-                });
-
             modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Product", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CollectionId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -577,6 +715,10 @@ namespace SEF_Project.Api.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -594,6 +736,10 @@ namespace SEF_Project.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("CollectionId");
+
                     b.HasIndex("Name");
 
                     b.HasIndex("SupplierId");
@@ -604,94 +750,67 @@ namespace SEF_Project.Api.Migrations
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000021"),
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000001"),
+                            CollectionId = new Guid("00000000-0000-0000-0000-000000000005"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Classic tomato, mozzarella and basil.",
+                            Description = "Soft combed cotton crew-neck tee.",
+                            ImageUrl = "/images/products/classic-cotton-tshirt.svg",
                             IsActive = true,
-                            Name = "Margherita Pizza",
+                            Name = "Classic Cotton T-Shirt",
                             SupplierId = new Guid("00000000-0000-0000-0000-000000000011"),
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000022"),
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000001"),
+                            CollectionId = new Guid("00000000-0000-0000-0000-000000000007"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Pepperoni with mozzarella.",
+                            Description = "Brushed fleece hoodie with a kangaroo pocket.",
+                            ImageUrl = "/images/products/fleece-pullover-hoodie.svg",
                             IsActive = true,
-                            Name = "Pepperoni Pizza",
+                            Name = "Fleece Pullover Hoodie",
                             SupplierId = new Guid("00000000-0000-0000-0000-000000000011"),
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000023"),
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000002"),
+                            CollectionId = new Guid("00000000-0000-0000-0000-000000000005"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Creamy pasta with pancetta.",
+                            Description = "Mid-rise slim jeans in stretch denim.",
+                            ImageUrl = "/images/products/slim-fit-denim-jeans.svg",
                             IsActive = true,
-                            Name = "Spaghetti Carbonara",
+                            Name = "Slim Fit Denim Jeans",
                             SupplierId = new Guid("00000000-0000-0000-0000-000000000011"),
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000024"),
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000003"),
+                            CollectionId = new Guid("00000000-0000-0000-0000-000000000006"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Carbonated soft drink.",
+                            Description = "Lightly quilted jacket for layering.",
+                            ImageUrl = "/images/products/quilted-field-jacket.svg",
                             IsActive = true,
-                            Name = "Cola",
-                            SupplierId = new Guid("00000000-0000-0000-0000-000000000012"),
+                            Name = "Quilted Field Jacket",
+                            SupplierId = new Guid("00000000-0000-0000-0000-000000000011"),
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000025"),
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000004"),
+                            CollectionId = new Guid("00000000-0000-0000-0000-000000000006"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Classic coffee dessert.",
+                            Description = "Full-grain leather boots with a block heel.",
+                            ImageUrl = "/images/products/leather-ankle-boots.svg",
                             IsActive = true,
-                            Name = "Tiramisu",
-                            SupplierId = new Guid("00000000-0000-0000-0000-000000000011"),
+                            Name = "Leather Ankle Boots",
+                            SupplierId = new Guid("00000000-0000-0000-0000-000000000012"),
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        });
-                });
-
-            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.ProductCategory", b =>
-                {
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CategoryId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("ProductId", "CategoryId");
-
-                    b.HasIndex("CategoryId");
-
-                    b.ToTable("ProductCategories", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            ProductId = new Guid("00000000-0000-0000-0000-000000000021"),
-                            CategoryId = new Guid("00000000-0000-0000-0000-000000000001")
-                        },
-                        new
-                        {
-                            ProductId = new Guid("00000000-0000-0000-0000-000000000022"),
-                            CategoryId = new Guid("00000000-0000-0000-0000-000000000001")
-                        },
-                        new
-                        {
-                            ProductId = new Guid("00000000-0000-0000-0000-000000000023"),
-                            CategoryId = new Guid("00000000-0000-0000-0000-000000000002")
-                        },
-                        new
-                        {
-                            ProductId = new Guid("00000000-0000-0000-0000-000000000024"),
-                            CategoryId = new Guid("00000000-0000-0000-0000-000000000003")
-                        },
-                        new
-                        {
-                            ProductId = new Guid("00000000-0000-0000-0000-000000000025"),
-                            CategoryId = new Guid("00000000-0000-0000-0000-000000000004")
                         });
                 });
 
@@ -699,6 +818,9 @@ namespace SEF_Project.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ColourId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -719,6 +841,9 @@ namespace SEF_Project.Api.Migrations
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("SizeId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Sku")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -729,93 +854,393 @@ namespace SEF_Project.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ColourId");
+
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("SizeId");
 
                     b.HasIndex("Sku")
                         .IsUnique();
 
+                    b.HasIndex("ProductId", "SizeId", "ColourId")
+                        .IsUnique();
+
                     b.ToTable("ProductVariants", null, t =>
                         {
-                            t.HasCheckConstraint("CK_ProductVariants_Price", "\"Price\" > 0");
+                            t.HasCheckConstraint("CK_ProductVariants_Price", "\"Price\" >= 0");
                         });
 
                     b.HasData(
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000031"),
+                            ColourId = new Guid("00000000-0000-0000-0000-00000000003e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Small",
-                            Price = 1200m,
+                            Name = "XS / Black",
+                            Price = 2500m,
                             ProductId = new Guid("00000000-0000-0000-0000-000000000021"),
-                            Sku = "PIZ-MARG-S",
+                            SizeId = new Guid("00000000-0000-0000-0000-000000000038"),
+                            Sku = "TSH-CLS-XS",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000032"),
+                            ColourId = new Guid("00000000-0000-0000-0000-00000000003f"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Large",
-                            Price = 2200m,
+                            Name = "M / White",
+                            Price = 2600m,
                             ProductId = new Guid("00000000-0000-0000-0000-000000000021"),
-                            Sku = "PIZ-MARG-L",
+                            SizeId = new Guid("00000000-0000-0000-0000-00000000003a"),
+                            Sku = "TSH-CLS-M",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000033"),
+                            ColourId = new Guid("00000000-0000-0000-0000-000000000040"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Medium",
-                            Price = 1600m,
+                            Name = "M / Navy",
+                            Price = 6500m,
                             ProductId = new Guid("00000000-0000-0000-0000-000000000022"),
-                            Sku = "PIZ-PEP-M",
+                            SizeId = new Guid("00000000-0000-0000-0000-00000000003a"),
+                            Sku = "HOD-FLC-M",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000034"),
+                            ColourId = new Guid("00000000-0000-0000-0000-000000000040"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Large",
-                            Price = 2600m,
+                            Name = "L / Navy",
+                            Price = 6900m,
                             ProductId = new Guid("00000000-0000-0000-0000-000000000022"),
-                            Sku = "PIZ-PEP-L",
+                            SizeId = new Guid("00000000-0000-0000-0000-00000000003b"),
+                            Sku = "HOD-FLC-L",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000035"),
+                            ColourId = new Guid("00000000-0000-0000-0000-00000000003e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Regular",
-                            Price = 1800m,
+                            Name = "M / Black",
+                            Price = 7500m,
                             ProductId = new Guid("00000000-0000-0000-0000-000000000023"),
-                            Sku = "PST-CARB-R",
+                            SizeId = new Guid("00000000-0000-0000-0000-00000000003a"),
+                            Sku = "JEA-SLM-M",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000036"),
+                            ColourId = new Guid("00000000-0000-0000-0000-000000000040"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "330ml",
-                            Price = 300m,
+                            Name = "L / Navy",
+                            Price = 12500m,
                             ProductId = new Guid("00000000-0000-0000-0000-000000000024"),
-                            Sku = "BEV-COLA-330",
+                            SizeId = new Guid("00000000-0000-0000-0000-00000000003b"),
+                            Sku = "JKT-QFD-L",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000037"),
+                            ColourId = new Guid("00000000-0000-0000-0000-00000000003e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Single",
-                            Price = 900m,
+                            Name = "One Size / Black",
+                            Price = 8900m,
                             ProductId = new Guid("00000000-0000-0000-0000-000000000025"),
-                            Sku = "DES-TIRA-S",
+                            SizeId = new Guid("00000000-0000-0000-0000-00000000003d"),
+                            Sku = "BTS-ANK-OS",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        });
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.PurchaseOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ExpectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("OrderNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("ReceivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique();
+
+                    b.HasIndex("SupplierId", "Status");
+
+                    b.ToTable("PurchaseOrders", (string)null);
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.PurchaseOrderItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ProductVariantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PurchaseOrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("PurchaseOrderId");
+
+                    b.ToTable("PurchaseOrderItems", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_PurchaseOrderItems_Quantity", "\"Quantity\" > 0");
+
+                            t.HasCheckConstraint("CK_PurchaseOrderItems_UnitCost", "\"UnitCost\" >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Review", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsPublished")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("ProductId", "CustomerId")
+                        .IsUnique();
+
+                    b.HasIndex("ProductId", "IsPublished");
+
+                    b.ToTable("Reviews", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Reviews_Rating", "\"Rating\" BETWEEN 1 AND 5");
+                        });
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Size", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Sizes", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000038"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DisplayOrder = 10,
+                            IsActive = true,
+                            Name = "XS",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000039"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DisplayOrder = 20,
+                            IsActive = true,
+                            Name = "S",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-00000000003a"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DisplayOrder = 30,
+                            IsActive = true,
+                            Name = "M",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-00000000003b"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DisplayOrder = 40,
+                            IsActive = true,
+                            Name = "L",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-00000000003c"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DisplayOrder = 50,
+                            IsActive = true,
+                            Name = "XL",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-00000000003d"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DisplayOrder = 60,
+                            IsActive = true,
+                            Name = "One Size",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        });
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.StockTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("PerformedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ProductVariantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("QuantityChange")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("QuantityOnHandAfter")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("QuantityOnHandBefore")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("PerformedByUserId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.ToTable("StockTransactions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_StockTransactions_QuantityChange", "\"QuantityChange\" <> 0");
+
+                            t.HasCheckConstraint("CK_StockTransactions_QuantityOnHandAfter", "\"QuantityOnHandAfter\" >= 0");
+
+                            t.HasCheckConstraint("CK_StockTransactions_QuantityOnHandBefore", "\"QuantityOnHandBefore\" >= 0");
                         });
                 });
 
@@ -861,9 +1286,9 @@ namespace SEF_Project.Api.Migrations
                             Id = new Guid("00000000-0000-0000-0000-000000000011"),
                             ContactName = "Nimal Perera",
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "orders@freshfoods.lk",
+                            Email = "orders@atlastextiles.lk",
                             IsActive = true,
-                            Name = "Fresh Foods Ltd",
+                            Name = "Atlas Textiles",
                             Phone = "+94 11 234 5678",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
@@ -872,9 +1297,9 @@ namespace SEF_Project.Api.Migrations
                             Id = new Guid("00000000-0000-0000-0000-000000000012"),
                             ContactName = "Kamal Silva",
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "sales@beverageco.lk",
+                            Email = "sales@nordicfootwear.lk",
                             IsActive = true,
-                            Name = "Beverage Co",
+                            Name = "Nordic Footwear",
                             Phone = "+94 11 876 5432",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
@@ -921,9 +1346,6 @@ namespace SEF_Project.Api.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -932,23 +1354,48 @@ namespace SEF_Project.Api.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Campaigns", (string)null);
+                    b.HasIndex("Status");
+
+                    b.HasIndex("StartDate", "EndDate");
+
+                    b.ToTable("Campaigns", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Campaigns_DateRange", "\"EndDate\" >= \"StartDate\"");
+
+                            t.HasCheckConstraint("CK_Campaigns_Status", "\"Status\" IN ('Draft', 'Scheduled', 'Active', 'Paused', 'Completed', 'Cancelled')");
+                        });
 
                     b.HasData(
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000051"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Launch promotion for the new menu.",
+                            Description = "Launch promotion for the new season.",
                             EndDate = new DateTime(2026, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
                             Name = "Summer Launch",
                             StartDate = new DateTime(2026, 9, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Status = "Active",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000054"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Weekend beverage deals.",
+                            EndDate = new DateTime(2027, 3, 31, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "Weekend Refresh",
+                            StartDate = new DateTime(2027, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Status = "Scheduled",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
@@ -995,7 +1442,14 @@ namespace SEF_Project.Api.Migrations
 
                     b.HasIndex("PromotionId");
 
-                    b.ToTable("Coupons", (string)null);
+                    b.ToTable("Coupons", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Coupons_DateRange", "\"EndsAt\" >= \"StartsAt\"");
+
+                            t.HasCheckConstraint("CK_Coupons_PerCustomerLimit", "\"PerCustomerLimit\" IS NULL OR \"PerCustomerLimit\" > 0");
+
+                            t.HasCheckConstraint("CK_Coupons_UsageLimit", "\"UsageLimit\" IS NULL OR \"UsageLimit\" > 0");
+                        });
 
                     b.HasData(
                         new
@@ -1010,6 +1464,19 @@ namespace SEF_Project.Api.Migrations
                             StartsAt = new DateTime(2026, 9, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             UsageLimit = 100
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000058"),
+                            Code = "FREEDELIVERY",
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EndsAt = new DateTime(2026, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            PerCustomerLimit = 3,
+                            PromotionId = new Guid("00000000-0000-0000-0000-000000000057"),
+                            StartsAt = new DateTime(2026, 9, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            UsageLimit = 500
                         });
                 });
 
@@ -1039,11 +1506,14 @@ namespace SEF_Project.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CouponId");
-
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("OrderId");
+
+                    b.HasIndex("RedeemedAt");
+
+                    b.HasIndex("CouponId", "OrderId")
+                        .IsUnique();
 
                     b.ToTable("CouponRedemptions", (string)null);
                 });
@@ -1098,7 +1568,11 @@ namespace SEF_Project.Api.Migrations
 
                     b.ToTable("Promotions", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Promotions_DiscountValue", "\"DiscountValue\" >= 0");
+                            t.HasCheckConstraint("CK_Promotions_DateRange", "\"EndDate\" >= \"StartDate\"");
+
+                            t.HasCheckConstraint("CK_Promotions_DiscountValue", "CAST(\"DiscountValue\" AS REAL) >= 0 AND (\"Type\" <> 'PercentageDiscount' OR (CAST(\"DiscountValue\" AS REAL) > 0 AND CAST(\"DiscountValue\" AS REAL) <= 100)) AND (\"Type\" <> 'FixedAmountDiscount' OR CAST(\"DiscountValue\" AS REAL) > 0)");
+
+                            t.HasCheckConstraint("CK_Promotions_Type", "\"Type\" IN ('PercentageDiscount', 'FixedAmountDiscount', 'BuyXGetY', 'FreeShipping')");
                         });
 
                     b.HasData(
@@ -1107,13 +1581,54 @@ namespace SEF_Project.Api.Migrations
                             Id = new Guid("00000000-0000-0000-0000-000000000052"),
                             CampaignId = new Guid("00000000-0000-0000-0000-000000000051"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "20% off all pizzas.",
+                            Description = "20% off all tops.",
                             DiscountValue = 20m,
                             EndDate = new DateTime(2026, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
-                            Name = "Pizza 20% Off",
+                            Name = "Tops 20% Off",
                             StartDate = new DateTime(2026, 9, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Type = "PercentageDiscount",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000056"),
+                            CampaignId = new Guid("00000000-0000-0000-0000-000000000051"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "10% off every footwear style.",
+                            DiscountValue = 10m,
+                            EndDate = new DateTime(2026, 10, 31, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Footwear Week 10% Off",
+                            StartDate = new DateTime(2026, 10, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Type = "PercentageDiscount",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000055"),
+                            CampaignId = new Guid("00000000-0000-0000-0000-000000000054"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Rs. 50 off every pair of jeans.",
+                            DiscountValue = 50m,
+                            EndDate = new DateTime(2027, 3, 31, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Denim Rs. 50 Off",
+                            StartDate = new DateTime(2027, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Type = "FixedAmountDiscount",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000057"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Free delivery with a coupon code.",
+                            DiscountValue = 0m,
+                            EndDate = new DateTime(2026, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Free Delivery",
+                            StartDate = new DateTime(2026, 9, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Type = "FreeShipping",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
@@ -1131,6 +1646,13 @@ namespace SEF_Project.Api.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("PromotionCategories", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            PromotionId = new Guid("00000000-0000-0000-0000-000000000056"),
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000004")
+                        });
                 });
 
             modelBuilder.Entity("SEF_Project.Api.Models.Marketing.PromotionProduct", b =>
@@ -1157,6 +1679,11 @@ namespace SEF_Project.Api.Migrations
                         {
                             PromotionId = new Guid("00000000-0000-0000-0000-000000000052"),
                             ProductId = new Guid("00000000-0000-0000-0000-000000000022")
+                        },
+                        new
+                        {
+                            PromotionId = new Guid("00000000-0000-0000-0000-000000000055"),
+                            ProductId = new Guid("00000000-0000-0000-0000-000000000023")
                         });
                 });
 
@@ -1563,6 +2090,57 @@ namespace SEF_Project.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("SEF_Project.Api.Models.Shopping.Wishlist", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId")
+                        .IsUnique();
+
+                    b.ToTable("Wishlists", (string)null);
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Shopping.WishlistItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("WishlistId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("WishlistId", "ProductId")
+                        .IsUnique();
+
+                    b.ToTable("WishlistItems", (string)null);
+                });
+
             modelBuilder.Entity("SEF_Project.Api.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -1690,23 +2268,12 @@ namespace SEF_Project.Api.Migrations
                     b.Navigation("Workflow");
                 });
 
-            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Inventory", b =>
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.InventoryStock", b =>
                 {
                     b.HasOne("SEF_Project.Api.Models.Catalog.ProductVariant", "ProductVariant")
-                        .WithOne("Inventory")
-                        .HasForeignKey("SEF_Project.Api.Models.Catalog.Inventory", "ProductVariantId")
+                        .WithOne("InventoryStock")
+                        .HasForeignKey("SEF_Project.Api.Models.Catalog.InventoryStock", "ProductVariantId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ProductVariant");
-                });
-
-            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.InventoryTransaction", b =>
-                {
-                    b.HasOne("SEF_Project.Api.Models.Catalog.ProductVariant", "ProductVariant")
-                        .WithMany("InventoryTransactions")
-                        .HasForeignKey("ProductVariantId")
-                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("ProductVariant");
@@ -1714,42 +2281,122 @@ namespace SEF_Project.Api.Migrations
 
             modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Product", b =>
                 {
+                    b.HasOne("SEF_Project.Api.Models.Catalog.Category", "Category")
+                        .WithMany("Products")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SEF_Project.Api.Models.Catalog.Collection", "Collection")
+                        .WithMany("Products")
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("SEF_Project.Api.Models.Catalog.Supplier", "Supplier")
                         .WithMany("Products")
                         .HasForeignKey("SupplierId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("Supplier");
-                });
-
-            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.ProductCategory", b =>
-                {
-                    b.HasOne("SEF_Project.Api.Models.Catalog.Category", "Category")
-                        .WithMany("ProductCategories")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SEF_Project.Api.Models.Catalog.Product", "Product")
-                        .WithMany("ProductCategories")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Category");
 
-                    b.Navigation("Product");
+                    b.Navigation("Collection");
+
+                    b.Navigation("Supplier");
                 });
 
             modelBuilder.Entity("SEF_Project.Api.Models.Catalog.ProductVariant", b =>
                 {
+                    b.HasOne("SEF_Project.Api.Models.Catalog.Colour", "Colour")
+                        .WithMany("ProductVariants")
+                        .HasForeignKey("ColourId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("SEF_Project.Api.Models.Catalog.Product", "Product")
                         .WithMany("Variants")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("SEF_Project.Api.Models.Catalog.Size", "Size")
+                        .WithMany("ProductVariants")
+                        .HasForeignKey("SizeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Colour");
+
                     b.Navigation("Product");
+
+                    b.Navigation("Size");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.PurchaseOrder", b =>
+                {
+                    b.HasOne("SEF_Project.Api.Models.Catalog.Supplier", "Supplier")
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Supplier");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.PurchaseOrderItem", b =>
+                {
+                    b.HasOne("SEF_Project.Api.Models.Catalog.ProductVariant", "ProductVariant")
+                        .WithMany()
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SEF_Project.Api.Models.Catalog.PurchaseOrder", "PurchaseOrder")
+                        .WithMany("Items")
+                        .HasForeignKey("PurchaseOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ProductVariant");
+
+                    b.Navigation("PurchaseOrder");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Review", b =>
+                {
+                    b.HasOne("SEF_Project.Api.Models.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SEF_Project.Api.Models.Catalog.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.StockTransaction", b =>
+                {
+                    b.HasOne("SEF_Project.Api.Models.User", "PerformedByUser")
+                        .WithMany()
+                        .HasForeignKey("PerformedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SEF_Project.Api.Models.Catalog.ProductVariant", "ProductVariant")
+                        .WithMany("StockTransactions")
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("PerformedByUser");
+
+                    b.Navigation("ProductVariant");
                 });
 
             modelBuilder.Entity("SEF_Project.Api.Models.Customer", b =>
@@ -1931,8 +2578,8 @@ namespace SEF_Project.Api.Migrations
             modelBuilder.Entity("SEF_Project.Api.Models.Shopping.Cart", b =>
                 {
                     b.HasOne("SEF_Project.Api.Models.Customer", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
+                        .WithOne("Cart")
+                        .HasForeignKey("SEF_Project.Api.Models.Shopping.Cart", "CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1956,6 +2603,36 @@ namespace SEF_Project.Api.Migrations
                     b.Navigation("Cart");
 
                     b.Navigation("ProductVariant");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Shopping.Wishlist", b =>
+                {
+                    b.HasOne("SEF_Project.Api.Models.Customer", "Customer")
+                        .WithOne("Wishlist")
+                        .HasForeignKey("SEF_Project.Api.Models.Shopping.Wishlist", "CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Shopping.WishlistItem", b =>
+                {
+                    b.HasOne("SEF_Project.Api.Models.Catalog.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SEF_Project.Api.Models.Shopping.Wishlist", "Wishlist")
+                        .WithMany("Items")
+                        .HasForeignKey("WishlistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Wishlist");
                 });
 
             modelBuilder.Entity("SEF_Project.Api.Models.User", b =>
@@ -1987,21 +2664,39 @@ namespace SEF_Project.Api.Migrations
 
             modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Category", b =>
                 {
-                    b.Navigation("ProductCategories");
+                    b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Collection", b =>
+                {
+                    b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Colour", b =>
+                {
+                    b.Navigation("ProductVariants");
                 });
 
             modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Product", b =>
                 {
-                    b.Navigation("ProductCategories");
-
                     b.Navigation("Variants");
                 });
 
             modelBuilder.Entity("SEF_Project.Api.Models.Catalog.ProductVariant", b =>
                 {
-                    b.Navigation("Inventory");
+                    b.Navigation("InventoryStock");
 
-                    b.Navigation("InventoryTransactions");
+                    b.Navigation("StockTransactions");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.PurchaseOrder", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Size", b =>
+                {
+                    b.Navigation("ProductVariants");
                 });
 
             modelBuilder.Entity("SEF_Project.Api.Models.Catalog.Supplier", b =>
@@ -2012,6 +2707,10 @@ namespace SEF_Project.Api.Migrations
             modelBuilder.Entity("SEF_Project.Api.Models.Customer", b =>
                 {
                     b.Navigation("Addresses");
+
+                    b.Navigation("Cart");
+
+                    b.Navigation("Wishlist");
                 });
 
             modelBuilder.Entity("SEF_Project.Api.Models.Marketing.Campaign", b =>
@@ -2052,6 +2751,11 @@ namespace SEF_Project.Api.Migrations
                 });
 
             modelBuilder.Entity("SEF_Project.Api.Models.Shopping.Cart", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Shopping.Wishlist", b =>
                 {
                     b.Navigation("Items");
                 });

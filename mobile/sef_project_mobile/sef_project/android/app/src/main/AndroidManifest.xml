@@ -2,7 +2,7 @@
     <!-- The customer app talks to the ASP.NET Core API over HTTP. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="sef_project"
+        android:label="Clothic"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">

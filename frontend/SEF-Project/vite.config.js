@@ -6,6 +6,10 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
-    setupFiles: './src/test/setup.js',
+    setupFiles: ['./src/test/setup.js'],
+    css: false,
+    // Worker threads start reliably on Windows/OneDrive paths where the
+    // default child-process pool times out.
+    pool: 'threads',
   },
 })

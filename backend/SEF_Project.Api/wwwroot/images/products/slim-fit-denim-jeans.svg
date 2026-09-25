@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000" role="img" aria-label="Slim fit denim jeans illustration">
+  <title>Slim fit denim jeans</title>
+  <rect width="800" height="1000" fill="#f7f4ee"/>
+  <circle cx="400" cy="560" r="300" fill="#e4eee8"/>
+  <path d="M250 300H550L566 540 540 884H446L404 620 362 884H260L234 540Z" fill="#25221f"/>
+  <path d="M250 246H550V306H250Z" fill="#25221f"/>
+  <path d="M272 238H288V310H272Z M332 238H348V310H332Z M452 238H468V310H452Z M512 238H528V310H512Z" fill="#191612"/>
+  <circle cx="400" cy="278" r="11" fill="#ded8ce"/>
+  <path d="M400 306L404 596" fill="none" stroke="#ded8ce" stroke-width="3" stroke-dasharray="12 9"/>
+  <path d="M268 322C292 358 320 358 336 324M532 322C508 358 480 358 464 324" fill="none" stroke="#ded8ce" stroke-width="3"/>
+  <path d="M238 306L232 540 258 874M562 306L566 540 542 874" fill="none" stroke="#ded8ce" stroke-width="3" stroke-dasharray="12 9"/>
+  <path d="M404 620L446 878M404 620L362 878" fill="none" stroke="#ded8ce" stroke-width="3" stroke-dasharray="12 9"/>
+  <path d="M264 858H358M446 858H538M254 254H546" fill="none" stroke="#ded8ce" stroke-width="3" stroke-dasharray="12 9"/>
+  <circle cx="400" cy="912" r="22" fill="#2e5944"/>
+  <circle cx="410" cy="912" r="15" fill="#f7f4ee"/>
+</svg>

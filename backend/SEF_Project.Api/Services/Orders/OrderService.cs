@@ -143,7 +143,7 @@ public class OrderService : IOrderService
                 var inventory = stock[item.ProductVariantId];
                 inventory.ReservedQuantity += item.Quantity;
 
-                _context.InventoryTransactions.Add(new InventoryTransaction
+                _context.InventoryTransactions.Add(new StockTransaction
                 {
                     ProductVariantId = item.ProductVariantId,
                     Type = InventoryTransactionType.Reservation,
@@ -151,6 +151,7 @@ public class OrderService : IOrderService
                     // leaving stock, positive = returned); QuantityOnHandAfter
                     // snapshots on-hand.
                     QuantityChange = -item.Quantity,
+                    QuantityOnHandBefore = inventory.QuantityOnHand,
                     QuantityOnHandAfter = inventory.QuantityOnHand,
                     Reference = order.OrderNumber
                 });
@@ -837,7 +838,7 @@ public class OrderService : IOrderService
 
             stock.ReservedQuantity -= quantity;
 
-            _context.InventoryTransactions.Add(new InventoryTransaction
+            _context.InventoryTransactions.Add(new StockTransaction
             {
                 ProductVariantId = group.Key,
                 Type = InventoryTransactionType.ReservationRelease,
@@ -845,6 +846,7 @@ public class OrderService : IOrderService
                 // leaving stock, positive = returned); QuantityOnHandAfter
                 // snapshots on-hand.
                 QuantityChange = quantity,
+                QuantityOnHandBefore = stock.QuantityOnHand,
                 QuantityOnHandAfter = stock.QuantityOnHand,
                 Reference = order.OrderNumber
             });
@@ -885,14 +887,17 @@ public class OrderService : IOrderService
                     "Reserved inventory is inconsistent for this order.");
             }
 
+            var quantityOnHandBefore = stock.QuantityOnHand;
+
             stock.ReservedQuantity -= quantity;
             stock.QuantityOnHand -= quantity;
 
-            _context.InventoryTransactions.Add(new InventoryTransaction
+            _context.InventoryTransactions.Add(new StockTransaction
             {
                 ProductVariantId = group.Key,
                 Type = InventoryTransactionType.Sale,
                 QuantityChange = -quantity,
+                QuantityOnHandBefore = quantityOnHandBefore,
                 QuantityOnHandAfter = stock.QuantityOnHand,
                 Reference = order.OrderNumber
             });
@@ -1012,7 +1017,7 @@ public class OrderService : IOrderService
     private static void ValidateAvailability(
         List<CreateOrderItemRequest> items,
         Dictionary<Guid, ProductVariant> variants,
-        Dictionary<Guid, Inventory> stock)
+        Dictionary<Guid, InventoryStock> stock)
     {
         foreach (var item in items)
         {

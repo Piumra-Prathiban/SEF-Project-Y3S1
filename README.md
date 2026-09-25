@@ -63,7 +63,7 @@ Each group member owns one business component, but every member contributes acro
 
 ### Customer
 
-Uses Flutter for shopping, checkout, orders, returns and AI styling.
+Uses Flutter for the shopping experience (products, cart, wishlist, profile and recommendations). The orders screens exist in the codebase but are not yet wired into the app shell.
 
 ### Staff / Inventory Manager
 
@@ -357,17 +357,18 @@ Agent responsibility
 → Tests
 ```
 
-Backend
+1. Clone the repository.
+2. Backend (ASP.NET Core)
    cd backend/SEF_Project.Api
    dotnet restore
    dotnet build
 
 3. Frontend (React)
-   cd <react-folder>
+   cd frontend/SEF-Project
    npm install
 
 4. Flutter
-   cd <flutter-folder>
+   cd mobile/sef_project_mobile/sef_project
    flutter pub get
 
 5. PostgreSQL
@@ -384,6 +385,10 @@ Backend
 
 ## Local Database Setup
 
+Member 2 technical documentation and contribution evidence:
+
+- [Shopping and Customer Experience](docs/MEMBER2_TECHNICAL_DOCUMENTATION.md)
+
 1. Make sure PostgreSQL is installed and running.
 2. Create a database named `sef_project_db`.
 3. Copy:
@@ -397,13 +402,23 @@ Backend
 4. Update the PostgreSQL password in
    `appsettings.Development.json`.
 
-5. Run:
+5. Copy `.env.example` to `.env` (in `backend/SEF_Project.Api/`) and set the
+   bootstrap Administrator details:
+
+   `SeedAdmin__Email` and `SeedAdmin__Password`
+
+6. Run:
 
    `dotnet ef database update`
 
-6. Start the API:
+7. Start the API:
 
    `dotnet run`
+
+The `.env` file is gitignored. On startup the API creates that Administrator
+account when the email does not exist yet (existing accounts are never modified),
+so no manual SQL is needed — sign in with those credentials to reach the
+staff/admin screens. Public registration always creates Customers.
 
 
 ## Important

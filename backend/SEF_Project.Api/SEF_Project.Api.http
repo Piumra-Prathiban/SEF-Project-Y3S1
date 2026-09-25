@@ -1,6 +1,22 @@
-@SEF_Project.Api_HostAddress = http://localhost:5193
+@host = http://localhost:5193
+@token = paste-jwt-access-token-here
 
-GET {{SEF_Project.Api_HostAddress}}/weatherforecast/
+### Public storefront product list
+GET {{host}}/api/storefront/products
 Accept: application/json
+
+### Log in and copy the access token into @token
+POST {{host}}/api/Auth/login
+Content-Type: application/json
+
+{
+  "email": "customer@clothic.example",
+  "password": "ChangeMe123!"
+}
+
+### Authenticated orders list
+GET {{host}}/api/orders
+Accept: application/json
+Authorization: Bearer {{token}}
 
 ###

@@ -8,6 +8,5 @@ public class Category : GuidEntity
 
     public bool IsActive { get; set; } = true;
 
-    public ICollection<ProductCategory> ProductCategories { get; set; } =
-        new List<ProductCategory>();
+    public ICollection<Product> Products { get; set; } = new List<Product>();
 }

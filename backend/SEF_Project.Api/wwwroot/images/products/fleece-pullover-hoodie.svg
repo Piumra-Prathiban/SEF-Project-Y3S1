@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000" role="img" aria-label="Fleece pullover hoodie illustration">
+  <title>Fleece pullover hoodie</title>
+  <rect width="800" height="1000" fill="#f7f4ee"/>
+  <circle cx="400" cy="520" r="310" fill="#e4eee8"/>
+  <path d="M286 398C286 214 514 214 514 398Z" fill="#001226"/>
+  <path d="M268 452C214 520 188 630 188 726" fill="none" stroke="#001f3f" stroke-width="86" stroke-linecap="round"/>
+  <path d="M532 452C586 520 612 630 612 726" fill="none" stroke="#001f3f" stroke-width="86" stroke-linecap="round"/>
+  <path d="M292 392C322 366 478 366 508 392L566 478 566 792C470 820 330 820 234 792L234 478Z" fill="#001f3f"/>
+  <path d="M320 392C320 262 480 262 480 392Z" fill="#0b2f52"/>
+  <path d="M302 560L498 560 472 690C430 702 370 702 328 690Z" fill="#0b2f52"/>
+  <path d="M302 560L498 560" fill="none" stroke="#123f63" stroke-width="8"/>
+  <path d="M372 402L366 476M428 402L434 476" fill="none" stroke="#ded8ce" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="366" cy="484" r="7" fill="#ded8ce"/>
+  <circle cx="434" cy="484" r="7" fill="#ded8ce"/>
+  <path d="M234 792C330 820 470 820 566 792L566 838C470 866 330 866 234 838Z" fill="#0b2f52"/>
+  <rect x="148" y="698" width="90" height="58" rx="24" fill="#0b2f52"/>
+  <rect x="562" y="698" width="90" height="58" rx="24" fill="#0b2f52"/>
+  <circle cx="400" cy="912" r="22" fill="#2e5944"/>
+  <circle cx="410" cy="912" r="15" fill="#f7f4ee"/>
+</svg>

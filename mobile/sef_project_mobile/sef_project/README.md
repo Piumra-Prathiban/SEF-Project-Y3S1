@@ -1,17 +1,26 @@
-# sef_project
+# Clothic customer shopping app
 
-A new Flutter project.
+Flutter client for product discovery, wishlist, cart, customer profile, and address management.
 
-## Getting Started
+## Run locally
 
-This project is a starting point for a Flutter application.
+1. Start `backend/SEF_Project.Api` with its HTTP launch profile.
+2. Run `flutter pub get` in this directory.
+3. Start an Android emulator and run `flutter run`.
 
-A few resources to get you started if this is your first Flutter project:
+The Android emulator defaults to `http://10.0.2.2:5193/api`. Override the API root for a physical device or another platform:
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```sh
+flutter run --dart-define=API_BASE_URL=http://YOUR_HOST:5193/api
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Use HTTPS for non-development deployments. Android cleartext traffic is allowed by the main manifest (`android:usesCleartextTraffic="true"`) as well as the debug manifest, so HTTP works against the local API in every build type.
+
+## Verification
+
+```sh
+flutter analyze
+flutter test
+```
+
+The current product discovery API supplies products, categories, variants, prices, and inventory availability. The UI is ready to render image, size, and colour fields, but the backend must expose those fields before the corresponding live filters and media can be enabled.

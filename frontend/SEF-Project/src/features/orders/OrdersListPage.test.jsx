@@ -180,7 +180,7 @@ describe('OrdersListPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('API down');
 
-    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
 
     expect(await screen.findByText('ORD-1001')).toBeInTheDocument();
     expect(getOrders).toHaveBeenCalledTimes(2);

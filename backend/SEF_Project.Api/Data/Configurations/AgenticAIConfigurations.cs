@@ -34,6 +34,7 @@ public class AgentWorkflowStepConfiguration : IEntityTypeConfiguration<AgentWork
         builder.Property(e => e.Title).IsRequired().HasMaxLength(500);
         builder.Property(e => e.Status).HasConversion<string>().HasMaxLength(50);
         builder.Property(e => e.Summary).HasMaxLength(4000);
+        builder.Property(e => e.ResultJson).HasColumnType("jsonb");
 
         builder.HasIndex(e => new { e.WorkflowId, e.StepOrder }).IsUnique();
 

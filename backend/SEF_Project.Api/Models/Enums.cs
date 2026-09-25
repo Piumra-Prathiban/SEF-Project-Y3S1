@@ -37,6 +37,8 @@ public enum ShipmentStatus
 public enum InventoryTransactionType
 {
     Adjustment,
+    StockIn,
+    StockOut,
     Receipt,
     Sale,
     Reservation,
@@ -50,6 +52,16 @@ public enum PromotionType
     FixedAmountDiscount,
     BuyXGetY,
     FreeShipping
+}
+
+public enum CampaignStatus
+{
+    Draft,
+    Scheduled,
+    Active,
+    Paused,
+    Completed,
+    Cancelled
 }
 
 public enum AgentWorkflowStatus
@@ -90,5 +102,14 @@ public enum ApprovalStatus
 {
     Pending,
     Approved,
-    Rejected
+    Rejected,
+    RevisionRequested
+}
+
+public enum PurchaseOrderStatus
+{
+    Draft,
+    Submitted,
+    Received,
+    Cancelled
 }
