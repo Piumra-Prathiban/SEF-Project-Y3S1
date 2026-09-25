@@ -4,6 +4,7 @@ import { CollectionsPage } from '../features/collections';
 import { ColoursPage } from '../features/colours';
 import { InventoryDashboardPage, LowStockPage } from '../features/inventory';
 import { InventoryAgentPage } from '../features/inventory-agent';
+import OrdersListPage from '../features/orders/OrdersListPage';
 import { ProductsPage } from '../features/products';
 import { SizesPage } from '../features/sizes';
 import { VariantsPage } from '../features/variants';
@@ -23,6 +24,12 @@ export const memberOneRoutes = [
     path: '/products',
     label: 'Products',
     element: <ProductsPage />,
+    showInNavigation: true,
+  },
+  {
+    path: '/orders',
+    label: 'Orders',
+    element: <OrdersListPage />,
     showInNavigation: true,
   },
   {

@@ -1,20 +1,19 @@
+import { Navigate } from 'react-router-dom';
 import { Alert } from '../components/ui/Alert';
 import { useAuth } from '../contexts/AuthContext';
-import { navigateTo } from '../hooks/useLocation';
 import { hasAnyRole } from '../utils/roles';
 
 export function ProtectedRoute({ children, roles }) {
   const { isAuthenticated, user } = useAuth();
 
   if (!isAuthenticated) {
-    navigateTo('/login');
-    return null;
+    return <Navigate to="/login" replace />;
   }
 
   if (!hasAnyRole(user, roles)) {
     return (
       <Alert tone="danger">
-        You do not have permission to access this Member 1 page.
+        You do not have permission to access this page.
       </Alert>
     );
   }

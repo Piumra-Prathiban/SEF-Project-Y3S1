@@ -1,5 +1,4 @@
-import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, expect, it } from 'vitest';
 import {
   buildInventorySummary,
   buildInventoryQuery,
@@ -33,8 +32,8 @@ describe('inventory dashboard utilities', () => {
   it('normalizes array and paginated inventory responses', () => {
     const items = [{ id: 'stock-1' }];
 
-    assert.deepEqual(normalizeInventoryItems(items), items);
-    assert.deepEqual(normalizeInventoryItems({ items }), items);
+    expect(normalizeInventoryItems(items)).toEqual(items);
+    expect(normalizeInventoryItems({ items })).toEqual(items);
   });
 
   it('resets pagination when inventory filters change', () => {
@@ -44,18 +43,18 @@ describe('inventory dashboard utilities', () => {
       'TSH',
     );
 
-    assert.equal(query.sku, 'TSH');
-    assert.equal(query.page, 1);
+    expect(query.sku).toBe('TSH');
+    expect(query.page).toBe(1);
   });
 
   it('preserves inventory pagination when the page changes', () => {
     const query = updateInventoryQuery(defaultInventoryQuery, 'page', 2);
 
-    assert.equal(query.page, 2);
+    expect(query.page).toBe(2);
   });
 
   it('passes server-side inventory query parameters through to the API', () => {
-    assert.deepEqual(
+    expect(
       buildInventoryQuery({
         ...defaultInventoryQuery,
         product: 'shirt',
@@ -66,16 +65,15 @@ describe('inventory dashboard utilities', () => {
         page: 3,
         pageSize: 25,
       }),
-      {
-        product: 'shirt',
-        sku: 'TSH',
-        categoryId: 'category-1',
-        stockStatus: 'Low Stock',
-        lowStockOnly: true,
-        page: 3,
-        pageSize: 25,
-      },
-    );
+    ).toEqual({
+      product: 'shirt',
+      sku: 'TSH',
+      categoryId: 'category-1',
+      stockStatus: 'Low Stock',
+      lowStockOnly: true,
+      page: 3,
+      pageSize: 25,
+    });
   });
 
   it('resets pagination when low-stock sorting changes', () => {
@@ -85,12 +83,12 @@ describe('inventory dashboard utilities', () => {
       'sku',
     );
 
-    assert.equal(query.sortBy, 'sku');
-    assert.equal(query.page, 1);
+    expect(query.sortBy).toBe('sku');
+    expect(query.page).toBe(1);
   });
 
   it('passes server-side low-stock sorting and pagination parameters through to the API', () => {
-    assert.deepEqual(
+    expect(
       buildLowStockQuery({
         ...defaultLowStockQuery,
         sortBy: 'quantity',
@@ -98,28 +96,32 @@ describe('inventory dashboard utilities', () => {
         page: 2,
         pageSize: 25,
       }),
-      {
-        sortBy: 'quantity',
-        sortDirection: 'desc',
-        page: 2,
-        pageSize: 25,
-      },
-    );
+    ).toEqual({
+      sortBy: 'quantity',
+      sortDirection: 'desc',
+      page: 2,
+      pageSize: 25,
+    });
   });
 
   it('extracts pagination metadata from server responses', () => {
-    assert.deepEqual(
+    expect(
       getPaginationMeta(
-        { items: [{ id: 'stock-1' }], page: 2, pageSize: 25, totalItems: 60, totalPages: 3 },
+        {
+          items: [{ id: 'stock-1' }],
+          page: 2,
+          pageSize: 25,
+          totalItems: 60,
+          totalPages: 3,
+        },
         defaultInventoryQuery,
       ),
-      {
-        page: 2,
-        pageSize: 25,
-        totalItems: 60,
-        totalPages: 3,
-      },
-    );
+    ).toEqual({
+      page: 2,
+      pageSize: 25,
+      totalItems: 60,
+      totalPages: 3,
+    });
   });
 
   it('reads inventory table fields from supported response shapes', () => {
@@ -136,28 +138,38 @@ describe('inventory dashboard utilities', () => {
       },
     };
 
-    assert.equal(getProductName(item), 'Classic Cotton T-Shirt');
-    assert.equal(getSku(item), 'TSH-B-M');
-    assert.equal(getSizeName(item), 'M');
-    assert.equal(getColourName(item), 'Black');
-    assert.equal(getInventoryQuantity(item), 12);
-    assert.equal(getReorderLevel(item), 5);
+    expect(getProductName(item)).toBe('Classic Cotton T-Shirt');
+    expect(getSku(item)).toBe('TSH-B-M');
+    expect(getSizeName(item)).toBe('M');
+    expect(getColourName(item)).toBe('Black');
+    expect(getInventoryQuantity(item)).toBe(12);
+    expect(getReorderLevel(item)).toBe(5);
   });
 
   it('uses backend inventory status when supplied', () => {
-    assert.equal(getInventoryStatus({ status: 'Backend Status' }), 'Backend Status');
+    expect(getInventoryStatus({ status: 'Backend Status' })).toBe(
+      'Backend Status',
+    );
   });
 
   it('derives fallback status from quantity and reorder level', () => {
-    assert.equal(getInventoryStatus({ quantityOnHand: 0, reorderLevel: 5 }), 'Out of Stock');
-    assert.equal(getInventoryStatus({ quantityOnHand: 4, reorderLevel: 5 }), 'Low Stock');
-    assert.equal(getInventoryStatus({ quantityOnHand: 8, reorderLevel: 5 }), 'In Stock');
+    expect(getInventoryStatus({ quantityOnHand: 0, reorderLevel: 5 })).toBe(
+      'Out of Stock',
+    );
+    expect(getInventoryStatus({ quantityOnHand: 4, reorderLevel: 5 })).toBe(
+      'Low Stock',
+    );
+    expect(getInventoryStatus({ quantityOnHand: 8, reorderLevel: 5 })).toBe(
+      'In Stock',
+    );
   });
 
   it('uses provided shortage amount or safely calculates the reorder shortfall', () => {
-    assert.equal(getShortageAmount({ shortageAmount: 7, quantityOnHand: 1, reorderLevel: 5 }), 7);
-    assert.equal(getShortageAmount({ quantityOnHand: 3, reorderLevel: 5 }), 2);
-    assert.equal(getShortageAmount({ quantityOnHand: 8, reorderLevel: 5 }), 0);
+    expect(
+      getShortageAmount({ shortageAmount: 7, quantityOnHand: 1, reorderLevel: 5 }),
+    ).toBe(7);
+    expect(getShortageAmount({ quantityOnHand: 3, reorderLevel: 5 })).toBe(2);
+    expect(getShortageAmount({ quantityOnHand: 8, reorderLevel: 5 })).toBe(0);
   });
 
   it('builds reliable summary metrics from inventory and low-stock data', () => {
@@ -171,7 +183,7 @@ describe('inventory dashboard utilities', () => {
       { totalItems: 10 },
     );
 
-    assert.deepEqual(summary, {
+    expect(summary).toEqual({
       totalProducts: 2,
       totalVariants: 10,
       totalStock: 13,
@@ -181,42 +193,39 @@ describe('inventory dashboard utilities', () => {
   });
 
   it('validates stock adjustment requests before API submission', () => {
-    assert.deepEqual(
+    expect(
       validateStockAdjustment({
         transactionType: 'StockIn',
         quantity: '5',
         reason: 'New delivery',
       }),
-      [],
-    );
+    ).toEqual([]);
 
-    assert.deepEqual(
+    expect(
       validateStockAdjustment({
         transactionType: 'BadType',
         quantity: '0',
         reason: '',
       }),
-      [
-        'Transaction type is not valid.',
-        'Quantity must be greater than zero.',
-        'Reason is required.',
-      ],
-    );
+    ).toEqual([
+      'Transaction type is not valid.',
+      'Quantity must be greater than zero.',
+      'Reason is required.',
+    ]);
   });
 
   it('builds stock adjustment payload without calculating stock on the frontend', () => {
-    assert.deepEqual(
+    expect(
       buildStockAdjustmentPayload({
         transactionType: 'StockOut',
         quantity: '3',
         reason: 'Damaged items',
       }),
-      {
-        transactionType: 'StockOut',
-        quantity: 3,
-        reason: 'Damaged items',
-      },
-    );
+    ).toEqual({
+      transactionType: 'StockOut',
+      quantity: 3,
+      reason: 'Damaged items',
+    });
   });
 
   it('normalizes stock history and exposes rendering fields', () => {
@@ -229,16 +238,20 @@ describe('inventory dashboard utilities', () => {
       responsibleUserEmail: 'staff@example.com',
     };
 
-    assert.deepEqual(normalizeStockHistoryItems({ transactions: [transaction] }), [transaction]);
-    assert.equal(getHistoryType(transaction), 'StockIn');
-    assert.equal(getHistoryPreviousQuantity(transaction), 10);
-    assert.equal(getHistoryNewQuantity(transaction), 15);
-    assert.equal(getHistoryReason(transaction), 'Restock');
-    assert.equal(getHistoryResponsibleUser(transaction), 'staff@example.com');
+    expect(normalizeStockHistoryItems({ transactions: [transaction] })).toEqual([
+      transaction,
+    ]);
+    expect(getHistoryType(transaction)).toBe('StockIn');
+    expect(getHistoryPreviousQuantity(transaction)).toBe(10);
+    expect(getHistoryNewQuantity(transaction)).toBe(15);
+    expect(getHistoryReason(transaction)).toBe('Restock');
+    expect(getHistoryResponsibleUser(transaction)).toBe('staff@example.com');
   });
 
   it('finds the variant id needed for inventory detail and adjustment APIs', () => {
-    assert.equal(getVariantId({ productVariantId: 'variant-1' }), 'variant-1');
-    assert.equal(getVariantId({ productVariant: { id: 'variant-2' } }), 'variant-2');
+    expect(getVariantId({ productVariantId: 'variant-1' })).toBe('variant-1');
+    expect(getVariantId({ productVariant: { id: 'variant-2' } })).toBe(
+      'variant-2',
+    );
   });
 });

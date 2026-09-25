@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Alert } from '../../components/ui/Alert';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
 import { useAuth } from '../../contexts/AuthContext';
-import { navigateTo } from '../../hooks/useLocation';
 import { useMemberOneApi } from '../../hooks/useMemberOneApi';
 import { ProductForm } from './ProductForm';
 import {
@@ -42,6 +42,7 @@ function getBasePrice(product) {
 
 export function ProductsPage() {
   const api = useMemberOneApi();
+  const navigate = useNavigate();
   const { isStaffOrAdmin } = useAuth();
   const [query, setQuery] = useState(defaultProductQuery);
   const [productsResponse, setProductsResponse] = useState(null);
@@ -362,7 +363,7 @@ export function ProductsPage() {
                       </button>
                       <button
                         className="button-secondary"
-                        onClick={() => navigateTo(`/variants?productId=${encodeURIComponent(product.id)}`)}
+                        onClick={() => navigate(`/variants?productId=${encodeURIComponent(product.id)}`)}
                         type="button"
                       >
                         Variants

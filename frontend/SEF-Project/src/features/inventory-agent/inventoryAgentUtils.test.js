@@ -1,5 +1,4 @@
-import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, expect, it } from 'vitest';
 import {
   buildWorkflowRequest,
   buildApprovalPayload,
@@ -29,23 +28,21 @@ import {
 
 describe('inventory agent utilities', () => {
   it('validates required workflow objective', () => {
-    assert.deepEqual(
-      validateWorkflowRequest({ objective: ' ', variantIds: '' }),
-      ['Workflow objective is required.'],
-    );
+    expect(validateWorkflowRequest({ objective: ' ', variantIds: '' })).toEqual([
+      'Workflow objective is required.',
+    ]);
   });
 
   it('builds a strict workflow request from form state', () => {
-    assert.deepEqual(
+    expect(
       buildWorkflowRequest({
         objective: ' Analyze low stock ',
         variantIds: ' variant-1, variant-2 ,, ',
       }),
-      {
-        objective: 'Analyze low stock',
-        variantIds: ['variant-1', 'variant-2'],
-      },
-    );
+    ).toEqual({
+      objective: 'Analyze low stock',
+      variantIds: ['variant-1', 'variant-2'],
+    });
   });
 
   it('reads common workflow response fields', () => {
@@ -60,16 +57,18 @@ describe('inventory agent utilities', () => {
       },
     };
 
-    assert.equal(getWorkflowId(workflow), 'wf-1');
-    assert.equal(getWorkflowStatus(workflow), 'PendingApproval');
-    assert.equal(getApprovalStatus(workflow), 'PendingApproval');
-    assert.deepEqual(getValidationResult(workflow), { isValid: true });
-    assert.deepEqual(getToolSummaries(workflow), [{ tool: 'GetLowStockProducts' }]);
-    assert.deepEqual(getRecommendations(workflow), [{ variantId: 'variant-1' }]);
+    expect(getWorkflowId(workflow)).toBe('wf-1');
+    expect(getWorkflowStatus(workflow)).toBe('PendingApproval');
+    expect(getApprovalStatus(workflow)).toBe('PendingApproval');
+    expect(getValidationResult(workflow)).toEqual({ isValid: true });
+    expect(getToolSummaries(workflow)).toEqual([
+      { tool: 'GetLowStockProducts' },
+    ]);
+    expect(getRecommendations(workflow)).toEqual([{ variantId: 'variant-1' }]);
   });
 
   it('removes hidden reasoning fields from structured display values', () => {
-    assert.deepEqual(
+    expect(
       sanitizeStructuredValue({
         visible: 'summary',
         chainOfThought: 'hidden',
@@ -78,13 +77,12 @@ describe('inventory agent utilities', () => {
           result: 'ok',
         },
       }),
-      {
-        visible: 'summary',
-        nested: {
-          result: 'ok',
-        },
+    ).toEqual({
+      visible: 'summary',
+      nested: {
+        result: 'ok',
       },
-    );
+    });
   });
 
   it('formats structured values without hidden reasoning', () => {
@@ -93,22 +91,24 @@ describe('inventory agent utilities', () => {
       hiddenReasoning: 'do not show',
     });
 
-    assert.equal(formatted.includes('RESTOCK'), true);
-    assert.equal(formatted.includes('do not show'), false);
+    expect(formatted.includes('RESTOCK')).toBe(true);
+    expect(formatted.includes('do not show')).toBe(false);
   });
 
   it('allows authorized staff/admin approval controls and blocks unauthorized users', () => {
     const approverRoles = ['Staff', 'Administrator'];
 
-    assert.equal(canReviewWorkflow({ role: 'Administrator' }, approverRoles), true);
-    assert.equal(canReviewWorkflow({ role: 'Staff' }, approverRoles), true);
-    assert.equal(canReviewWorkflow({ role: 'Customer' }, approverRoles), false);
+    expect(canReviewWorkflow({ role: 'Administrator' }, approverRoles)).toBe(
+      true,
+    );
+    expect(canReviewWorkflow({ role: 'Staff' }, approverRoles)).toBe(true);
+    expect(canReviewWorkflow({ role: 'Customer' }, approverRoles)).toBe(false);
   });
 
   it('builds approval, rejection and revision payloads for backend endpoints', () => {
-    assert.deepEqual(buildApprovalPayload(' Approved '), { note: 'Approved' });
-    assert.deepEqual(buildRejectionPayload(' Unsafe '), { reason: 'Unsafe' });
-    assert.deepEqual(buildRevisionPayload(' Re-check size M '), {
+    expect(buildApprovalPayload(' Approved ')).toEqual({ note: 'Approved' });
+    expect(buildRejectionPayload(' Unsafe ')).toEqual({ reason: 'Unsafe' });
+    expect(buildRevisionPayload(' Re-check size M ')).toEqual({
       revisionRequest: 'Re-check size M',
     });
   });
@@ -125,17 +125,19 @@ describe('inventory agent utilities', () => {
       reason: 'Below reorder level',
     };
 
-    assert.equal(getRecommendationProduct(recommendation), 'Classic Cotton T-Shirt');
-    assert.equal(getRecommendationSku(recommendation), 'TSH-B-M');
-    assert.equal(getRecommendationCurrentStock(recommendation), 3);
-    assert.equal(getRecommendationReorderLevel(recommendation), 5);
-    assert.equal(getRecommendationAction(recommendation), 'RESTOCK');
-    assert.equal(getRecommendationProposedQuantity(recommendation), 20);
-    assert.equal(getRecommendationReason(recommendation), 'Below reorder level');
+    expect(getRecommendationProduct(recommendation)).toBe(
+      'Classic Cotton T-Shirt',
+    );
+    expect(getRecommendationSku(recommendation)).toBe('TSH-B-M');
+    expect(getRecommendationCurrentStock(recommendation)).toBe(3);
+    expect(getRecommendationReorderLevel(recommendation)).toBe(5);
+    expect(getRecommendationAction(recommendation)).toBe('RESTOCK');
+    expect(getRecommendationProposedQuantity(recommendation)).toBe(20);
+    expect(getRecommendationReason(recommendation)).toBe('Below reorder level');
   });
 
   it('identifies affected variants for successful state refresh after approval', () => {
-    assert.deepEqual(
+    expect(
       getAffectedVariantIds({
         recommendations: [
           { variantId: 'variant-1' },
@@ -143,38 +145,34 @@ describe('inventory agent utilities', () => {
           { variantId: 'variant-1' },
         ],
       }),
-      ['variant-1', 'variant-2'],
-    );
+    ).toEqual(['variant-1', 'variant-2']);
   });
 
   it('returns explicit review result messages for approval, rejection and revision', () => {
-    assert.equal(
-      getReviewSuccessMessage('approve'),
+    expect(getReviewSuccessMessage('approve')).toBe(
       'Workflow approved. Inventory and stock history were refreshed from the backend.',
     );
-    assert.equal(
-      getReviewSuccessMessage('reject'),
+    expect(getReviewSuccessMessage('reject')).toBe(
       'Workflow rejected. No stock modification was executed from React.',
     );
-    assert.equal(
-      getReviewSuccessMessage('revise'),
+    expect(getReviewSuccessMessage('revise')).toBe(
       'Workflow revision requested. The latest backend workflow state is displayed.',
     );
   });
 
   it('normalizes API failures from workflow approval endpoints', () => {
-    assert.equal(
+    expect(
       normalizeAgentApiError({
         errors: {
           reason: ['Revision request is required.'],
         },
       }),
-      'Revision request is required.',
-    );
+    ).toBe('Revision request is required.');
 
-    assert.equal(
-      normalizeAgentApiError({ detail: 'Workflow is no longer pending approval.' }),
-      'Workflow is no longer pending approval.',
-    );
+    expect(
+      normalizeAgentApiError({
+        detail: 'Workflow is no longer pending approval.',
+      }),
+    ).toBe('Workflow is no longer pending approval.');
   });
 });

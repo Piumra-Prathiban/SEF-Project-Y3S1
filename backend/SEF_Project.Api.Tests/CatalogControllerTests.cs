@@ -204,7 +204,7 @@ public class CatalogControllerTests
         var category = new CategoryResponseDto
         {
             Id = Guid.NewGuid(),
-            Name = "Pizza",
+            Name = "Tops",
             IsActive = true
         };
         var service = new FakeCatalogService
@@ -214,7 +214,7 @@ public class CatalogControllerTests
         var controller = new CategoriesController(service);
 
         var result = await controller.CreateCategory(
-            new CategoryCreateDto { Name = "Pizza" },
+            new CategoryCreateDto { Name = "Tops" },
             CancellationToken.None);
 
         var created = Assert.IsType<CreatedAtActionResult>(result.Result);

@@ -1,15 +1,14 @@
 import { useState } from 'react';
-import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { PageShell } from '../../components/ui/PageShell';
 import { useAuth } from '../../contexts/AuthContext';
-import { navigateTo } from '../../hooks/useLocation';
 import { normalizeApiError } from '../../utils/apiErrorUtils';
 import './LoginPage.css';
 
 export function LoginPage() {
   const { isAuthenticated, login } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -27,13 +26,11 @@ export function LoginPage() {
 
     try {
       await login(email, password);
-      navigateTo('/products');
+      navigate('/products');
     } catch (err) {
       setError(normalizeApiError(err));
     } finally {
       setIsSubmitting(false);
-    }
-  }
     }
   }
 
@@ -42,7 +39,7 @@ export function LoginPage() {
       <PageShell
         eyebrow="SE3090 Group Project"
         title="Sign in"
-        description="Use your existing project account to access Member 1 product and inventory tools."
+        description="Sign in to shop the Clothic collection and manage products, inventory and orders."
       >
         <form className="auth-form" onSubmit={handleSubmit}>
           <label>

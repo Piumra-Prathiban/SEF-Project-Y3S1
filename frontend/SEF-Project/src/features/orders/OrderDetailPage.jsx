@@ -14,8 +14,8 @@ import { formatCurrency, formatDateTime } from '../../utils/format';
 import { isStaff } from '../../utils/roles';
 import { useSessionGuard } from '../../hooks/useSessionGuard';
 import { describePaymentError } from './paymentErrors';
-import Loading from '../../components/Loading';
-import ErrorAlert from '../../components/ErrorAlert';
+import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
+import { LoadingState } from '../../components/ui/LoadingState';
 import StatusBadge from '../../components/StatusBadge';
 import PaymentStatusForm from './PaymentStatusForm';
 import ShipmentsSection from './ShipmentsSection';
@@ -204,7 +204,7 @@ function OrderDetailPage() {
   if (loading) {
     return (
       <div className="orders-page">
-        <Loading />
+        <LoadingState />
       </div>
     );
   }
@@ -226,8 +226,8 @@ function OrderDetailPage() {
   if (error) {
     return (
       <div className="orders-page">
-        <ErrorAlert
-          error={error}
+        <ApiErrorAlert
+          message={error?.message || 'Something went wrong. Please try again.'}
           onRetry={() => setRetryTick((tick) => tick + 1)}
         />
       </div>

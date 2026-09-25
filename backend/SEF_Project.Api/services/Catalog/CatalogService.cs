@@ -448,6 +448,7 @@ public class CatalogService : ICatalogService
         {
             Name = request.Name.Trim(),
             Description = NullIfWhitespace(request.Description),
+            ImageUrl = NullIfWhitespace(request.ImageUrl),
             CategoryId = request.CategoryId,
             CollectionId = request.CollectionId,
             SupplierId = request.SupplierId,
@@ -485,6 +486,7 @@ public class CatalogService : ICatalogService
 
         product.Name = request.Name.Trim();
         product.Description = NullIfWhitespace(request.Description);
+        product.ImageUrl = NullIfWhitespace(request.ImageUrl);
         product.CategoryId = request.CategoryId;
         product.CollectionId = request.CollectionId;
         product.SupplierId = request.SupplierId;
@@ -920,6 +922,7 @@ public class CatalogService : ICatalogService
             Id = product.Id,
             Name = product.Name,
             Description = product.Description,
+            ImageUrl = product.ImageUrl,
             CategoryId = product.CategoryId,
             CategoryName = product.Category?.Name ?? string.Empty,
             CollectionId = product.CollectionId,

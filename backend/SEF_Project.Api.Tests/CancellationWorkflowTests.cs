@@ -12,7 +12,7 @@ namespace SEF_Project.Api.Tests;
 
 public class CancellationWorkflowTests
 {
-    private const string MargheritaSmallSku = "PIZ-MARG-S";
+    private const string TShirtXsSku = "TSH-CLS-XS";
 
     private static async Task<AppDbContext> CreateContextAsync(
         SqliteConnection connection)
@@ -93,7 +93,7 @@ public class CancellationWorkflowTests
         var (customerUserId, _) =
             await SeedCustomerAsync(context, "customer@test.com");
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
 
         var service = CreateService(context);
         var order = await PlaceOrderAsync(
@@ -131,7 +131,7 @@ public class CancellationWorkflowTests
         var (customerUserId, _) =
             await SeedCustomerAsync(context, "customer@test.com");
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
 
         var service = CreateService(context);
         var order = await PlaceOrderAsync(
@@ -177,7 +177,7 @@ public class CancellationWorkflowTests
         var (staffUserId, _) =
             await SeedCustomerAsync(context, "staff@test.com");
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
 
         var service = CreateService(context);
         var order = await PlaceOrderAsync(
@@ -297,7 +297,7 @@ public class CancellationWorkflowTests
         var (staffUserId, _) =
             await SeedCustomerAsync(context, "staff@test.com");
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
 
         var service = CreateService(context);
         var order = await PlaceOrderAsync(
@@ -334,7 +334,7 @@ public class CancellationWorkflowTests
         var (customerUserId, customerId) =
             await SeedCustomerAsync(context, "customer@test.com");
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
 
         var order = new Order
         {

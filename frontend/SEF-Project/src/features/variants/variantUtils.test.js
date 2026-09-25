@@ -1,5 +1,4 @@
-import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, expect, it } from 'vitest';
 import {
   buildVariantPayload,
   getVariantColourName,
@@ -20,7 +19,7 @@ describe('variant utilities', () => {
       colours,
     );
 
-    assert.deepEqual(errors, [
+    expect(errors).toEqual([
       'SKU is required.',
       'Size is required.',
       'Selected colour is not valid.',
@@ -37,7 +36,7 @@ describe('variant utilities', () => {
       isActive: false,
     });
 
-    assert.deepEqual(payload, {
+    expect(payload).toEqual({
       sku: 'TSH-B-M',
       sizeId: 'size-1',
       colourId: 'colour-1',
@@ -47,15 +46,15 @@ describe('variant utilities', () => {
   });
 
   it('reads stock and related names from supported response shapes', () => {
-    assert.equal(getVariantStock({ inventoryStock: { quantityOnHand: 12 } }), 12);
-    assert.equal(getVariantSizeName({ size: { name: 'Large' } }), 'Large');
-    assert.equal(getVariantColourName({ colourName: 'White' }), 'White');
+    expect(getVariantStock({ inventoryStock: { quantityOnHand: 12 } })).toBe(12);
+    expect(getVariantSizeName({ size: { name: 'Large' } })).toBe('Large');
+    expect(getVariantColourName({ colourName: 'White' })).toBe('White');
   });
 
   it('normalizes paginated product responses', () => {
     const products = [{ id: 'product-1' }];
 
-    assert.deepEqual(normalizeProductList({ items: products }), products);
-    assert.deepEqual(normalizeProductList(products), products);
+    expect(normalizeProductList({ items: products })).toEqual(products);
+    expect(normalizeProductList(products)).toEqual(products);
   });
 });

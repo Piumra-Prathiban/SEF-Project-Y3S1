@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
-import { navigateTo } from '../../hooks/useLocation';
 import { useMemberOneApi } from '../../hooks/useMemberOneApi';
 import { normalizeApiError } from '../../utils/apiErrorUtils';
 import {
@@ -38,6 +38,7 @@ function getStatusClass(status) {
 
 export function LowStockPage() {
   const api = useMemberOneApi();
+  const navigate = useNavigate();
   const [query, setQuery] = useState(defaultLowStockQuery);
   const [response, setResponse] = useState(null);
   const [items, setItems] = useState([]);
@@ -86,9 +87,9 @@ export function LowStockPage() {
     const variantId = getVariantId(item);
 
     if (variantId) {
-      navigateTo(`/inventory?variantId=${encodeURIComponent(variantId)}`);
+      navigate(`/inventory?variantId=${encodeURIComponent(variantId)}`);
     } else {
-      navigateTo('/inventory');
+      navigate('/inventory');
     }
   }
 

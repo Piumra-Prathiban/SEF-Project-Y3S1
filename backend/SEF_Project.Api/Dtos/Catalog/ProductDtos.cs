@@ -12,6 +12,9 @@ public class ProductCreateDto
     [StringLength(2000)]
     public string? Description { get; set; }
 
+    [StringLength(500)]
+    public string? ImageUrl { get; set; }
+
     [NotEmptyGuid]
     public Guid CategoryId { get; set; }
 
@@ -32,6 +35,9 @@ public class ProductUpdateDto
     [StringLength(2000)]
     public string? Description { get; set; }
 
+    [StringLength(500)]
+    public string? ImageUrl { get; set; }
+
     [NotEmptyGuid]
     public Guid CategoryId { get; set; }
 
@@ -50,6 +56,8 @@ public class ProductResponseDto
     public string Name { get; set; } = string.Empty;
 
     public string? Description { get; set; }
+
+    public string? ImageUrl { get; set; }
 
     public Guid CategoryId { get; set; }
 

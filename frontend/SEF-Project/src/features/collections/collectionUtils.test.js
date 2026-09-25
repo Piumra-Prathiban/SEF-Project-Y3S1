@@ -1,5 +1,4 @@
-import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, expect, it } from 'vitest';
 import {
   buildCollectionPayload,
   filterCollections,
@@ -14,18 +13,18 @@ describe('collection utilities', () => {
       isActive: true,
     });
 
-    assert.deepEqual(errors, ['Collection name is required.']);
+    expect(errors).toEqual(['Collection name is required.']);
   });
 
   it('builds the backend payload with trimmed optional description', () => {
     const payload = buildCollectionPayload({
-      name: '  Signature Meals  ',
+      name: '  Summer Essentials  ',
       description: '  ',
       isActive: false,
     });
 
-    assert.deepEqual(payload, {
-      name: 'Signature Meals',
+    expect(payload).toEqual({
+      name: 'Summer Essentials',
       description: null,
       isActive: false,
     });
@@ -33,8 +32,8 @@ describe('collection utilities', () => {
 
   it('filters collections by search and status', () => {
     const collections = [
-      { name: 'Classic Menu', description: 'Everyday', isActive: true },
-      { name: 'Seasonal', description: 'Limited offer', isActive: false },
+      { name: 'Summer Essentials', description: 'Everyday pieces', isActive: true },
+      { name: 'Seasonal Capsule', description: 'Limited offer', isActive: false },
     ];
 
     const result = filterCollections(collections, {
@@ -42,6 +41,6 @@ describe('collection utilities', () => {
       isActive: 'false',
     });
 
-    assert.deepEqual(result, [collections[1]]);
+    expect(result).toEqual([collections[1]]);
   });
 });

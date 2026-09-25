@@ -10,8 +10,16 @@ using SEF_Project.Api.Services.Auth;
 using SEF_Project.Api.Services.AgenticAI;
 using SEF_Project.Api.Services.Catalog;
 using SEF_Project.Api.Services.Orders;
+using SEF_Project.Api.Services.Storefront;
 using SEF_Project.Api.Middleware;
 
+
+// Local secrets live in the gitignored backend/SEF_Project.Api/.env (see
+// .env.example). Loaded before the builder so they become configuration —
+// double underscores map to nested keys (SeedAdmin__Email -> SeedAdmin:Email).
+DotEnvLoader.Load(
+    Path.Combine(Directory.GetCurrentDirectory(), ".env"),
+    Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".env"));
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -90,6 +98,7 @@ builder.Services.AddScoped<IInventoryAnalysisModelClient, LocalInventoryAnalysis
 builder.Services.AddScoped<IInventoryAnalysisAgentService, InventoryAnalysisAgentService>();
 builder.Services.AddScoped<IInventoryAgentWorkflowService, InventoryAgentWorkflowService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IStorefrontService, StorefrontService>();
 
 builder.Services.AddCors(options =>
 {
@@ -164,6 +173,19 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 app.UseExceptionHandler();
+
+// Bootstrap the Administrator account from configuration when it is missing:
+// registration only ever creates Customers, so this is the only built-in way
+// to get a staff/admin login on a fresh database.
+using (var scope = app.Services.CreateScope())
+{
+    await AdminUserSeeder.SeedAsync(
+        scope.ServiceProvider.GetRequiredService<AppDbContext>(),
+        scope.ServiceProvider.GetRequiredService<IPasswordService>(),
+        builder.Configuration.GetSection("SeedAdmin").Get<AdminSeedSettings>()
+            ?? new AdminSeedSettings(),
+        scope.ServiceProvider.GetRequiredService<ILogger<Program>>());
+}
 
 
 // Configure the HTTP request pipeline.

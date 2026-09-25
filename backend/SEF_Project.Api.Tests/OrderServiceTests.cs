@@ -12,7 +12,7 @@ namespace SEF_Project.Api.Tests;
 
 public class OrderServiceTests
 {
-    private const string MargheritaSmallSku = "PIZ-MARG-S";
+    private const string TShirtXsSku = "TSH-CLS-XS";
 
     private static async Task<(SqliteConnection Connection, AppDbContext Context)>
         CreateContextAsync()
@@ -87,7 +87,7 @@ public class OrderServiceTests
 
         var userId = await SeedCustomerAsync(context);
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
 
         var service = new OrderService(
             context,
@@ -104,14 +104,14 @@ public class OrderServiceTests
 
         Assert.Equal(OrderStatus.Pending, order.Status);
         Assert.False(string.IsNullOrWhiteSpace(order.OrderNumber));
-        Assert.Equal(2400m, order.Subtotal);
-        Assert.Equal(2400m, order.Total);
+        Assert.Equal(5000m, order.Subtotal);
+        Assert.Equal(5000m, order.Total);
 
         var item = Assert.Single(order.Items);
         Assert.Equal(variant.Id, item.ProductVariantId);
         Assert.Equal(2, item.Quantity);
         Assert.Equal(variant.Price, item.UnitPrice);
-        Assert.Equal(2400m, item.LineTotal);
+        Assert.Equal(5000m, item.LineTotal);
 
         Assert.NotNull(order.DeliveryAddress);
         Assert.Equal("Colombo", order.DeliveryAddress.City);
@@ -132,7 +132,7 @@ public class OrderServiceTests
 
         var userId = await SeedCustomerAsync(context);
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
         var reservedBefore = (await context.Inventory
             .SingleAsync(i => i.ProductVariantId == variant.Id))
             .ReservedQuantity;
@@ -199,7 +199,7 @@ public class OrderServiceTests
 
         var userId = await SeedCustomerAsync(context);
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
 
         var service = new OrderService(
             context,
@@ -225,7 +225,7 @@ public class OrderServiceTests
 
         var userId = await SeedCustomerAsync(context);
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
 
         var service = new OrderService(
             context,
@@ -251,7 +251,7 @@ public class OrderServiceTests
 
         var userId = await SeedCustomerAsync(context);
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
         var reservedBefore = (await context.Inventory
             .SingleAsync(i => i.ProductVariantId == variant.Id))
             .ReservedQuantity;
@@ -295,7 +295,7 @@ public class OrderServiceTests
 
         var userId = await SeedCustomerAsync(context);
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
         var originalPrice = variant.Price;
 
         var service = new OrderService(

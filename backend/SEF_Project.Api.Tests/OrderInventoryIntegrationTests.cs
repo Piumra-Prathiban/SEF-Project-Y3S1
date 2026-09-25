@@ -11,7 +11,7 @@ namespace SEF_Project.Api.Tests;
 
 public class OrderInventoryIntegrationTests
 {
-    private const string MargheritaSmallSku = "PIZ-MARG-S";
+    private const string TShirtXsSku = "TSH-CLS-XS";
 
     private static async Task<AppDbContext> CreateContextAsync(
         SqliteConnection connection)
@@ -121,7 +121,7 @@ public class OrderInventoryIntegrationTests
         var (staffUserId, _) =
             await SeedCustomerAsync(context, "staff@test.com");
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
         var onHandBefore = (await context.Inventory
             .SingleAsync(i => i.ProductVariantId == variant.Id))
             .QuantityOnHand;
@@ -186,7 +186,7 @@ public class OrderInventoryIntegrationTests
         var (staffUserId, _) =
             await SeedCustomerAsync(context, "staff@test.com");
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
         var onHandBefore = (await context.Inventory
             .SingleAsync(i => i.ProductVariantId == variant.Id))
             .QuantityOnHand;
@@ -225,7 +225,7 @@ public class OrderInventoryIntegrationTests
         var (customerUserId, _) =
             await SeedCustomerAsync(context, "customer@test.com");
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
         var onHandBefore = (await context.Inventory
             .SingleAsync(i => i.ProductVariantId == variant.Id))
             .QuantityOnHand;

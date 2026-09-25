@@ -1,5 +1,4 @@
-import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, expect, it } from 'vitest';
 import {
   buildColourPayload,
   filterColours,
@@ -15,7 +14,7 @@ describe('colour utilities', () => {
       isActive: true,
     });
 
-    assert.deepEqual(errors, [
+    expect(errors).toEqual([
       'Colour name is required.',
       'Hex code must be a valid value such as #000000.',
     ]);
@@ -28,7 +27,7 @@ describe('colour utilities', () => {
       isActive: false,
     });
 
-    assert.deepEqual(payload, {
+    expect(payload).toEqual({
       name: 'Navy',
       hexCode: '#001f3f',
       isActive: false,
@@ -46,12 +45,12 @@ describe('colour utilities', () => {
       isActive: 'false',
     });
 
-    assert.deepEqual(results, [colours[1]]);
+    expect(results).toEqual([colours[1]]);
   });
 
   it('validates three and six character hex values', () => {
-    assert.equal(isValidHexCode('#fff'), true);
-    assert.equal(isValidHexCode('#ffffff'), true);
-    assert.equal(isValidHexCode('ffffff'), false);
+    expect(isValidHexCode('#fff')).toBe(true);
+    expect(isValidHexCode('#ffffff')).toBe(true);
+    expect(isValidHexCode('ffffff')).toBe(false);
   });
 });

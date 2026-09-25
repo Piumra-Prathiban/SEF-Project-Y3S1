@@ -1,7 +1,8 @@
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { MainNavigation } from '../navigation/MainNavigation';
 
-export function AppLayout({ children, currentPath, routes }) {
+export function AppLayout({ children, routes }) {
   const { user, logout } = useAuth();
 
   return (
@@ -13,10 +14,13 @@ export function AppLayout({ children, currentPath, routes }) {
       <header className="app-header">
         <div>
           <p className="app-header__eyebrow">SE3090 Group Project</p>
-          <h1 className="app-header__title">Product & Inventory</h1>
+          <h1 className="app-header__title">Clothic</h1>
         </div>
 
         <div className="app-header__user">
+          <Link className="app-header__storefront" to="/">
+            Storefront
+          </Link>
           <span>{user?.email}</span>
           <span className="role-badge">{user?.role}</span>
           <button type="button" onClick={logout}>
@@ -27,7 +31,7 @@ export function AppLayout({ children, currentPath, routes }) {
 
       <div className="app-layout__body">
         <aside className="app-layout__sidebar">
-          <MainNavigation currentPath={currentPath} routes={routes} />
+          <MainNavigation routes={routes} />
         </aside>
 
         <main className="app-layout__content" id="main-content" tabIndex={-1}>

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Alert } from '../../components/ui/Alert';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
-import { navigateTo } from '../../hooks/useLocation';
 import { useMemberOneApi } from '../../hooks/useMemberOneApi';
 import { normalizeApiError } from '../../utils/apiErrorUtils';
 import { VariantForm } from './VariantForm';
@@ -26,17 +26,17 @@ function formatPrice(value) {
   }).format(value);
 }
 
-function getInitialProductId() {
-  return new URLSearchParams(window.location.search).get('productId') ?? '';
-}
-
 export function VariantsPage() {
   const api = useMemberOneApi();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [sizes, setSizes] = useState([]);
   const [colours, setColours] = useState([]);
   const [variants, setVariants] = useState([]);
-  const [selectedProductId, setSelectedProductId] = useState(getInitialProductId);
+  const [selectedProductId, setSelectedProductId] = useState(
+    () => searchParams.get('productId') ?? '',
+  );
   const [formMode, setFormMode] = useState(null);
   const [editingVariant, setEditingVariant] = useState(null);
   const [isLoadingLookups, setIsLoadingLookups] = useState(true);
@@ -122,9 +122,9 @@ export function VariantsPage() {
     setError(null);
 
     if (productId) {
-      navigateTo(`/variants?productId=${encodeURIComponent(productId)}`);
+      navigate(`/variants?productId=${encodeURIComponent(productId)}`);
     } else {
-      navigateTo('/variants');
+      navigate('/variants');
     }
   }
 

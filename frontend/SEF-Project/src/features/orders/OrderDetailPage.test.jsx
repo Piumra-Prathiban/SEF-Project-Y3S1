@@ -295,7 +295,7 @@ describe('OrderDetailPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('API down');
 
-    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
 
     expect(
       await screen.findByRole('heading', { name: 'Order ORD-1001' }),

@@ -21,7 +21,7 @@ public class CampaignConfiguration : IEntityTypeConfiguration<Campaign>
             {
                 Id = SeedData.CampaignSummer,
                 Name = "Summer Launch",
-                Description = "Launch promotion for the new menu.",
+                Description = "Launch promotion for the new season.",
                 StartDate = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
                 EndDate = new DateTime(2026, 12, 31, 0, 0, 0, DateTimeKind.Utc),
                 IsActive = true
@@ -55,10 +55,10 @@ public class PromotionConfiguration : IEntityTypeConfiguration<Promotion>
         builder.HasData(
             new Promotion
             {
-                Id = SeedData.PromotionPizza20,
+                Id = SeedData.PromotionTops20,
                 CampaignId = SeedData.CampaignSummer,
-                Name = "Pizza 20% Off",
-                Description = "20% off all pizzas.",
+                Name = "Tops 20% Off",
+                Description = "20% off all tops.",
                 Type = PromotionType.PercentageDiscount,
                 DiscountValue = 20m,
                 StartDate = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
@@ -89,13 +89,13 @@ public class PromotionProductConfiguration : IEntityTypeConfiguration<PromotionP
         builder.HasData(
             new PromotionProduct
             {
-                PromotionId = SeedData.PromotionPizza20,
-                ProductId = SeedData.ProductMargherita
+                PromotionId = SeedData.PromotionTops20,
+                ProductId = SeedData.ProductTShirt
             },
             new PromotionProduct
             {
-                PromotionId = SeedData.PromotionPizza20,
-                ProductId = SeedData.ProductPepperoni
+                PromotionId = SeedData.PromotionTops20,
+                ProductId = SeedData.ProductHoodie
             });
     }
 }
@@ -142,7 +142,7 @@ public class CouponConfiguration : IEntityTypeConfiguration<Coupon>
             {
                 Id = SeedData.CouponSummer20,
                 Code = "SUMMER20",
-                PromotionId = SeedData.PromotionPizza20,
+                PromotionId = SeedData.PromotionTops20,
                 UsageLimit = 100,
                 PerCustomerLimit = 1,
                 StartsAt = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),

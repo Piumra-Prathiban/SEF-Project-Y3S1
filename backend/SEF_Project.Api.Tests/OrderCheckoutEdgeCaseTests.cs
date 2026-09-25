@@ -12,7 +12,7 @@ namespace SEF_Project.Api.Tests;
 
 public class OrderCheckoutEdgeCaseTests
 {
-    private const string MargheritaSmallSku = "PIZ-MARG-S";
+    private const string TShirtXsSku = "TSH-CLS-XS";
 
     private static async Task<AppDbContext> CreateContextAsync(
         SqliteConnection connection)
@@ -95,7 +95,7 @@ public class OrderCheckoutEdgeCaseTests
         await context.SaveChangesAsync();
 
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             CreateService(context).CreateOrderAsync(
@@ -115,7 +115,7 @@ public class OrderCheckoutEdgeCaseTests
             "inactive@test.com",
             isActive: false);
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             CreateService(context).CreateOrderAsync(
@@ -132,7 +132,7 @@ public class OrderCheckoutEdgeCaseTests
 
         var userId = await SeedCustomerAsync(context, "customer@test.com");
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
 
         variant.IsActive = false;
         await context.SaveChangesAsync();
@@ -152,7 +152,7 @@ public class OrderCheckoutEdgeCaseTests
 
         var userId = await SeedCustomerAsync(context, "customer@test.com");
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
 
         var request = OrderRequest(variant.Id, 2);
         request.Items.Add(new CreateOrderItemRequest
@@ -183,7 +183,7 @@ public class OrderCheckoutEdgeCaseTests
 
         var userId = await SeedCustomerAsync(context, "customer@test.com");
         var variant = await context.ProductVariants
-            .FirstAsync(v => v.Sku == MargheritaSmallSku);
+            .FirstAsync(v => v.Sku == TShirtXsSku);
 
         var request = new CreateOrderRequest
         {

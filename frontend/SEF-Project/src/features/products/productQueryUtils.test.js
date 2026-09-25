@@ -1,5 +1,4 @@
-import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, expect, it } from 'vitest';
 import {
   buildProductQuery,
   defaultProductQuery,
@@ -14,14 +13,14 @@ describe('product query utilities', () => {
       'category-1',
     );
 
-    assert.equal(query.categoryId, 'category-1');
-    assert.equal(query.page, 1);
+    expect(query.categoryId).toBe('category-1');
+    expect(query.page).toBe(1);
   });
 
   it('preserves pagination when only the page changes', () => {
     const query = updatePagedQuery(defaultProductQuery, 'page', 2);
 
-    assert.equal(query.page, 2);
+    expect(query.page).toBe(2);
   });
 
   it('passes server-side product query parameters through to the API', () => {
@@ -34,7 +33,7 @@ describe('product query utilities', () => {
       pageSize: 25,
     });
 
-    assert.deepEqual(query, {
+    expect(query).toEqual({
       search: 'shirt',
       categoryId: '',
       collectionId: '',

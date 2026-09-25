@@ -41,7 +41,7 @@ public class InventoryServiceTests
             await context.Inventory.CountAsync(),
             response.Count);
         Assert.Contains(response, item =>
-            item.Sku == "BEV-COLA-330"
+            item.Sku == "JKT-QFD-L"
             && item.QuantityOnHand == 200
             && item.AvailableQuantity == 200);
     }

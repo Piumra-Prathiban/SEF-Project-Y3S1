@@ -38,13 +38,12 @@ The product domain is normalized around catalog master data and variants.
 
 Main entities:
 
-- `Category`: Groups products, for example Pizza or Beverages.
-- `Collection`: Groups products into menu/business collections, for example
-  Classic Menu or Signature Meals.
-- `Product`: The sellable product concept, for example Margherita Pizza.
-- `Size`: Reusable size option, for example Small, Medium, Large or 330ml.
-- `Colour`: Reusable colour/appearance option. Food items use the seeded
-  `Default` colour.
+- `Category`: Groups products, for example Tops or Footwear.
+- `Collection`: Groups products into seasonal/business collections, for example
+  Summer Essentials or Signature Selection.
+- `Product`: The sellable product concept, for example Classic Cotton T-Shirt.
+- `Size`: Reusable size option, for example XS, S, M, L, XL or One Size.
+- `Colour`: Reusable colour/appearance option, for example Black, White or Navy.
 - `ProductVariant`: A specific sellable combination of product, size and colour.
 
 Important product rules:
@@ -414,8 +413,8 @@ Recommendation shape:
 ```json
 {
   "variantId": "00000000-0000-0000-0000-000000000000",
-  "sku": "PIZ-MARG-S",
-  "productName": "Margherita Pizza",
+  "sku": "TSH-CLS-XS",
+  "productName": "Classic Cotton T-Shirt",
   "currentStock": 3,
   "reorderLevel": 5,
   "recommendedAction": "RESTOCK",
@@ -471,6 +470,7 @@ Relevant Member 1 migrations currently present:
 - `20260923091802_AddInventoryTransactionAuditFields`
 - `20260923145720_AllowZeroProductVariantPrice`
 - `20260923152644_AddAgentWorkflowStepResultJson`
+- `20260925005159_FashionCatalogSeed`
 
 Apply migrations locally with:
 
@@ -488,37 +488,39 @@ Seed data is configured in EF Core model configuration.
 Seeded catalog/inventory data includes:
 
 - Categories:
-  - Pizza
-  - Pasta
-  - Beverages
-  - Desserts
+  - Tops
+  - Bottoms
+  - Outerwear
+  - Footwear
 - Collections:
-  - Classic Menu
-  - Signature Meals
-  - Drinks and Desserts
+  - Summer Essentials
+  - Signature Selection
+  - New Arrivals
 - Sizes:
-  - Small
-  - Medium
-  - Large
-  - Regular
-  - Single
-  - 330ml
+  - XS
+  - S
+  - M
+  - L
+  - XL
+  - One Size
 - Colours:
-  - Default
+  - Black
+  - White
+  - Navy
 - Products:
-  - Margherita Pizza
-  - Pepperoni Pizza
-  - Spaghetti Carbonara
-  - Cola
-  - Tiramisu
+  - Classic Cotton T-Shirt
+  - Fleece Pullover Hoodie
+  - Slim Fit Denim Jeans
+  - Quilted Field Jacket
+  - Leather Ankle Boots
 - Variants:
-  - `PIZ-MARG-S`
-  - `PIZ-MARG-L`
-  - `PIZ-PEP-M`
-  - `PIZ-PEP-L`
-  - `PST-CARB-R`
-  - `BEV-COLA-330`
-  - `DES-TIRA-S`
+  - `TSH-CLS-XS`
+  - `TSH-CLS-M`
+  - `HOD-FLC-M`
+  - `HOD-FLC-L`
+  - `JEA-SLM-M`
+  - `JKT-QFD-L`
+  - `BTS-ANK-OS`
 - Inventory stock records for each seeded variant.
 
 ## Tests

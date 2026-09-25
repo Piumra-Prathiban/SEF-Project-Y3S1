@@ -1,6 +1,7 @@
 export const initialProductFormState = {
   name: '',
   description: '',
+  imageUrl: '',
   categoryId: '',
   collectionId: '',
   supplierId: '',
@@ -29,6 +30,7 @@ export function buildProductPayload(product) {
   return {
     name: product.name.trim(),
     description: product.description.trim() || null,
+    imageUrl: product.imageUrl?.trim() || null,
     categoryId: product.categoryId,
     collectionId: product.collectionId,
     supplierId: product.supplierId || null,

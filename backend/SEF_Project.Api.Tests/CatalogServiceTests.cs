@@ -39,6 +39,7 @@ public class CatalogServiceTests
             Name = "  Salads  ",
             Description = "  Fresh sides  "
         });
+
         var read = await service.GetCategoryByIdAsync(created.Id);
         var updated = await service.UpdateCategoryAsync(created.Id, new CategoryUpdateDto
         {
@@ -67,7 +68,7 @@ public class CatalogServiceTests
         var service = new CatalogService(context);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.CreateCategoryAsync(new CategoryCreateDto { Name = "pizza" }));
+            service.CreateCategoryAsync(new CategoryCreateDto { Name = "tops" }));
 
         Assert.Equal("A category with this name already exists.", exception.Message);
     }
@@ -111,7 +112,7 @@ public class CatalogServiceTests
         var service = new CatalogService(context);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.CreateCollectionAsync(new CollectionCreateDto { Name = "classic menu" }));
+            service.CreateCollectionAsync(new CollectionCreateDto { Name = "summer essentials" }));
 
         Assert.Equal("A collection with this name already exists.", exception.Message);
     }
@@ -273,11 +274,11 @@ public class CatalogServiceTests
 
         var response = await service.GetProductsAsync(new ProductQueryDto
         {
-            Search = "pepperoni"
+            Search = "hoodie"
         });
 
         var product = Assert.Single(response.Items);
-        Assert.Equal("Pepperoni Pizza", product.Name);
+        Assert.Equal("Fleece Pullover Hoodie", product.Name);
         Assert.Equal(1, response.TotalItems);
         Assert.Equal(1, response.TotalPages);
     }
@@ -290,7 +291,7 @@ public class CatalogServiceTests
         await using var __ = context;
 
         var pepperoni = await context.Products
-            .SingleAsync(p => p.Name == "Pepperoni Pizza");
+            .SingleAsync(p => p.Name == "Fleece Pullover Hoodie");
         var service = new CatalogService(context);
 
         var response = await service.GetProductsAsync(new ProductQueryDto
@@ -298,12 +299,12 @@ public class CatalogServiceTests
             CategoryId = pepperoni.CategoryId,
             CollectionId = pepperoni.CollectionId,
             IsActive = true,
-            MinPrice = 1500m,
-            MaxPrice = 1700m
+            MinPrice = 6400m,
+            MaxPrice = 6600m
         });
 
         var product = Assert.Single(response.Items);
-        Assert.Equal("Pepperoni Pizza", product.Name);
+        Assert.Equal("Fleece Pullover Hoodie", product.Name);
     }
 
     [Fact]
@@ -324,9 +325,9 @@ public class CatalogServiceTests
 
         Assert.Equal(new[]
         {
-            "Cola",
-            "Tiramisu",
-            "Margherita Pizza"
+            "Classic Cotton T-Shirt",
+            "Fleece Pullover Hoodie",
+            "Slim Fit Denim Jeans"
         }, response.Items.Select(p => p.Name).ToArray());
     }
 
@@ -353,8 +354,8 @@ public class CatalogServiceTests
         Assert.Equal(3, response.TotalPages);
         Assert.Equal(new[]
         {
-            "Pepperoni Pizza",
-            "Spaghetti Carbonara"
+            "Leather Ankle Boots",
+            "Quilted Field Jacket"
         }, response.Items.Select(p => p.Name).ToArray());
     }
 
@@ -587,9 +588,9 @@ public class CatalogServiceTests
 
         var variant = await context.ProductVariants
             .AsNoTracking()
-            .SingleAsync(v => v.Sku == "PIZ-MARG-S");
+            .SingleAsync(v => v.Sku == "TSH-CLS-XS");
         var mediumSizeId = await context.Sizes
-            .Where(s => s.Name == "Medium")
+            .Where(s => s.Name == "M")
             .Select(s => s.Id)
             .SingleAsync();
         var service = new CatalogService(context);
@@ -598,8 +599,8 @@ public class CatalogServiceTests
         {
             SizeId = mediumSizeId,
             ColourId = variant.ColourId,
-            Sku = "PIZ-MARG-M",
-            Name = "Medium / Default",
+            Sku = "TSH-CLS-M-BLK",
+            Name = "M / Black",
             Price = 1500.456m,
             ReorderLevel = 8,
             IsActive = true
@@ -609,7 +610,7 @@ public class CatalogServiceTests
             .SingleAsync(i => i.ProductVariantId == variant.Id);
 
         Assert.NotNull(updated);
-        Assert.Equal("PIZ-MARG-M", updated.Sku);
+        Assert.Equal("TSH-CLS-M-BLK", updated.Sku);
         Assert.Equal(1500.46m, updated.Price);
         Assert.Equal(8, inventory.ReorderLevel);
     }
@@ -623,10 +624,10 @@ public class CatalogServiceTests
 
         var target = await context.ProductVariants
             .AsNoTracking()
-            .SingleAsync(v => v.Sku == "PIZ-MARG-S");
+            .SingleAsync(v => v.Sku == "TSH-CLS-XS");
         var duplicate = await context.ProductVariants
             .AsNoTracking()
-            .SingleAsync(v => v.Sku == "PIZ-PEP-M");
+            .SingleAsync(v => v.Sku == "HOD-FLC-M");
         var service = new CatalogService(context);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -653,10 +654,10 @@ public class CatalogServiceTests
 
         var target = await context.ProductVariants
             .AsNoTracking()
-            .SingleAsync(v => v.Sku == "PIZ-PEP-M");
+            .SingleAsync(v => v.Sku == "TSH-CLS-XS");
         var existingCombination = await context.ProductVariants
             .AsNoTracking()
-            .SingleAsync(v => v.Sku == "PIZ-PEP-L");
+            .SingleAsync(v => v.Sku == "TSH-CLS-M");
         var service = new CatalogService(context);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -664,7 +665,7 @@ public class CatalogServiceTests
             {
                 SizeId = existingCombination.SizeId,
                 ColourId = existingCombination.ColourId,
-                Sku = "PIZ-PEP-M-UPDATED",
+                Sku = "TSH-CLS-XS-DUP",
                 Name = "Duplicate Combination",
                 Price = target.Price,
                 ReorderLevel = 1,

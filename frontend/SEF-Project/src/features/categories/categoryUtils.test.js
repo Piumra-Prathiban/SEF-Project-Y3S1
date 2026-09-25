@@ -1,5 +1,4 @@
-import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, expect, it } from 'vitest';
 import {
   buildCategoryPayload,
   filterCategories,
@@ -14,34 +13,34 @@ describe('category utilities', () => {
       isActive: true,
     });
 
-    assert.deepEqual(errors, ['Category name is required.']);
+    expect(errors).toEqual(['Category name is required.']);
   });
 
   it('builds the backend payload with trimmed fields', () => {
     const payload = buildCategoryPayload({
-      name: '  Pizza  ',
-      description: '  Menu items  ',
+      name: '  Tops  ',
+      description: '  Everyday layering  ',
       isActive: true,
     });
 
-    assert.deepEqual(payload, {
-      name: 'Pizza',
-      description: 'Menu items',
+    expect(payload).toEqual({
+      name: 'Tops',
+      description: 'Everyday layering',
       isActive: true,
     });
   });
 
   it('filters categories by search and active status', () => {
     const categories = [
-      { name: 'Pizza', description: 'Hot meals', isActive: true },
-      { name: 'Desserts', description: 'Sweet items', isActive: false },
+      { name: 'Tops', description: 'Everyday layering', isActive: true },
+      { name: 'Footwear', description: 'Boots and sneakers', isActive: false },
     ];
 
     const result = filterCategories(categories, {
-      search: 'sweet',
+      search: 'sneakers',
       isActive: 'false',
     });
 
-    assert.deepEqual(result, [categories[1]]);
+    expect(result).toEqual([categories[1]]);
   });
 });

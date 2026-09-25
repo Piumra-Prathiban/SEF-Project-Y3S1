@@ -34,7 +34,7 @@ class SefApp extends StatelessWidget {
     return AuthScope(
       controller: authController,
       child: MaterialApp(
-        title: 'SEF Fashion',
+        title: 'Clothic',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFAA3BFF)),
           useMaterial3: true,

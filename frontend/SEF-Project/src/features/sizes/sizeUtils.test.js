@@ -1,19 +1,11 @@
-import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
-import {
-  buildSizePayload,
-  filterSizes,
-  validateSizeForm,
-} from './sizeUtils.js';
+import { describe, expect, it } from 'vitest';
+import { buildSizePayload, filterSizes, validateSizeForm } from './sizeUtils.js';
 
 describe('size utilities', () => {
   it('validates required size name and code', () => {
     const errors = validateSizeForm({ name: ' ', code: '', isActive: true });
 
-    assert.deepEqual(errors, [
-      'Size name is required.',
-      'Size code is required.',
-    ]);
+    expect(errors).toEqual(['Size name is required.', 'Size code is required.']);
   });
 
   it('builds the backend payload with trimmed fields', () => {
@@ -23,7 +15,7 @@ describe('size utilities', () => {
       isActive: false,
     });
 
-    assert.deepEqual(payload, {
+    expect(payload).toEqual({
       name: 'Medium',
       code: 'M',
       isActive: false,
@@ -41,6 +33,6 @@ describe('size utilities', () => {
       isActive: 'false',
     });
 
-    assert.deepEqual(results, [sizes[1]]);
+    expect(results).toEqual([sizes[1]]);
   });
 });

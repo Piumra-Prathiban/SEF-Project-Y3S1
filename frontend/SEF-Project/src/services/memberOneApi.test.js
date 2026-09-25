@@ -1,5 +1,4 @@
-import assert from 'node:assert/strict';
-import { afterEach, describe, it } from 'node:test';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
   adjustStock,
   approveInventoryWorkflow,
@@ -52,91 +51,93 @@ describe('Member 1 API integration functions', () => {
   it('sends product query parameters to the backend list endpoint', async () => {
     const calls = mockFetch({ items: [], page: 2 });
 
-    await getProducts({
-      search: 'shirt',
-      categoryId: 'cat-1',
-      page: 2,
-      pageSize: 25,
-    }, { token: 'token-1' });
+    await getProducts(
+      {
+        search: 'shirt',
+        categoryId: 'cat-1',
+        page: 2,
+        pageSize: 25,
+      },
+      { token: 'token-1' },
+    );
 
     const requestUrl = new URL(calls[0].url);
-    assert.equal(requestUrl.pathname, '/api/products');
-    assert.equal(requestUrl.searchParams.get('search'), 'shirt');
-    assert.equal(requestUrl.searchParams.get('categoryId'), 'cat-1');
-    assert.equal(requestUrl.searchParams.get('page'), '2');
-    assert.equal(calls[0].options.headers.Authorization, 'Bearer token-1');
+    expect(requestUrl.pathname).toBe('/api/products');
+    expect(requestUrl.searchParams.get('search')).toBe('shirt');
+    expect(requestUrl.searchParams.get('categoryId')).toBe('cat-1');
+    expect(requestUrl.searchParams.get('page')).toBe('2');
+    expect(calls[0].options.headers.Authorization).toBe('Bearer token-1');
   });
 
   it('uses JSON bodies for product create/update and delete method for deactivation', async () => {
     let calls = mockFetch({ id: 'product-1' });
     await createProduct({ name: 'T-Shirt' }, { token: 'token-1' });
-    assert.equal(calls[0].options.method, 'POST');
-    assert.equal(calls[0].options.headers['Content-Type'], 'application/json');
+    expect(calls[0].options.method).toBe('POST');
+    expect(calls[0].options.headers['Content-Type']).toBe('application/json');
 
     calls = mockFetch({ id: 'product-1' });
     await updateProduct('product-1', { name: 'Updated' }, { token: 'token-1' });
-    assert.equal(calls[0].url.endsWith('/api/products/product-1'), true);
-    assert.equal(calls[0].options.method, 'PUT');
+    expect(calls[0].url.endsWith('/api/products/product-1')).toBe(true);
+    expect(calls[0].options.method).toBe('PUT');
 
     calls = mockFetch(null);
     await deleteProduct('product-1', { token: 'token-1' });
-    assert.equal(calls[0].options.method, 'DELETE');
+    expect(calls[0].options.method).toBe('DELETE');
   });
 
   it('covers category and collection CRUD routes', async () => {
     let calls = mockFetch({ id: 'category-1' });
     await createCategory({ name: 'Tops' });
-    assert.equal(calls[0].url.endsWith('/api/categories'), true);
+    expect(calls[0].url.endsWith('/api/categories')).toBe(true);
 
     calls = mockFetch({ id: 'category-1' });
     await updateCategory('category-1', { name: 'Updated' });
-    assert.equal(calls[0].options.method, 'PUT');
+    expect(calls[0].options.method).toBe('PUT');
 
     calls = mockFetch(null);
     await deleteCategory('category-1');
-    assert.equal(calls[0].options.method, 'DELETE');
+    expect(calls[0].options.method).toBe('DELETE');
 
     calls = mockFetch({ id: 'collection-1' });
     await createCollection({ name: 'Summer' });
-    assert.equal(calls[0].url.endsWith('/api/collections'), true);
+    expect(calls[0].url.endsWith('/api/collections')).toBe(true);
 
     calls = mockFetch({ id: 'collection-1' });
     await updateCollection('collection-1', { name: 'Winter' });
-    assert.equal(calls[0].options.method, 'PUT');
+    expect(calls[0].options.method).toBe('PUT');
 
     calls = mockFetch(null);
     await deleteCollection('collection-1');
-    assert.equal(calls[0].options.method, 'DELETE');
+    expect(calls[0].options.method).toBe('DELETE');
   });
 
   it('covers variant list/create/update/delete routes and conflict propagation', async () => {
     let calls = mockFetch([]);
     await getProductVariants('product-1');
-    assert.equal(calls[0].url.endsWith('/api/products/product-1/variants'), true);
+    expect(calls[0].url.endsWith('/api/products/product-1/variants')).toBe(true);
 
     calls = mockFetch({ id: 'variant-1' });
     await createVariant('product-1', { sku: 'SKU-1' });
-    assert.equal(calls[0].options.method, 'POST');
+    expect(calls[0].options.method).toBe('POST');
 
     calls = mockFetch({ id: 'variant-1' });
     await updateVariant('variant-1', { sku: 'SKU-2' });
-    assert.equal(calls[0].url.endsWith('/api/variants/variant-1'), true);
+    expect(calls[0].url.endsWith('/api/variants/variant-1')).toBe(true);
 
     calls = mockFetch(null);
     await deleteVariant('variant-1');
-    assert.equal(calls[0].options.method, 'DELETE');
+    expect(calls[0].options.method).toBe('DELETE');
 
     mockFetch({ title: 'Duplicate SKU' }, false, 409);
-    await assert.rejects(
-      () => createVariant('product-1', { sku: 'SKU-1' }),
-      { status: 409, isConflict: true },
-    );
+    await expect(
+      createVariant('product-1', { sku: 'SKU-1' }),
+    ).rejects.toMatchObject({ status: 409, isConflict: true });
   });
 
   it('covers inventory query, adjustment success/failure and low-stock route', async () => {
     let calls = mockFetch({ items: [] });
     await getInventory({ sku: 'TSH', page: 1 });
-    assert.equal(new URL(calls[0].url).searchParams.get('sku'), 'TSH');
+    expect(new URL(calls[0].url).searchParams.get('sku')).toBe('TSH');
 
     calls = mockFetch({ quantityOnHand: 12 });
     await adjustStock('variant-1', {
@@ -144,45 +145,50 @@ describe('Member 1 API integration functions', () => {
       quantity: 5,
       reason: 'Delivery',
     });
-    assert.equal(calls[0].url.endsWith('/api/inventory/variant-1/adjust'), true);
-    assert.equal(calls[0].options.method, 'POST');
+    expect(calls[0].url.endsWith('/api/inventory/variant-1/adjust')).toBe(true);
+    expect(calls[0].options.method).toBe('POST');
 
     mockFetch({ detail: 'Insufficient stock' }, false, 400);
-    await assert.rejects(
-      () => adjustStock('variant-1', {
+    await expect(
+      adjustStock('variant-1', {
         transactionType: 'StockOut',
         quantity: 999,
         reason: 'Sale',
       }),
-      { status: 400, isValidationError: true },
-    );
+    ).rejects.toMatchObject({ status: 400, isValidationError: true });
 
     calls = mockFetch({ items: [] });
     await getLowStock({ sortBy: 'quantity', page: 2 });
-    assert.equal(new URL(calls[0].url).pathname, '/api/inventory/low-stock');
-    assert.equal(new URL(calls[0].url).searchParams.get('sortBy'), 'quantity');
+    expect(new URL(calls[0].url).pathname).toBe('/api/inventory/low-stock');
+    expect(new URL(calls[0].url).searchParams.get('sortBy')).toBe('quantity');
 
     calls = mockFetch([{ transactionType: 'StockIn' }]);
     await getStockHistory('variant-1');
-    assert.equal(calls[0].url.endsWith('/api/inventory/variant-1/history'), true);
-    assert.equal(calls[0].options.method, 'GET');
+    expect(calls[0].url.endsWith('/api/inventory/variant-1/history')).toBe(true);
+    expect(calls[0].options.method).toBe('GET');
   });
 
   it('covers inventory agent workflow create, approve, reject and revise endpoints', async () => {
     let calls = mockFetch({ workflowId: 'wf-1' });
     await createInventoryWorkflow({ objective: 'Analyze stock' });
-    assert.equal(calls[0].url.endsWith('/api/inventory/agent/workflows'), true);
+    expect(calls[0].url.endsWith('/api/inventory/agent/workflows')).toBe(true);
 
     calls = mockFetch({ workflowId: 'wf-1', status: 'Approved' });
     await approveInventoryWorkflow('wf-1', { note: 'Approved' });
-    assert.equal(calls[0].url.endsWith('/api/inventory/agent/workflows/wf-1/approve'), true);
+    expect(
+      calls[0].url.endsWith('/api/inventory/agent/workflows/wf-1/approve'),
+    ).toBe(true);
 
     calls = mockFetch({ workflowId: 'wf-1', status: 'Rejected' });
     await rejectInventoryWorkflow('wf-1', { reason: 'Unsafe' });
-    assert.equal(calls[0].url.endsWith('/api/inventory/agent/workflows/wf-1/reject'), true);
+    expect(
+      calls[0].url.endsWith('/api/inventory/agent/workflows/wf-1/reject'),
+    ).toBe(true);
 
     calls = mockFetch({ workflowId: 'wf-1', status: 'RevisionRequested' });
     await reviseInventoryWorkflow('wf-1', { revisionRequest: 'Try again' });
-    assert.equal(calls[0].url.endsWith('/api/inventory/agent/workflows/wf-1/revise'), true);
+    expect(
+      calls[0].url.endsWith('/api/inventory/agent/workflows/wf-1/revise'),
+    ).toBe(true);
   });
 });

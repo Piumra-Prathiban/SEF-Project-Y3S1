@@ -385,7 +385,7 @@ namespace SEF_Project.Api.Migrations
                             Id = new Guid("00000000-0000-0000-0000-000000000001"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Pizza",
+                            Name = "Tops",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
@@ -393,7 +393,7 @@ namespace SEF_Project.Api.Migrations
                             Id = new Guid("00000000-0000-0000-0000-000000000002"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Pasta",
+                            Name = "Bottoms",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
@@ -401,7 +401,7 @@ namespace SEF_Project.Api.Migrations
                             Id = new Guid("00000000-0000-0000-0000-000000000003"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Beverages",
+                            Name = "Outerwear",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
@@ -409,7 +409,7 @@ namespace SEF_Project.Api.Migrations
                             Id = new Guid("00000000-0000-0000-0000-000000000004"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Desserts",
+                            Name = "Footwear",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
@@ -450,27 +450,27 @@ namespace SEF_Project.Api.Migrations
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000005"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Core menu items available every day.",
+                            Description = "Lightweight staples for the warm season.",
                             IsActive = true,
-                            Name = "Classic Menu",
+                            Name = "Summer Essentials",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000006"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Featured meals and customer favourites.",
+                            Description = "Featured pieces from the signature line.",
                             IsActive = true,
-                            Name = "Signature Meals",
+                            Name = "Signature Selection",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000007"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Beverages and sweet add-ons.",
+                            Description = "The latest additions to the catalogue.",
                             IsActive = true,
-                            Name = "Drinks and Desserts",
+                            Name = "New Arrivals",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
@@ -514,8 +514,27 @@ namespace SEF_Project.Api.Migrations
                         {
                             Id = new Guid("00000000-0000-0000-0000-00000000003e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            HexCode = "#000000",
                             IsActive = true,
-                            Name = "Default",
+                            Name = "Black",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-00000000003f"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            HexCode = "#ffffff",
+                            IsActive = true,
+                            Name = "White",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000040"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            HexCode = "#001f3f",
+                            IsActive = true,
+                            Name = "Navy",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
@@ -652,6 +671,10 @@ namespace SEF_Project.Api.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
@@ -685,9 +708,9 @@ namespace SEF_Project.Api.Migrations
                             CategoryId = new Guid("00000000-0000-0000-0000-000000000001"),
                             CollectionId = new Guid("00000000-0000-0000-0000-000000000005"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Classic tomato, mozzarella and basil.",
+                            Description = "Soft combed cotton crew-neck tee.",
                             IsActive = true,
-                            Name = "Margherita Pizza",
+                            Name = "Classic Cotton T-Shirt",
                             SupplierId = new Guid("00000000-0000-0000-0000-000000000011"),
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
@@ -695,11 +718,11 @@ namespace SEF_Project.Api.Migrations
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000022"),
                             CategoryId = new Guid("00000000-0000-0000-0000-000000000001"),
-                            CollectionId = new Guid("00000000-0000-0000-0000-000000000006"),
+                            CollectionId = new Guid("00000000-0000-0000-0000-000000000007"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Pepperoni with mozzarella.",
+                            Description = "Brushed fleece hoodie with a kangaroo pocket.",
                             IsActive = true,
-                            Name = "Pepperoni Pizza",
+                            Name = "Fleece Pullover Hoodie",
                             SupplierId = new Guid("00000000-0000-0000-0000-000000000011"),
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
@@ -709,9 +732,9 @@ namespace SEF_Project.Api.Migrations
                             CategoryId = new Guid("00000000-0000-0000-0000-000000000002"),
                             CollectionId = new Guid("00000000-0000-0000-0000-000000000005"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Creamy pasta with pancetta.",
+                            Description = "Mid-rise slim jeans in stretch denim.",
                             IsActive = true,
-                            Name = "Spaghetti Carbonara",
+                            Name = "Slim Fit Denim Jeans",
                             SupplierId = new Guid("00000000-0000-0000-0000-000000000011"),
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
@@ -719,24 +742,24 @@ namespace SEF_Project.Api.Migrations
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000024"),
                             CategoryId = new Guid("00000000-0000-0000-0000-000000000003"),
-                            CollectionId = new Guid("00000000-0000-0000-0000-000000000007"),
+                            CollectionId = new Guid("00000000-0000-0000-0000-000000000006"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Carbonated soft drink.",
+                            Description = "Lightly quilted jacket for layering.",
                             IsActive = true,
-                            Name = "Cola",
-                            SupplierId = new Guid("00000000-0000-0000-0000-000000000012"),
+                            Name = "Quilted Field Jacket",
+                            SupplierId = new Guid("00000000-0000-0000-0000-000000000011"),
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000025"),
                             CategoryId = new Guid("00000000-0000-0000-0000-000000000004"),
-                            CollectionId = new Guid("00000000-0000-0000-0000-000000000007"),
+                            CollectionId = new Guid("00000000-0000-0000-0000-000000000006"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Classic coffee dessert.",
+                            Description = "Full-grain leather boots with a block heel.",
                             IsActive = true,
-                            Name = "Tiramisu",
-                            SupplierId = new Guid("00000000-0000-0000-0000-000000000011"),
+                            Name = "Leather Ankle Boots",
+                            SupplierId = new Guid("00000000-0000-0000-0000-000000000012"),
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
@@ -805,50 +828,50 @@ namespace SEF_Project.Api.Migrations
                             ColourId = new Guid("00000000-0000-0000-0000-00000000003e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Small / Default",
-                            Price = 1200m,
+                            Name = "XS / Black",
+                            Price = 2500m,
                             ProductId = new Guid("00000000-0000-0000-0000-000000000021"),
                             SizeId = new Guid("00000000-0000-0000-0000-000000000038"),
-                            Sku = "PIZ-MARG-S",
+                            Sku = "TSH-CLS-XS",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000032"),
-                            ColourId = new Guid("00000000-0000-0000-0000-00000000003e"),
+                            ColourId = new Guid("00000000-0000-0000-0000-00000000003f"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Large / Default",
-                            Price = 2200m,
+                            Name = "M / White",
+                            Price = 2600m,
                             ProductId = new Guid("00000000-0000-0000-0000-000000000021"),
                             SizeId = new Guid("00000000-0000-0000-0000-00000000003a"),
-                            Sku = "PIZ-MARG-L",
+                            Sku = "TSH-CLS-M",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000033"),
-                            ColourId = new Guid("00000000-0000-0000-0000-00000000003e"),
+                            ColourId = new Guid("00000000-0000-0000-0000-000000000040"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Medium / Default",
-                            Price = 1600m,
+                            Name = "M / Navy",
+                            Price = 6500m,
                             ProductId = new Guid("00000000-0000-0000-0000-000000000022"),
-                            SizeId = new Guid("00000000-0000-0000-0000-000000000039"),
-                            Sku = "PIZ-PEP-M",
+                            SizeId = new Guid("00000000-0000-0000-0000-00000000003a"),
+                            Sku = "HOD-FLC-M",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000034"),
-                            ColourId = new Guid("00000000-0000-0000-0000-00000000003e"),
+                            ColourId = new Guid("00000000-0000-0000-0000-000000000040"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Large / Default",
-                            Price = 2600m,
+                            Name = "L / Navy",
+                            Price = 6900m,
                             ProductId = new Guid("00000000-0000-0000-0000-000000000022"),
-                            SizeId = new Guid("00000000-0000-0000-0000-00000000003a"),
-                            Sku = "PIZ-PEP-L",
+                            SizeId = new Guid("00000000-0000-0000-0000-00000000003b"),
+                            Sku = "HOD-FLC-L",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
@@ -857,24 +880,24 @@ namespace SEF_Project.Api.Migrations
                             ColourId = new Guid("00000000-0000-0000-0000-00000000003e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Regular / Default",
-                            Price = 1800m,
+                            Name = "M / Black",
+                            Price = 7500m,
                             ProductId = new Guid("00000000-0000-0000-0000-000000000023"),
-                            SizeId = new Guid("00000000-0000-0000-0000-00000000003b"),
-                            Sku = "PST-CARB-R",
+                            SizeId = new Guid("00000000-0000-0000-0000-00000000003a"),
+                            Sku = "JEA-SLM-M",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000036"),
-                            ColourId = new Guid("00000000-0000-0000-0000-00000000003e"),
+                            ColourId = new Guid("00000000-0000-0000-0000-000000000040"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "330ml / Default",
-                            Price = 300m,
+                            Name = "L / Navy",
+                            Price = 12500m,
                             ProductId = new Guid("00000000-0000-0000-0000-000000000024"),
-                            SizeId = new Guid("00000000-0000-0000-0000-00000000003d"),
-                            Sku = "BEV-COLA-330",
+                            SizeId = new Guid("00000000-0000-0000-0000-00000000003b"),
+                            Sku = "JKT-QFD-L",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
@@ -883,11 +906,11 @@ namespace SEF_Project.Api.Migrations
                             ColourId = new Guid("00000000-0000-0000-0000-00000000003e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
-                            Name = "Single / Default",
-                            Price = 900m,
+                            Name = "One Size / Black",
+                            Price = 8900m,
                             ProductId = new Guid("00000000-0000-0000-0000-000000000025"),
-                            SizeId = new Guid("00000000-0000-0000-0000-00000000003c"),
-                            Sku = "DES-TIRA-S",
+                            SizeId = new Guid("00000000-0000-0000-0000-00000000003d"),
+                            Sku = "BTS-ANK-OS",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
@@ -933,7 +956,7 @@ namespace SEF_Project.Api.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DisplayOrder = 10,
                             IsActive = true,
-                            Name = "Small",
+                            Name = "XS",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
@@ -942,7 +965,7 @@ namespace SEF_Project.Api.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DisplayOrder = 20,
                             IsActive = true,
-                            Name = "Medium",
+                            Name = "S",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
@@ -951,7 +974,7 @@ namespace SEF_Project.Api.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DisplayOrder = 30,
                             IsActive = true,
-                            Name = "Large",
+                            Name = "M",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
@@ -960,7 +983,7 @@ namespace SEF_Project.Api.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DisplayOrder = 40,
                             IsActive = true,
-                            Name = "Regular",
+                            Name = "L",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
@@ -969,7 +992,7 @@ namespace SEF_Project.Api.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DisplayOrder = 50,
                             IsActive = true,
-                            Name = "Single",
+                            Name = "XL",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
@@ -978,7 +1001,7 @@ namespace SEF_Project.Api.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DisplayOrder = 60,
                             IsActive = true,
-                            Name = "330ml",
+                            Name = "One Size",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
@@ -1083,9 +1106,9 @@ namespace SEF_Project.Api.Migrations
                             Id = new Guid("00000000-0000-0000-0000-000000000011"),
                             ContactName = "Nimal Perera",
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "orders@freshfoods.lk",
+                            Email = "orders@atlastextiles.lk",
                             IsActive = true,
-                            Name = "Fresh Foods Ltd",
+                            Name = "Atlas Textiles",
                             Phone = "+94 11 234 5678",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
@@ -1094,9 +1117,9 @@ namespace SEF_Project.Api.Migrations
                             Id = new Guid("00000000-0000-0000-0000-000000000012"),
                             ContactName = "Kamal Silva",
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "sales@beverageco.lk",
+                            Email = "sales@nordicfootwear.lk",
                             IsActive = true,
-                            Name = "Beverage Co",
+                            Name = "Nordic Footwear",
                             Phone = "+94 11 876 5432",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
@@ -1166,7 +1189,7 @@ namespace SEF_Project.Api.Migrations
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000051"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Launch promotion for the new menu.",
+                            Description = "Launch promotion for the new season.",
                             EndDate = new DateTime(2026, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             Name = "Summer Launch",
@@ -1329,11 +1352,11 @@ namespace SEF_Project.Api.Migrations
                             Id = new Guid("00000000-0000-0000-0000-000000000052"),
                             CampaignId = new Guid("00000000-0000-0000-0000-000000000051"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "20% off all pizzas.",
+                            Description = "20% off all tops.",
                             DiscountValue = 20m,
                             EndDate = new DateTime(2026, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
-                            Name = "Pizza 20% Off",
+                            Name = "Tops 20% Off",
                             StartDate = new DateTime(2026, 9, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Type = "PercentageDiscount",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)

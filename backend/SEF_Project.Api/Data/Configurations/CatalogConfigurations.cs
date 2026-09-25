@@ -19,10 +19,10 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.HasIndex(e => e.Name).IsUnique();
 
         builder.HasData(
-            new Category { Id = SeedData.CategoryPizza, Name = "Pizza", IsActive = true },
-            new Category { Id = SeedData.CategoryPasta, Name = "Pasta", IsActive = true },
-            new Category { Id = SeedData.CategoryBeverages, Name = "Beverages", IsActive = true },
-            new Category { Id = SeedData.CategoryDesserts, Name = "Desserts", IsActive = true });
+            new Category { Id = SeedData.CategoryTops, Name = "Tops", IsActive = true },
+            new Category { Id = SeedData.CategoryBottoms, Name = "Bottoms", IsActive = true },
+            new Category { Id = SeedData.CategoryOuterwear, Name = "Outerwear", IsActive = true },
+            new Category { Id = SeedData.CategoryFootwear, Name = "Footwear", IsActive = true });
     }
 }
 
@@ -42,23 +42,23 @@ public class CollectionConfiguration : IEntityTypeConfiguration<Collection>
         builder.HasData(
             new Collection
             {
-                Id = SeedData.CollectionClassic,
-                Name = "Classic Menu",
-                Description = "Core menu items available every day.",
+                Id = SeedData.CollectionSummerEssentials,
+                Name = "Summer Essentials",
+                Description = "Lightweight staples for the warm season.",
                 IsActive = true
             },
             new Collection
             {
                 Id = SeedData.CollectionSignature,
-                Name = "Signature Meals",
-                Description = "Featured meals and customer favourites.",
+                Name = "Signature Selection",
+                Description = "Featured pieces from the signature line.",
                 IsActive = true
             },
             new Collection
             {
-                Id = SeedData.CollectionDrinksAndDesserts,
-                Name = "Drinks and Desserts",
-                Description = "Beverages and sweet add-ons.",
+                Id = SeedData.CollectionNewArrivals,
+                Name = "New Arrivals",
+                Description = "The latest additions to the catalogue.",
                 IsActive = true
             });
     }
@@ -78,12 +78,12 @@ public class SizeConfiguration : IEntityTypeConfiguration<Size>
         builder.HasIndex(e => e.Name).IsUnique();
 
         builder.HasData(
-            new Size { Id = SeedData.SizeSmall, Name = "Small", DisplayOrder = 10, IsActive = true },
-            new Size { Id = SeedData.SizeMedium, Name = "Medium", DisplayOrder = 20, IsActive = true },
-            new Size { Id = SeedData.SizeLarge, Name = "Large", DisplayOrder = 30, IsActive = true },
-            new Size { Id = SeedData.SizeRegular, Name = "Regular", DisplayOrder = 40, IsActive = true },
-            new Size { Id = SeedData.SizeSingle, Name = "Single", DisplayOrder = 50, IsActive = true },
-            new Size { Id = SeedData.Size330Ml, Name = "330ml", DisplayOrder = 60, IsActive = true });
+            new Size { Id = SeedData.SizeXs, Name = "XS", DisplayOrder = 10, IsActive = true },
+            new Size { Id = SeedData.SizeS, Name = "S", DisplayOrder = 20, IsActive = true },
+            new Size { Id = SeedData.SizeM, Name = "M", DisplayOrder = 30, IsActive = true },
+            new Size { Id = SeedData.SizeL, Name = "L", DisplayOrder = 40, IsActive = true },
+            new Size { Id = SeedData.SizeXl, Name = "XL", DisplayOrder = 50, IsActive = true },
+            new Size { Id = SeedData.SizeOneSize, Name = "One Size", DisplayOrder = 60, IsActive = true });
     }
 }
 
@@ -106,7 +106,9 @@ public class ColourConfiguration : IEntityTypeConfiguration<Colour>
         builder.HasIndex(e => e.Name).IsUnique();
 
         builder.HasData(
-            new Colour { Id = SeedData.ColourDefault, Name = "Default", IsActive = true });
+            new Colour { Id = SeedData.ColourBlack, Name = "Black", HexCode = "#000000", IsActive = true },
+            new Colour { Id = SeedData.ColourWhite, Name = "White", HexCode = "#ffffff", IsActive = true },
+            new Colour { Id = SeedData.ColourNavy, Name = "Navy", HexCode = "#001f3f", IsActive = true });
     }
 }
 
@@ -120,6 +122,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
 
         builder.Property(e => e.Name).IsRequired().HasMaxLength(200);
         builder.Property(e => e.Description).HasMaxLength(2000);
+        builder.Property(e => e.ImageUrl).HasMaxLength(500);
 
         builder.HasIndex(e => e.Name);
         builder.HasIndex(e => e.CategoryId);
@@ -143,52 +146,52 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasData(
             new Product
             {
-                Id = SeedData.ProductMargherita,
-                Name = "Margherita Pizza",
-                Description = "Classic tomato, mozzarella and basil.",
-                CategoryId = SeedData.CategoryPizza,
-                CollectionId = SeedData.CollectionClassic,
-                SupplierId = SeedData.SupplierFreshFoods,
+                Id = SeedData.ProductTShirt,
+                Name = "Classic Cotton T-Shirt",
+                Description = "Soft combed cotton crew-neck tee.",
+                CategoryId = SeedData.CategoryTops,
+                CollectionId = SeedData.CollectionSummerEssentials,
+                SupplierId = SeedData.SupplierAtlasTextiles,
                 IsActive = true
             },
             new Product
             {
-                Id = SeedData.ProductPepperoni,
-                Name = "Pepperoni Pizza",
-                Description = "Pepperoni with mozzarella.",
-                CategoryId = SeedData.CategoryPizza,
+                Id = SeedData.ProductHoodie,
+                Name = "Fleece Pullover Hoodie",
+                Description = "Brushed fleece hoodie with a kangaroo pocket.",
+                CategoryId = SeedData.CategoryTops,
+                CollectionId = SeedData.CollectionNewArrivals,
+                SupplierId = SeedData.SupplierAtlasTextiles,
+                IsActive = true
+            },
+            new Product
+            {
+                Id = SeedData.ProductJeans,
+                Name = "Slim Fit Denim Jeans",
+                Description = "Mid-rise slim jeans in stretch denim.",
+                CategoryId = SeedData.CategoryBottoms,
+                CollectionId = SeedData.CollectionSummerEssentials,
+                SupplierId = SeedData.SupplierAtlasTextiles,
+                IsActive = true
+            },
+            new Product
+            {
+                Id = SeedData.ProductJacket,
+                Name = "Quilted Field Jacket",
+                Description = "Lightly quilted jacket for layering.",
+                CategoryId = SeedData.CategoryOuterwear,
                 CollectionId = SeedData.CollectionSignature,
-                SupplierId = SeedData.SupplierFreshFoods,
+                SupplierId = SeedData.SupplierAtlasTextiles,
                 IsActive = true
             },
             new Product
             {
-                Id = SeedData.ProductCarbonara,
-                Name = "Spaghetti Carbonara",
-                Description = "Creamy pasta with pancetta.",
-                CategoryId = SeedData.CategoryPasta,
-                CollectionId = SeedData.CollectionClassic,
-                SupplierId = SeedData.SupplierFreshFoods,
-                IsActive = true
-            },
-            new Product
-            {
-                Id = SeedData.ProductCola,
-                Name = "Cola",
-                Description = "Carbonated soft drink.",
-                CategoryId = SeedData.CategoryBeverages,
-                CollectionId = SeedData.CollectionDrinksAndDesserts,
-                SupplierId = SeedData.SupplierBeverageCo,
-                IsActive = true
-            },
-            new Product
-            {
-                Id = SeedData.ProductTiramisu,
-                Name = "Tiramisu",
-                Description = "Classic coffee dessert.",
-                CategoryId = SeedData.CategoryDesserts,
-                CollectionId = SeedData.CollectionDrinksAndDesserts,
-                SupplierId = SeedData.SupplierFreshFoods,
+                Id = SeedData.ProductBoots,
+                Name = "Leather Ankle Boots",
+                Description = "Full-grain leather boots with a block heel.",
+                CategoryId = SeedData.CategoryFootwear,
+                CollectionId = SeedData.CollectionSignature,
+                SupplierId = SeedData.SupplierNordicFootwear,
                 IsActive = true
             });
     }
@@ -231,79 +234,79 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
         builder.HasData(
             new ProductVariant
             {
-                Id = SeedData.VariantMargheritaSmall,
-                ProductId = SeedData.ProductMargherita,
-                SizeId = SeedData.SizeSmall,
-                ColourId = SeedData.ColourDefault,
-                Sku = "PIZ-MARG-S",
-                Name = "Small / Default",
-                Price = 1200m,
+                Id = SeedData.VariantTShirtXs,
+                ProductId = SeedData.ProductTShirt,
+                SizeId = SeedData.SizeXs,
+                ColourId = SeedData.ColourBlack,
+                Sku = "TSH-CLS-XS",
+                Name = "XS / Black",
+                Price = 2500m,
                 IsActive = true
             },
             new ProductVariant
             {
-                Id = SeedData.VariantMargheritaLarge,
-                ProductId = SeedData.ProductMargherita,
-                SizeId = SeedData.SizeLarge,
-                ColourId = SeedData.ColourDefault,
-                Sku = "PIZ-MARG-L",
-                Name = "Large / Default",
-                Price = 2200m,
-                IsActive = true
-            },
-            new ProductVariant
-            {
-                Id = SeedData.VariantPepperoniMedium,
-                ProductId = SeedData.ProductPepperoni,
-                SizeId = SeedData.SizeMedium,
-                ColourId = SeedData.ColourDefault,
-                Sku = "PIZ-PEP-M",
-                Name = "Medium / Default",
-                Price = 1600m,
-                IsActive = true
-            },
-            new ProductVariant
-            {
-                Id = SeedData.VariantPepperoniLarge,
-                ProductId = SeedData.ProductPepperoni,
-                SizeId = SeedData.SizeLarge,
-                ColourId = SeedData.ColourDefault,
-                Sku = "PIZ-PEP-L",
-                Name = "Large / Default",
+                Id = SeedData.VariantTShirtM,
+                ProductId = SeedData.ProductTShirt,
+                SizeId = SeedData.SizeM,
+                ColourId = SeedData.ColourWhite,
+                Sku = "TSH-CLS-M",
+                Name = "M / White",
                 Price = 2600m,
                 IsActive = true
             },
             new ProductVariant
             {
-                Id = SeedData.VariantCarbonaraRegular,
-                ProductId = SeedData.ProductCarbonara,
-                SizeId = SeedData.SizeRegular,
-                ColourId = SeedData.ColourDefault,
-                Sku = "PST-CARB-R",
-                Name = "Regular / Default",
-                Price = 1800m,
+                Id = SeedData.VariantHoodieM,
+                ProductId = SeedData.ProductHoodie,
+                SizeId = SeedData.SizeM,
+                ColourId = SeedData.ColourNavy,
+                Sku = "HOD-FLC-M",
+                Name = "M / Navy",
+                Price = 6500m,
                 IsActive = true
             },
             new ProductVariant
             {
-                Id = SeedData.VariantCola330,
-                ProductId = SeedData.ProductCola,
-                SizeId = SeedData.Size330Ml,
-                ColourId = SeedData.ColourDefault,
-                Sku = "BEV-COLA-330",
-                Name = "330ml / Default",
-                Price = 300m,
+                Id = SeedData.VariantHoodieL,
+                ProductId = SeedData.ProductHoodie,
+                SizeId = SeedData.SizeL,
+                ColourId = SeedData.ColourNavy,
+                Sku = "HOD-FLC-L",
+                Name = "L / Navy",
+                Price = 6900m,
                 IsActive = true
             },
             new ProductVariant
             {
-                Id = SeedData.VariantTiramisuSingle,
-                ProductId = SeedData.ProductTiramisu,
-                SizeId = SeedData.SizeSingle,
-                ColourId = SeedData.ColourDefault,
-                Sku = "DES-TIRA-S",
-                Name = "Single / Default",
-                Price = 900m,
+                Id = SeedData.VariantJeansM,
+                ProductId = SeedData.ProductJeans,
+                SizeId = SeedData.SizeM,
+                ColourId = SeedData.ColourBlack,
+                Sku = "JEA-SLM-M",
+                Name = "M / Black",
+                Price = 7500m,
+                IsActive = true
+            },
+            new ProductVariant
+            {
+                Id = SeedData.VariantJacketL,
+                ProductId = SeedData.ProductJacket,
+                SizeId = SeedData.SizeL,
+                ColourId = SeedData.ColourNavy,
+                Sku = "JKT-QFD-L",
+                Name = "L / Navy",
+                Price = 12500m,
+                IsActive = true
+            },
+            new ProductVariant
+            {
+                Id = SeedData.VariantBootsOneSize,
+                ProductId = SeedData.ProductBoots,
+                SizeId = SeedData.SizeOneSize,
+                ColourId = SeedData.ColourBlack,
+                Sku = "BTS-ANK-OS",
+                Name = "One Size / Black",
+                Price = 8900m,
                 IsActive = true
             });
     }
@@ -334,7 +337,7 @@ public class InventoryStockConfiguration : IEntityTypeConfiguration<InventorySto
             new InventoryStock
             {
                 Id = new Guid("00000000-0000-0000-0000-000000000041"),
-                ProductVariantId = SeedData.VariantMargheritaSmall,
+                ProductVariantId = SeedData.VariantTShirtXs,
                 QuantityOnHand = 50,
                 ReservedQuantity = 0,
                 ReorderLevel = 10
@@ -342,7 +345,7 @@ public class InventoryStockConfiguration : IEntityTypeConfiguration<InventorySto
             new InventoryStock
             {
                 Id = new Guid("00000000-0000-0000-0000-000000000042"),
-                ProductVariantId = SeedData.VariantMargheritaLarge,
+                ProductVariantId = SeedData.VariantTShirtM,
                 QuantityOnHand = 30,
                 ReservedQuantity = 0,
                 ReorderLevel = 10
@@ -350,7 +353,7 @@ public class InventoryStockConfiguration : IEntityTypeConfiguration<InventorySto
             new InventoryStock
             {
                 Id = new Guid("00000000-0000-0000-0000-000000000043"),
-                ProductVariantId = SeedData.VariantPepperoniMedium,
+                ProductVariantId = SeedData.VariantHoodieM,
                 QuantityOnHand = 40,
                 ReservedQuantity = 0,
                 ReorderLevel = 10
@@ -358,7 +361,7 @@ public class InventoryStockConfiguration : IEntityTypeConfiguration<InventorySto
             new InventoryStock
             {
                 Id = new Guid("00000000-0000-0000-0000-000000000044"),
-                ProductVariantId = SeedData.VariantPepperoniLarge,
+                ProductVariantId = SeedData.VariantHoodieL,
                 QuantityOnHand = 25,
                 ReservedQuantity = 0,
                 ReorderLevel = 10
@@ -366,7 +369,7 @@ public class InventoryStockConfiguration : IEntityTypeConfiguration<InventorySto
             new InventoryStock
             {
                 Id = new Guid("00000000-0000-0000-0000-000000000045"),
-                ProductVariantId = SeedData.VariantCarbonaraRegular,
+                ProductVariantId = SeedData.VariantJeansM,
                 QuantityOnHand = 35,
                 ReservedQuantity = 0,
                 ReorderLevel = 10
@@ -374,7 +377,7 @@ public class InventoryStockConfiguration : IEntityTypeConfiguration<InventorySto
             new InventoryStock
             {
                 Id = new Guid("00000000-0000-0000-0000-000000000046"),
-                ProductVariantId = SeedData.VariantCola330,
+                ProductVariantId = SeedData.VariantJacketL,
                 QuantityOnHand = 200,
                 ReservedQuantity = 0,
                 ReorderLevel = 50
@@ -382,7 +385,7 @@ public class InventoryStockConfiguration : IEntityTypeConfiguration<InventorySto
             new InventoryStock
             {
                 Id = new Guid("00000000-0000-0000-0000-000000000047"),
-                ProductVariantId = SeedData.VariantTiramisuSingle,
+                ProductVariantId = SeedData.VariantBootsOneSize,
                 QuantityOnHand = 20,
                 ReservedQuantity = 0,
                 ReorderLevel = 5
@@ -439,19 +442,19 @@ public class SupplierConfiguration : IEntityTypeConfiguration<Supplier>
         builder.HasData(
             new Supplier
             {
-                Id = SeedData.SupplierFreshFoods,
-                Name = "Fresh Foods Ltd",
+                Id = SeedData.SupplierAtlasTextiles,
+                Name = "Atlas Textiles",
                 ContactName = "Nimal Perera",
-                Email = "orders@freshfoods.lk",
+                Email = "orders@atlastextiles.lk",
                 Phone = "+94 11 234 5678",
                 IsActive = true
             },
             new Supplier
             {
-                Id = SeedData.SupplierBeverageCo,
-                Name = "Beverage Co",
+                Id = SeedData.SupplierNordicFootwear,
+                Name = "Nordic Footwear",
                 ContactName = "Kamal Silva",
-                Email = "sales@beverageco.lk",
+                Email = "sales@nordicfootwear.lk",
                 Phone = "+94 11 876 5432",
                 IsActive = true
             });

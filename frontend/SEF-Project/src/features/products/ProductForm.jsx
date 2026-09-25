@@ -17,6 +17,7 @@ export function ProductForm({
   const [form, setForm] = useState(() => ({
     name: initialValue?.name ?? initialProductFormState.name,
     description: initialValue?.description ?? initialProductFormState.description,
+    imageUrl: initialValue?.imageUrl ?? initialProductFormState.imageUrl,
     categoryId: initialValue?.categoryId ?? initialProductFormState.categoryId,
     collectionId: initialValue?.collectionId ?? initialProductFormState.collectionId,
     supplierId: initialValue?.supplierId ?? initialProductFormState.supplierId,
@@ -74,6 +75,20 @@ export function ProductForm({
           rows={4}
           value={form.description}
         />
+      </label>
+
+      <label>
+        Image URL
+        <input
+          maxLength={500}
+          onChange={(event) => updateField('imageUrl', event.target.value)}
+          placeholder="https://..."
+          type="url"
+          value={form.imageUrl}
+        />
+        <small>
+          Shown on the storefront; leave empty to use the placeholder tile.
+        </small>
       </label>
 
       <div className="form-grid">

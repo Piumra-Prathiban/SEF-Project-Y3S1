@@ -397,13 +397,23 @@ Backend
 4. Update the PostgreSQL password in
    `appsettings.Development.json`.
 
-5. Run:
+5. Copy `.env.example` to `.env` (in `backend/SEF_Project.Api/`) and set the
+   bootstrap Administrator details:
+
+   `SeedAdmin__Email` and `SeedAdmin__Password`
+
+6. Run:
 
    `dotnet ef database update`
 
-6. Start the API:
+7. Start the API:
 
    `dotnet run`
+
+The `.env` file is gitignored. On startup the API creates that Administrator
+account when the email does not exist yet (existing accounts are never modified),
+so no manual SQL is needed — sign in with those credentials to reach the
+staff/admin screens. Public registration always creates Customers.
 
 
 ## Important

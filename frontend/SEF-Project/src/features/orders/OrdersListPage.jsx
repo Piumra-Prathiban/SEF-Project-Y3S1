@@ -5,8 +5,8 @@ import { getOrders, OrderStatus } from '../../services/orderService';
 import { formatCurrency, formatDate } from '../../utils/format';
 import { isStaff } from '../../utils/roles';
 import { useSessionGuard } from '../../hooks/useSessionGuard';
-import Loading from '../../components/Loading';
-import ErrorAlert from '../../components/ErrorAlert';
+import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
+import { LoadingState } from '../../components/ui/LoadingState';
 import StatusBadge from '../../components/StatusBadge';
 import Pagination from '../../components/Pagination';
 import './orders.css';
@@ -268,10 +268,10 @@ function OrdersListPage() {
 
       <div className="orders-results" aria-busy={showLoading}>
         {showLoading ? (
-          <Loading />
+          <LoadingState />
         ) : error ? (
-          <ErrorAlert
-            error={error}
+          <ApiErrorAlert
+            message={error?.message || 'Something went wrong. Please try again.'}
             onRetry={() => setRetryTick((tick) => tick + 1)}
           />
         ) : data.items.length === 0 ? (

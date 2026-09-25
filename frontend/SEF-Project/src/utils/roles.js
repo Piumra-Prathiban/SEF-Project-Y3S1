@@ -4,12 +4,6 @@ export const ROLES = Object.freeze({
   administrator: 'Administrator',
 });
 
-export const ROLE = Object.freeze({
-  Customer: 'Customer',
-  Staff: 'Staff',
-  Administrator: 'Administrator',
-});
-
 export const STAFF_ROLES = [ROLES.staff, ROLES.administrator];
 
 export function hasAnyRole(user, roles) {
@@ -21,16 +15,9 @@ export function hasAnyRole(user, roles) {
 }
 
 export function isStaff(user) {
-  return (
-    user?.role === ROLE.Staff ||
-    user?.role === ROLE.Administrator ||
-    user?.role === ROLES.staff ||
-    user?.role === ROLES.administrator
-  );
+  return hasAnyRole(user, STAFF_ROLES);
 }
 
 export function isAdministrator(user) {
-  return user?.role === ROLE.Administrator || user?.role === ROLES.administrator;
-}
-
+  return user?.role === ROLES.administrator;
 }
