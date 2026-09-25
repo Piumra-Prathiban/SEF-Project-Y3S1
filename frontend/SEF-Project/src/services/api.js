@@ -76,3 +76,11 @@ export async function apiRequest(endpoint, options = {}) {
 
   return data;
 }
+
+export function getApiErrorMessage(error) {
+  if (error?.data?.errors) {
+    return Object.values(error.data.errors).flat().join(' ');
+  }
+
+  return error?.message || 'Something went wrong. Please try again.';
+}

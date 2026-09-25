@@ -11,7 +11,11 @@ using SEF_Project.Api.Services.AgenticAI;
 using SEF_Project.Api.Services.Catalog;
 using SEF_Project.Api.Services.Orders;
 using SEF_Project.Api.Services.Storefront;
+using SEF_Project.Api.Services.Shopping;
+using SEF_Project.Api.Services.Profile;
+using SEF_Project.Api.Services.Recommendations;
 using SEF_Project.Api.Middleware;
+using System.Reflection;
 
 
 // Local secrets live in the gitignored backend/SEF_Project.Api/.env (see
@@ -25,11 +29,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("Jwt"));
+builder.Services.Configure<PersonalStylistAgentOptions>(
+    builder.Configuration.GetSection("PersonalStylistAgent"));
 
 var jwtSettings = builder.Configuration
     .GetSection("Jwt")
     .Get<JwtSettings>()
     ?? throw new InvalidOperationException("JWT settings are missing.");
+var allowedOrigins = CorsOriginPolicy.Normalize(
+    builder.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>());
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -99,13 +109,27 @@ builder.Services.AddScoped<IInventoryAnalysisAgentService, InventoryAnalysisAgen
 builder.Services.AddScoped<IInventoryAgentWorkflowService, InventoryAgentWorkflowService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IStorefrontService, StorefrontService>();
+builder.Services.AddScoped<IProductSearchService, ProductSearchService>();
+builder.Services.AddScoped<IProductAvailabilityService, ProductAvailabilityService>();
+builder.Services.AddScoped<IWishlistService, WishlistService>();
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<ICustomerPreferenceTool, CustomerPreferenceTool>();
+builder.Services.AddScoped<IProductSearchTool, ProductSearchTool>();
+builder.Services.AddScoped<IWishlistTool, WishlistTool>();
+builder.Services.AddScoped<IProductAvailabilityTool, ProductAvailabilityTool>();
+builder.Services.AddScoped<IPersonalStylistRecommendationModel, GroundedPersonalStylistModel>();
+builder.Services.AddScoped<IPersonalStylistOutputValidator, PersonalStylistOutputValidator>();
+builder.Services.AddScoped<IAgentWorkflowRecorder, AgentWorkflowRecorder>();
+builder.Services.AddScoped<IPersonalStylistAgent, PersonalStylistAgent>();
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
     {
         policy
-            .AllowAnyOrigin()
+            .WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -142,18 +166,22 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "SEF Project API",
         Version = "v1",
-        Description = "REST API for authentication, catalog, inventory and orders."
+        Description = "REST API for authentication, catalog, inventory, orders, storefront, shopping and recommendations."
     });
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
+        Description = "Enter the JWT access token returned by the shared authentication API.",
+        In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
         Scheme = "bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Enter a valid JWT bearer token."
+        BearerFormat = "JWT"
     });
+    options.OperationFilter<JwtSecurityOperationFilter>();
+
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFile));
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {

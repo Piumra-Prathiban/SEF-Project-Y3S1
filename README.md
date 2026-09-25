@@ -384,6 +384,10 @@ Backend
 
 ## Local Database Setup
 
+Member 2 technical documentation and contribution evidence:
+
+- [Shopping and Customer Experience](docs/MEMBER2_TECHNICAL_DOCUMENTATION.md)
+
 1. Make sure PostgreSQL is installed and running.
 2. Create a database named `sef_project_db`.
 3. Copy:

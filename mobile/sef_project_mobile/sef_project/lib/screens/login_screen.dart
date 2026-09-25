@@ -1,110 +1,93 @@
 import 'package:flutter/material.dart';
 
-import '../auth/auth_scope.dart';
-import '../services/api_client.dart';
+import '../state/customer_store.dart';
+import '../widgets/common.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
-
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-
-  bool _submitting = false;
-  String? _error;
+  final _formKey = GlobalKey<FormState>();
+  final _email = TextEditingController();
+  final _password = TextEditingController();
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    _email.dispose();
+    _password.dispose();
     super.dispose();
-  }
-
-  Future<void> _submit() async {
-    final auth = AuthScope.of(context);
-
-    setState(() {
-      _submitting = true;
-      _error = null;
-    });
-
-    try {
-      await auth.login(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
-    } on ApiException catch (error) {
-      if (mounted) {
-        setState(() => _error = error.message);
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() => _error = 'Sign in failed. Please try again.');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _submitting = false);
-      }
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final store = StoreScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Clothic')),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Sign in',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  key: const Key('login-email'),
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  autocorrect: false,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Icon(Icons.shopping_bag_outlined,
+                          size: 54,
+                          color: Theme.of(context).colorScheme.primary),
+                      const SizedBox(height: 18),
+                      Text('Welcome to Mode',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.headlineMedium),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Log in to shop, save products, and manage delivery addresses.',
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      TextFormField(
+                        controller: _email,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(labelText: 'Email'),
+                        validator: (value) => value == null ||
+                                !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                                    .hasMatch(value)
+                            ? 'Enter a valid email.'
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _password,
+                        obscureText: true,
+                        decoration: const InputDecoration(labelText: 'Password'),
+                        validator: (value) => (value?.length ?? 0) < 8
+                            ? 'Password must contain at least 8 characters.'
+                            : null,
+                      ),
+                      const SizedBox(height: 18),
+                      FilledButton(
+                        onPressed: store.loading
+                            ? null
+                            : () async {
+                                if (!_formKey.currentState!.validate()) return;
+                                await runAction(
+                                  context,
+                                  () => store.login(
+                                      _email.text.trim(), _password.text),
+                                );
+                              },
+                        child: Text(store.loading ? 'Logging in...' : 'Log in'),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                TextField(
-                  key: const Key('login-password'),
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: _submitting ? null : _submit,
-                  child: Text(_submitting ? 'Signing in…' : 'Sign in'),
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    _error!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                ],
-              ],
+              ),
             ),
           ),
         ),

@@ -1808,6 +1808,57 @@ namespace SEF_Project.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("SEF_Project.Api.Models.Shopping.Wishlist", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId")
+                        .IsUnique();
+
+                    b.ToTable("Wishlists", (string)null);
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Shopping.WishlistItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("WishlistId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("WishlistId", "ProductId")
+                        .IsUnique();
+
+                    b.ToTable("WishlistItems", (string)null);
+                });
+
             modelBuilder.Entity("SEF_Project.Api.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -2196,8 +2247,8 @@ namespace SEF_Project.Api.Migrations
             modelBuilder.Entity("SEF_Project.Api.Models.Shopping.Cart", b =>
                 {
                     b.HasOne("SEF_Project.Api.Models.Customer", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
+                        .WithOne("Cart")
+                        .HasForeignKey("SEF_Project.Api.Models.Shopping.Cart", "CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -2221,6 +2272,36 @@ namespace SEF_Project.Api.Migrations
                     b.Navigation("Cart");
 
                     b.Navigation("ProductVariant");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Shopping.Wishlist", b =>
+                {
+                    b.HasOne("SEF_Project.Api.Models.Customer", "Customer")
+                        .WithOne("Wishlist")
+                        .HasForeignKey("SEF_Project.Api.Models.Shopping.Wishlist", "CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Shopping.WishlistItem", b =>
+                {
+                    b.HasOne("SEF_Project.Api.Models.Catalog.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SEF_Project.Api.Models.Shopping.Wishlist", "Wishlist")
+                        .WithMany("Items")
+                        .HasForeignKey("WishlistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Wishlist");
                 });
 
             modelBuilder.Entity("SEF_Project.Api.Models.User", b =>
@@ -2290,6 +2371,10 @@ namespace SEF_Project.Api.Migrations
             modelBuilder.Entity("SEF_Project.Api.Models.Customer", b =>
                 {
                     b.Navigation("Addresses");
+
+                    b.Navigation("Cart");
+
+                    b.Navigation("Wishlist");
                 });
 
             modelBuilder.Entity("SEF_Project.Api.Models.Marketing.Campaign", b =>
@@ -2330,6 +2415,11 @@ namespace SEF_Project.Api.Migrations
                 });
 
             modelBuilder.Entity("SEF_Project.Api.Models.Shopping.Cart", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Shopping.Wishlist", b =>
                 {
                     b.Navigation("Items");
                 });
