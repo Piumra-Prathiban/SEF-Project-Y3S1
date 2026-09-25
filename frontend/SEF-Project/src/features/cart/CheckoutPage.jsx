@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Alert } from '../../components/ui/Alert';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { useAuth } from '../../contexts/AuthContext';
-import { createOrder, PaymentMethod } from '../../services/orderService';
+import { createOrder, createPayment, PaymentMethod } from '../../services/orderService';
 import { formatCurrency } from '../../utils/format';
 import { useCart } from './CartContext';
 import '../storefront/storefront.css';
@@ -63,8 +63,21 @@ export function CheckoutPage() {
         paymentMethod: Number(paymentMethod),
       });
 
+      // The order exists from here on, so a payment failure must not lose it:
+      // record the chosen method as a pending payment and warn instead.
+      let paymentWarning = null;
+
+      try {
+        await createPayment(token, order.id, {
+          method: Number(paymentMethod),
+          amount: order.total,
+        });
+      } catch {
+        paymentWarning = 'Your order is placed, but the payment could not be recorded. Record it from the order page.';
+      }
+
       clearCart();
-      setPlacedOrder(order);
+      setPlacedOrder({ ...order, paymentWarning });
     } catch (err) {
       setError(err?.message || 'The order could not be placed.');
     } finally {
@@ -79,8 +92,12 @@ export function CheckoutPage() {
           <h1>Order placed</h1>
           <p className="storefront__lede">
             Your order <strong>{placedOrder.orderNumber}</strong> was created.
-            The payment is recorded as pending until staff confirm it.
+            Your payment is recorded as pending until staff confirm it.
           </p>
+
+          {placedOrder.paymentWarning && (
+            <Alert tone="danger">{placedOrder.paymentWarning}</Alert>
+          )}
           <p>
             <Link className="storefront__cta" to={`/orders/${placedOrder.id}`}>
               View your order
@@ -194,8 +211,8 @@ export function CheckoutPage() {
               </select>
             </label>
             <p className="cart-summary__note">
-              No card details are collected here: the server records the payment
-              as pending and staff confirm it through the dashboard.
+              No card details are collected here: your chosen method is recorded
+              as a pending payment, and staff confirm it through the dashboard.
             </p>
 
             <ApiErrorAlert message={error} />

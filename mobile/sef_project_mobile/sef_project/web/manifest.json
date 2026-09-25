@@ -1,11 +1,11 @@
 {
-    "name": "sef_project",
-    "short_name": "sef_project",
+    "name": "Clothic",
+    "short_name": "Clothic",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Clothic - AI-powered fashion commerce platform.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

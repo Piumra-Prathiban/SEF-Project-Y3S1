@@ -4,7 +4,7 @@ import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
 import { useAuth } from '../../contexts/AuthContext';
-import { useMemberOneApi } from '../../hooks/useMemberOneApi';
+import { useCatalogApi } from '../../hooks/useCatalogApi';
 import { STAFF_ROLES } from '../../utils/roles';
 import {
   buildApprovalPayload,
@@ -77,7 +77,7 @@ function StructuredSection({ title, value }) {
 }
 
 export function InventoryAgentPage() {
-  const api = useMemberOneApi();
+  const api = useCatalogApi();
   const { user } = useAuth();
   const [form, setForm] = useState(initialForm);
   const [workflowIdInput, setWorkflowIdInput] = useState('');
@@ -233,7 +233,7 @@ export function InventoryAgentPage() {
 
   return (
     <PageShell
-      eyebrow="Member 1"
+      eyebrow="Clothic · AI agent"
       title="Inventory AI Analysis"
       description="Start and review Inventory Analysis Agent workflows using the backend workflow state as the source of truth."
     >

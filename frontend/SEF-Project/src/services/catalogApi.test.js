@@ -22,7 +22,7 @@ import {
   updateCollection,
   updateProduct,
   updateVariant,
-} from './memberOneApi.js';
+} from './catalogApi.js';
 
 function mockFetch(data, ok = true, status = 200) {
   const calls = [];
@@ -47,7 +47,7 @@ afterEach(() => {
   delete globalThis.fetch;
 });
 
-describe('Member 1 API integration functions', () => {
+describe('catalog API integration functions', () => {
   it('sends product query parameters to the backend list endpoint', async () => {
     const calls = mockFetch({ items: [], page: 2 });
 

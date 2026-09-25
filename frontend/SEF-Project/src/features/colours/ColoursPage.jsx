@@ -3,7 +3,7 @@ import { Alert } from '../../components/ui/Alert';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
-import { useMemberOneApi } from '../../hooks/useMemberOneApi';
+import { useCatalogApi } from '../../hooks/useCatalogApi';
 import { normalizeApiError } from '../../utils/apiErrorUtils';
 import { ColourForm } from './ColourForm';
 import {
@@ -29,7 +29,7 @@ function ColourSwatch({ hexCode }) {
 }
 
 export function ColoursPage() {
-  const api = useMemberOneApi();
+  const api = useCatalogApi();
   const [colours, setColours] = useState([]);
   const [filters, setFilters] = useState({
     search: '',
@@ -140,7 +140,7 @@ export function ColoursPage() {
 
   return (
     <PageShell
-      eyebrow="Member 1"
+      eyebrow="Clothic · Catalog"
       title="Colour Management"
       description="Maintain reusable product colours and hex values used when creating product variants."
     >

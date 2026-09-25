@@ -4,7 +4,7 @@ import { Alert } from '../../components/ui/Alert';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
-import { useMemberOneApi } from '../../hooks/useMemberOneApi';
+import { useCatalogApi } from '../../hooks/useCatalogApi';
 import { normalizeApiError } from '../../utils/apiErrorUtils';
 import { VariantForm } from './VariantForm';
 import {
@@ -27,7 +27,7 @@ function formatPrice(value) {
 }
 
 export function VariantsPage() {
-  const api = useMemberOneApi();
+  const api = useCatalogApi();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
@@ -198,7 +198,7 @@ export function VariantsPage() {
 
   return (
     <PageShell
-      eyebrow="Member 1"
+      eyebrow="Clothic · Catalog"
       title="Product Variant Management"
       description="Manage SKUs, size and colour combinations, price and visible stock for each product."
     >

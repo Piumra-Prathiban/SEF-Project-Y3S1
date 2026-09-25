@@ -18,9 +18,8 @@ public class ShoppingProductsController : ControllerBase
 
     /// <summary>Searches and filters the active product catalogue.</summary>
     /// <remarks>
-    /// Supports keyword and category filtering, an inclusive variant-price range,
-    /// inventory availability, allow-listed sorting, and pagination. Size, colour,
-    /// and collection filters will be added when their catalog models are integrated.
+    /// Supports keyword search, category filtering, an inclusive variant-price
+    /// range, in-stock filtering, allow-listed sorting, and pagination.
     /// </remarks>
     /// <response code="200">Returns the requested page of products.</response>
     /// <response code="400">The supplied query parameters are invalid.</response>

@@ -3,13 +3,13 @@ import { PageShell } from './PageShell';
 export function PlaceholderPage({ area, description }) {
   return (
     <PageShell
-      eyebrow="Member 1 architecture"
+      eyebrow="Clothic"
       title={area}
       description={description}
     >
       <p className="placeholder-note">
-        Route and layout are ready. Feature UI will be implemented in the next
-        phases.
+        This view is planned. The route and layout are in place, and the screen
+        will be added in a later release.
       </p>
     </PageShell>
   );

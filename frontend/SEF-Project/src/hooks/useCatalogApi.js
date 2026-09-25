@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import * as memberOneApi from '../services/memberOneApi';
+import * as catalogApi from '../services/catalogApi';
 
 function withToken(fn, token) {
   return (...args) => {
@@ -22,13 +22,13 @@ function withToken(fn, token) {
   };
 }
 
-export function useMemberOneApi() {
+export function useCatalogApi() {
   const { token } = useAuth();
 
   return useMemo(
     () =>
       Object.fromEntries(
-        Object.entries(memberOneApi).map(([name, fn]) => [
+        Object.entries(catalogApi).map(([name, fn]) => [
           name,
           withToken(fn, token),
         ]),

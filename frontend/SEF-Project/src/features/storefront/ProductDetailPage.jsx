@@ -6,6 +6,7 @@ import { LoadingState } from '../../components/ui/LoadingState';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency } from '../../utils/format';
 import { useCart } from '../cart/CartContext';
+import { addWishlistItem } from '../wishlist/wishlistService';
 import { getStorefrontProduct } from './storefrontService';
 import './storefront.css';
 import './productDetail.css';
@@ -33,7 +34,7 @@ function getHue(value) {
 export function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, token } = useAuth();
   const { addItem } = useCart();
 
   const [product, setProduct] = useState(null);
@@ -44,6 +45,7 @@ export function ProductDetailPage() {
   const [selectedColour, setSelectedColour] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [notice, setNotice] = useState(null);
+  const [isSavingToWishlist, setIsSavingToWishlist] = useState(false);
 
   const loadProduct = useCallback(async () => {
     setIsLoading(true);
@@ -134,6 +136,29 @@ export function ProductDetailPage() {
     setNotice(
       `${product.name} (${selectedVariant.sizeName} / ${selectedVariant.colourName}) added to your cart.`,
     );
+  }
+
+  async function handleSaveToWishlist() {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
+    setIsSavingToWishlist(true);
+    setNotice(null);
+
+    try {
+      await addWishlistItem(token, product.id);
+      setNotice(`${product.name} was saved to your wishlist.`);
+    } catch (err) {
+      setNotice(
+        err?.status === 409
+          ? `${product.name} is already in your wishlist.`
+          : (err?.message || 'The product could not be saved to your wishlist.'),
+      );
+    } finally {
+      setIsSavingToWishlist(false);
+    }
   }
 
   if (isLoading) {
@@ -291,6 +316,14 @@ export function ProductDetailPage() {
                 type="button"
               >
                 Buy now
+              </button>
+              <button
+                className="button-secondary"
+                disabled={isSavingToWishlist}
+                onClick={handleSaveToWishlist}
+                type="button"
+              >
+                {isSavingToWishlist ? 'Saving...' : 'Save to wishlist'}
               </button>
             </div>
           </div>

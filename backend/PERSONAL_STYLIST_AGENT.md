@@ -83,11 +83,13 @@ The agent can call only these read-only tools:
 
 The agent depends on typed tool interfaces and never receives `AppDbContext`. The tools call existing application/domain services; the product-availability domain service is the only new catalogue query boundary. Orders, inventory, promotions, payments, and other state cannot be modified.
 
-The current catalogue model does not expose structured size or colour fields.
-These preferences are reported in `unappliedPreferences`, and validation fails
-closed if a recommendation is produced for a requested size or colour that
-cannot be authoritatively verified. The interfaces remain ready for those
-capabilities when Member 1's schema supplies them.
+The catalogue exposes structured size and colour on every product variant.
+Product search reports those capabilities, and availability verification returns
+the authoritative size and colour for each available variant. Size and colour
+preferences are matched against that data, so a preference is reported in
+`unappliedPreferences` only when the current catalogue result cannot supply it.
+Validation still fails closed when a recommended size or colour cannot be
+authoritatively verified.
 
 ## Reliability and audit behaviour
 

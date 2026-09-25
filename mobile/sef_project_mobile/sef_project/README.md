@@ -1,4 +1,4 @@
-# SEF customer shopping app
+# Clothic customer shopping app
 
 Flutter client for product discovery, wishlist, cart, customer profile, and address management.
 
@@ -14,7 +14,7 @@ The Android emulator defaults to `http://10.0.2.2:5193/api`. Override the API ro
 flutter run --dart-define=API_BASE_URL=http://YOUR_HOST:5193/api
 ```
 
-Use HTTPS for non-development deployments. Android cleartext traffic is allowed only by the debug manifest.
+Use HTTPS for non-development deployments. Android cleartext traffic is allowed by the main manifest (`android:usesCleartextTraffic="true"`) as well as the debug manifest, so HTTP works against the local API in every build type.
 
 ## Verification
 

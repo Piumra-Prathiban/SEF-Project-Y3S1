@@ -5,9 +5,11 @@ import { ColoursPage } from '../features/colours';
 import { InventoryDashboardPage, LowStockPage } from '../features/inventory';
 import { InventoryAgentPage } from '../features/inventory-agent';
 import OrdersListPage from '../features/orders/OrdersListPage';
+import { ProfilePage } from '../features/profile';
 import { ProductsPage } from '../features/products';
 import { SizesPage } from '../features/sizes';
 import { VariantsPage } from '../features/variants';
+import { WishlistPage } from '../features/wishlist';
 import { STAFF_ROLES } from '../utils/roles';
 
 function createPlaceholder(feature) {
@@ -30,6 +32,18 @@ export const memberOneRoutes = [
     path: '/orders',
     label: 'Orders',
     element: <OrdersListPage />,
+    showInNavigation: true,
+  },
+  {
+    path: '/wishlist',
+    label: 'Wishlist',
+    element: <WishlistPage />,
+    showInNavigation: true,
+  },
+  {
+    path: '/profile',
+    label: 'Profile',
+    element: <ProfilePage />,
     showInNavigation: true,
   },
   {

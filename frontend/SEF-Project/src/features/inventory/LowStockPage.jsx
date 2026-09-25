@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
-import { useMemberOneApi } from '../../hooks/useMemberOneApi';
+import { useCatalogApi } from '../../hooks/useCatalogApi';
 import { normalizeApiError } from '../../utils/apiErrorUtils';
 import {
   buildLowStockQuery,
@@ -37,7 +37,7 @@ function getStatusClass(status) {
 }
 
 export function LowStockPage() {
-  const api = useMemberOneApi();
+  const api = useCatalogApi();
   const navigate = useNavigate();
   const [query, setQuery] = useState(defaultLowStockQuery);
   const [response, setResponse] = useState(null);
@@ -95,7 +95,7 @@ export function LowStockPage() {
 
   return (
     <PageShell
-      eyebrow="Member 1"
+      eyebrow="Clothic · Inventory"
       title="Low Stock Monitoring"
       description="Review variants returned by the backend low-stock endpoint and navigate to inventory management when action is needed."
     >

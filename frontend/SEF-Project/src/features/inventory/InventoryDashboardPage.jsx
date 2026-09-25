@@ -3,7 +3,7 @@ import { Alert } from '../../components/ui/Alert';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
-import { useMemberOneApi } from '../../hooks/useMemberOneApi';
+import { useCatalogApi } from '../../hooks/useCatalogApi';
 import { normalizeApiError } from '../../utils/apiErrorUtils';
 import {
   buildInventoryQuery,
@@ -69,7 +69,7 @@ function getInitialSelectedVariantId() {
 }
 
 export function InventoryDashboardPage() {
-  const api = useMemberOneApi();
+  const api = useCatalogApi();
   const [inventoryItems, setInventoryItems] = useState([]);
   const [inventoryResponse, setInventoryResponse] = useState(null);
   const [lowStockItems, setLowStockItems] = useState([]);
@@ -253,7 +253,7 @@ export function InventoryDashboardPage() {
 
   return (
     <PageShell
-      eyebrow="Member 1"
+      eyebrow="Clothic · Inventory"
       title="Inventory Dashboard"
       description="Monitor current stock, reorder levels and low-stock risk across product variants."
     >

@@ -89,6 +89,10 @@ public class ShoppingProductVariantResponse
     public int AvailableQuantity { get; set; }
 
     public bool IsAvailable { get; set; }
+
+    public string? Size { get; set; }
+
+    public string? Colour { get; set; }
 }
 
 public class ShoppingCategoryResponse

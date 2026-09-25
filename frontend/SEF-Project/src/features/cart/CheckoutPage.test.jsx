@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { CartProvider } from './CartContext';
 import { CheckoutPage } from './CheckoutPage';
-import { createOrder, PaymentMethod } from '../../services/orderService';
+import { createOrder, createPayment, PaymentMethod } from '../../services/orderService';
 
 vi.mock('../../services/orderService', async (importOriginal) => {
   const actual = await importOriginal();
@@ -12,6 +12,7 @@ vi.mock('../../services/orderService', async (importOriginal) => {
   return {
     ...actual,
     createOrder: vi.fn(),
+    createPayment: vi.fn(),
   };
 });
 
@@ -69,6 +70,7 @@ beforeEach(() => {
   };
 
   window.localStorage.setItem('clothic.cart', JSON.stringify([ITEM]));
+  createPayment.mockResolvedValue({ id: 'payment-1' });
 });
 
 describe('CheckoutPage', () => {
@@ -104,6 +106,33 @@ describe('CheckoutPage', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('ORD-1001')).toBeInTheDocument();
 
+    expect(createPayment).toHaveBeenCalledWith('test-token', 'order-1', {
+      method: PaymentMethod.Card,
+      amount: 5000,
+    });
+
+    expect(JSON.parse(window.localStorage.getItem('clothic.cart'))).toEqual([]);
+  });
+
+  it('keeps the order when the payment cannot be recorded', async () => {
+    createOrder.mockResolvedValue(PLACED_ORDER);
+    createPayment.mockRejectedValueOnce(
+      Object.assign(new Error('Payment rejected'), { status: 409 }),
+    );
+
+    const user = userEvent.setup();
+    renderCheckout();
+
+    await screen.findByRole('heading', { name: 'Checkout' });
+    await fillAddress(user);
+    await user.click(screen.getByRole('button', { name: 'Place order' }));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Order placed' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Your order is placed, but the payment could not be recorded.',
+    );
     expect(JSON.parse(window.localStorage.getItem('clothic.cart'))).toEqual([]);
   });
 

@@ -5,7 +5,7 @@ import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
 import { useAuth } from '../../contexts/AuthContext';
-import { useMemberOneApi } from '../../hooks/useMemberOneApi';
+import { useCatalogApi } from '../../hooks/useCatalogApi';
 import { ProductForm } from './ProductForm';
 import {
   buildProductQuery,
@@ -41,7 +41,7 @@ function getBasePrice(product) {
 }
 
 export function ProductsPage() {
-  const api = useMemberOneApi();
+  const api = useCatalogApi();
   const navigate = useNavigate();
   const { isStaffOrAdmin } = useAuth();
   const [query, setQuery] = useState(defaultProductQuery);
@@ -192,7 +192,7 @@ export function ProductsPage() {
 
   return (
     <PageShell
-      eyebrow="Member 1"
+      eyebrow="Clothic · Catalog"
       title="Product Management"
       description="Search, filter and maintain product catalog records connected to categories, collections and variants."
     >

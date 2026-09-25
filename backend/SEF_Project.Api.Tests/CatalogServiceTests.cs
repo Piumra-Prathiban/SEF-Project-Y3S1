@@ -36,24 +36,24 @@ public class CatalogServiceTests
 
         var created = await service.CreateCategoryAsync(new CategoryCreateDto
         {
-            Name = "  Salads  ",
-            Description = "  Fresh sides  "
+            Name = "  Accessories  ",
+            Description = "  Fashion add-ons  "
         });
 
         var read = await service.GetCategoryByIdAsync(created.Id);
         var updated = await service.UpdateCategoryAsync(created.Id, new CategoryUpdateDto
         {
-            Name = "Healthy Salads",
+            Name = "Bags and Accessories",
             Description = "Updated",
             IsActive = true
         });
         var deleted = await service.DeleteCategoryAsync(created.Id);
         var stored = await context.Categories.SingleAsync(c => c.Id == created.Id);
 
-        Assert.Equal("Salads", created.Name);
-        Assert.Equal("Fresh sides", created.Description);
+        Assert.Equal("Accessories", created.Name);
+        Assert.Equal("Fashion add-ons", created.Description);
         Assert.NotNull(read);
-        Assert.Equal("Healthy Salads", updated?.Name);
+        Assert.Equal("Bags and Accessories", updated?.Name);
         Assert.True(deleted);
         Assert.False(stored.IsActive);
     }
@@ -196,15 +196,15 @@ public class CatalogServiceTests
 
         var created = await service.CreateProductAsync(new ProductCreateDto
         {
-            Name = "  Garlic Bread  ",
-            Description = "  Starter  ",
+            Name = "  Merino Wool Scarf  ",
+            Description = "  Soft layering piece  ",
             CategoryId = categoryId,
             CollectionId = collectionId
         });
         var read = await service.GetProductByIdAsync(created.Id);
         var updated = await service.UpdateProductAsync(created.Id, new ProductUpdateDto
         {
-            Name = "Cheesy Garlic Bread",
+            Name = "Cashmere Blend Scarf",
             CategoryId = updatedCategoryId,
             CollectionId = collectionId,
             IsActive = true
@@ -212,10 +212,10 @@ public class CatalogServiceTests
         var deleted = await service.DeleteProductAsync(created.Id);
         var stored = await context.Products.SingleAsync(p => p.Id == created.Id);
 
-        Assert.Equal("Garlic Bread", created.Name);
-        Assert.Equal("Starter", created.Description);
+        Assert.Equal("Merino Wool Scarf", created.Name);
+        Assert.Equal("Soft layering piece", created.Description);
         Assert.NotNull(read);
-        Assert.Equal("Cheesy Garlic Bread", updated?.Name);
+        Assert.Equal("Cashmere Blend Scarf", updated?.Name);
         Assert.Equal(updatedCategoryId, updated?.CategoryId);
         Assert.True(deleted);
         Assert.False(stored.IsActive);
@@ -290,14 +290,14 @@ public class CatalogServiceTests
         await using var _ = connection;
         await using var __ = context;
 
-        var pepperoni = await context.Products
+        var hoodie = await context.Products
             .SingleAsync(p => p.Name == "Fleece Pullover Hoodie");
         var service = new CatalogService(context);
 
         var response = await service.GetProductsAsync(new ProductQueryDto
         {
-            CategoryId = pepperoni.CategoryId,
-            CollectionId = pepperoni.CollectionId,
+            CategoryId = hoodie.CategoryId,
+            CollectionId = hoodie.CollectionId,
             IsActive = true,
             MinPrice = 6400m,
             MaxPrice = 6600m

@@ -98,12 +98,17 @@ public class ProductSearchTool : IProductSearchTool
             .Select(product => MapProduct(product, input.MaximumPrice))
             .Where(product => product.AvailableVariants.Count > 0)
             .ToList();
+        var catalogueVariants = products
+            .SelectMany(product => product.AvailableVariants)
+            .ToList();
 
         return new ProductSearchToolOutput(
             products,
             new RecommendationCatalogCapabilities(
-                SupportsColour: false,
-                SupportsSize: false));
+                SupportsColour: catalogueVariants.Any(
+                    variant => variant.Colour != null),
+                SupportsSize: catalogueVariants.Any(
+                    variant => variant.Size != null)));
     }
 
     private static RecommendationCatalogProduct MapProduct(
@@ -120,8 +125,8 @@ public class ProductSearchTool : IProductSearchTool
                 variant.Name,
                 variant.Price,
                 variant.AvailableQuantity,
-                Size: null,
-                Colour: null))
+                Size: variant.Size,
+                Colour: variant.Colour))
             .ToList();
 
         return new RecommendationCatalogProduct(

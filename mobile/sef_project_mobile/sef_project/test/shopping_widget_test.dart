@@ -26,7 +26,7 @@ void main() {
     await tester.pumpWidget(CustomerShoppingApp(store: store));
     await tester.pumpAndSettle();
 
-    expect(find.text('Welcome to Mode'), findsOneWidget);
+    expect(find.text('Welcome to Clothic'), findsOneWidget);
     expect(find.text('Log in'), findsOneWidget);
   });
 

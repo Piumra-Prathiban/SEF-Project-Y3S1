@@ -42,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           size: 54,
                           color: Theme.of(context).colorScheme.primary),
                       const SizedBox(height: 18),
-                      Text('Welcome to Mode',
+                      Text('Welcome to Clothic',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.headlineMedium),
                       const SizedBox(height: 8),

@@ -69,6 +69,7 @@ export function StorefrontPage() {
 
           {isAuthenticated ? (
             <>
+              <Link to="/wishlist">Wishlist</Link>
               <Link to="/orders">My orders</Link>
               <Link to="/products">Dashboard</Link>
               <span className="storefront__user">{user?.email}</span>

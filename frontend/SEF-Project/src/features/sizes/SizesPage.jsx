@@ -3,13 +3,13 @@ import { Alert } from '../../components/ui/Alert';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
-import { useMemberOneApi } from '../../hooks/useMemberOneApi';
+import { useCatalogApi } from '../../hooks/useCatalogApi';
 import { normalizeApiError } from '../../utils/apiErrorUtils';
 import { SizeForm } from './SizeForm';
 import { filterSizes } from './sizeUtils';
 
 export function SizesPage() {
-  const api = useMemberOneApi();
+  const api = useCatalogApi();
   const [sizes, setSizes] = useState([]);
   const [filters, setFilters] = useState({
     search: '',
@@ -120,7 +120,7 @@ export function SizesPage() {
 
   return (
     <PageShell
-      eyebrow="Member 1"
+      eyebrow="Clothic · Catalog"
       title="Size Management"
       description="Maintain reusable product size options used when creating product variants."
     >

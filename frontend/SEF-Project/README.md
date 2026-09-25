@@ -1,16 +1,55 @@
-# React + Vite
+# Clothic Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + Vite front end for **Clothic**, the AI-powered fashion commerce and
+retail platform. It serves two audiences from one app:
 
-Currently, two official plugins are available:
+- the **public storefront** — anonymous visitors browse the collection, open a
+  product, pick a size/colour and fill a cart;
+- the **signed-in dashboard** — customers manage orders, wishlist and profile,
+  while staff and administrators manage catalog, inventory, orders and the
+  inventory agent.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Scripts
 
-## React Compiler
+| Command | Purpose |
+| --- | --- |
+| `npm install` | Install dependencies (unset `NODE_ENV` first if it is set to `production`) |
+| `npm run dev` | Vite dev server, http://localhost:5173 |
+| `npm test` | Vitest + Testing Library (the script sets `NODE_ENV=test`) |
+| `npm run lint` | ESLint |
+| `npm run build` | Production build into `dist/` |
+| `npm run preview` | Serve the production build |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## How it talks to the API
 
-## Expanding the ESLint configuration
+Every request goes through `src/services/api.js`, which attaches the bearer
+token and reads `VITE_API_BASE_URL` (default `http://localhost:5193/api`).
+Anonymous storefront calls use the public `/api/storefront/*` endpoints; all
+staff endpoints stay behind authentication. Business rules, pricing, stock
+reservation and the order/payment/shipment state machines live in the API, never
+in the browser.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Structure
+
+```
+src/
+  components/ui/     shared UI family (PageShell, LoadingState, ApiErrorAlert, Alert)
+  components/layout/ app shell + navigation
+  contexts/          AuthContext (session, login/logout)
+  features/          feature-first modules: storefront, cart, wishlist, profile,
+                     orders, products, categories, collections, sizes, colours,
+                     variants, inventory, inventory-agent
+  routes/            single react-router configuration
+  services/          API clients (api, authService, catalogApi, orderService)
+  utils/             roles, formatting, api error helpers
+```
+
+Anonymous routes are `/` (storefront), `/shop/:id` (product detail), `/cart` and
+`/login`; everything else — including `/checkout`, `/orders`, `/wishlist` and
+`/profile` — sits behind the protected layout, so placing an order or saving
+anything needs an account.
+
+## Tests
+
+Tests live next to the modules they cover (`*.test.jsx` / `*.test.js`) and share
+the setup in `src/test/setup.js` (jsdom, jest-dom, `localStorage` reset).

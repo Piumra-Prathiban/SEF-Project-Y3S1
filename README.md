@@ -63,7 +63,7 @@ Each group member owns one business component, but every member contributes acro
 
 ### Customer
 
-Uses Flutter for shopping, checkout, orders, returns and AI styling.
+Uses Flutter for the shopping experience (products, cart, wishlist, profile and recommendations). The orders screens exist in the codebase but are not yet wired into the app shell.
 
 ### Staff / Inventory Manager
 
@@ -357,17 +357,18 @@ Agent responsibility
 → Tests
 ```
 
-Backend
+1. Clone the repository.
+2. Backend (ASP.NET Core)
    cd backend/SEF_Project.Api
    dotnet restore
    dotnet build
 
 3. Frontend (React)
-   cd <react-folder>
+   cd frontend/SEF-Project
    npm install
 
 4. Flutter
-   cd <flutter-folder>
+   cd mobile/sef_project_mobile/sef_project
    flutter pub get
 
 5. PostgreSQL

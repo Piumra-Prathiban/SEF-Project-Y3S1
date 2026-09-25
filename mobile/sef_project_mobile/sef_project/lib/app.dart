@@ -10,7 +10,7 @@ class CustomerShoppingApp extends StatelessWidget {
   Widget build(BuildContext context) => StoreScope(
     store: store,
     child: MaterialApp(
-      title: 'Mode',
+      title: 'Clothic',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,

@@ -3,7 +3,7 @@ import { Alert } from '../../components/ui/Alert';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
-import { useMemberOneApi } from '../../hooks/useMemberOneApi';
+import { useCatalogApi } from '../../hooks/useCatalogApi';
 import { normalizeApiError } from '../../utils/apiErrorUtils';
 import { CollectionForm } from './CollectionForm';
 import { filterCollections } from './collectionUtils';
@@ -23,7 +23,7 @@ function getProductCount(collection) {
 }
 
 export function CollectionsPage() {
-  const api = useMemberOneApi();
+  const api = useCatalogApi();
   const [collections, setCollections] = useState([]);
   const [filters, setFilters] = useState({
     search: '',
@@ -134,9 +134,9 @@ export function CollectionsPage() {
 
   return (
     <PageShell
-      eyebrow="Member 1"
+      eyebrow="Clothic · Catalog"
       title="Collection Management"
-      description="Maintain product collections used to group catalog items for menus and campaigns."
+      description="Maintain product collections used to group catalog items for collections and campaigns."
     >
       <div className="toolbar">
         <div className="toolbar__filters">

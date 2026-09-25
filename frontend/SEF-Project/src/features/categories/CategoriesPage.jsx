@@ -3,7 +3,7 @@ import { Alert } from '../../components/ui/Alert';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
-import { useMemberOneApi } from '../../hooks/useMemberOneApi';
+import { useCatalogApi } from '../../hooks/useCatalogApi';
 import { normalizeApiError } from '../../utils/apiErrorUtils';
 import { CategoryForm } from './CategoryForm';
 import { filterCategories } from './categoryUtils';
@@ -19,7 +19,7 @@ function formatDate(value) {
 }
 
 export function CategoriesPage() {
-  const api = useMemberOneApi();
+  const api = useCatalogApi();
   const [categories, setCategories] = useState([]);
   const [filters, setFilters] = useState({
     search: '',
@@ -130,7 +130,7 @@ export function CategoriesPage() {
 
   return (
     <PageShell
-      eyebrow="Member 1"
+      eyebrow="Clothic · Catalog"
       title="Category Management"
       description="Maintain product categories used by the catalog and product management screens."
     >

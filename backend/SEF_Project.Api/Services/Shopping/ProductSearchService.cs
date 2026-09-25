@@ -39,6 +39,10 @@ public class ProductSearchService : IProductSearchService
             .AsSplitQuery()
             .Include(product => product.Category)
             .Include(product => product.Variants)
+                .ThenInclude(variant => variant.Size)
+            .Include(product => product.Variants)
+                .ThenInclude(variant => variant.Colour)
+            .Include(product => product.Variants)
                 .ThenInclude(variant => variant.InventoryStock)
             .ToListAsync(cancellationToken);
 
@@ -153,7 +157,9 @@ public class ProductSearchService : IProductSearchService
                     Name = variant.Name,
                     Price = variant.Price,
                     AvailableQuantity = availableQuantity,
-                    IsAvailable = availableQuantity > 0
+                    IsAvailable = availableQuantity > 0,
+                    Size = variant.Size?.Name,
+                    Colour = variant.Colour?.Name
                 };
             })
             .ToList();

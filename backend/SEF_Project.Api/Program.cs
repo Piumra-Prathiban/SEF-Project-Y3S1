@@ -164,9 +164,9 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "SEF Project API",
+        Title = "Clothic API",
         Version = "v1",
-        Description = "REST API for authentication, catalog, inventory, orders, storefront, shopping and recommendations."
+        Description = "REST API for the Clothic AI-powered fashion commerce and retail platform: authentication, catalog, inventory, orders, storefront, shopping and recommendations."
     });
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme

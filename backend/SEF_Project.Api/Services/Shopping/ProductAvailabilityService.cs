@@ -35,6 +35,8 @@ public class ProductAvailabilityService : IProductAvailabilityService
         var variants = await _context.ProductVariants
             .AsNoTracking()
             .Include(variant => variant.Product)
+            .Include(variant => variant.Size)
+            .Include(variant => variant.Colour)
             .Include(variant => variant.InventoryStock)
             .Where(variant =>
                 distinctIds.Contains(variant.Id) &&
@@ -55,8 +57,8 @@ public class ProductAvailabilityService : IProductAvailabilityService
                 variant.Price,
                 variant.InventoryStock!.QuantityOnHand -
                     variant.InventoryStock.ReservedQuantity,
-                Size: null,
-                Colour: null))
+                Size: variant.Size.Name,
+                Colour: variant.Colour.Name))
             .OrderBy(variant => distinctIds.IndexOf(variant.VariantId))
             .ToList();
     }
