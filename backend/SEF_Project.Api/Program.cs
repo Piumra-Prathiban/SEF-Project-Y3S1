@@ -14,6 +14,9 @@ using SEF_Project.Api.Services.Storefront;
 using SEF_Project.Api.Services.Shopping;
 using SEF_Project.Api.Services.Profile;
 using SEF_Project.Api.Services.Recommendations;
+using SEF_Project.Api.Services.Marketing;
+using SEF_Project.Api.Services.Analytics;
+using SEF_Project.Api.AI.InventoryPromotion;
 using SEF_Project.Api.Middleware;
 using System.Reflection;
 
@@ -123,6 +126,26 @@ builder.Services.AddScoped<IPersonalStylistOutputValidator, PersonalStylistOutpu
 builder.Services.AddScoped<IAgentWorkflowRecorder, AgentWorkflowRecorder>();
 builder.Services.AddScoped<IPersonalStylistAgent, PersonalStylistAgent>();
 builder.Services.AddScoped<IRecommendationService, RecommendationService>();
+builder.Services.AddScoped<IPromotionPricingService, PromotionPricingService>();
+builder.Services.AddScoped<IPromotionService, PromotionService>();
+builder.Services.AddScoped<ICampaignService, CampaignService>();
+builder.Services.AddScoped<IPromotionOfferService, PromotionOfferService>();
+
+// Inventory & Promotion Agent: allow-listed read-only tools, replaceable
+// proposal model (deterministic local policy by default), orchestrator.
+builder.Services.Configure<InventoryPromotionAgentOptions>(
+    builder.Configuration.GetSection(InventoryPromotionAgentOptions.SectionName));
+builder.Services.AddScoped<IPromotionAgentTool, GetSalesVelocityTool>();
+builder.Services.AddScoped<IPromotionAgentTool, GetInventoryTool>();
+builder.Services.AddScoped<IPromotionAgentTool, GetActivePromotionsTool>();
+builder.Services.AddScoped<IPromotionAgentTool, GetProductDetailsTool>();
+builder.Services.AddScoped<IPromotionAgentTool, GetProductPricingTool>();
+builder.Services.AddScoped<IPromotionAgentTool, CalculatePromotionTool>();
+builder.Services.AddScoped<PromotionAgentToolRegistry>();
+builder.Services.AddScoped<IPromotionProposalModel, LocalPromotionProposalModel>();
+builder.Services.AddScoped<IInventoryPromotionAgent, InventoryPromotionAgentService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.AddCors(options =>
 {
@@ -233,3 +256,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Exposes Program to WebApplicationFactory in the integration tests.
+public partial class Program { }

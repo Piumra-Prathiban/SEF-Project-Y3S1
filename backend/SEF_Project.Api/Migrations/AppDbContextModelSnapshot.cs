@@ -1166,9 +1166,6 @@ namespace SEF_Project.Api.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -1177,12 +1174,26 @@ namespace SEF_Project.Api.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Campaigns", (string)null);
+                    b.HasIndex("Status");
+
+                    b.HasIndex("StartDate", "EndDate");
+
+                    b.ToTable("Campaigns", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Campaigns_DateRange", "\"EndDate\" >= \"StartDate\"");
+
+                            t.HasCheckConstraint("CK_Campaigns_Status", "\"Status\" IN ('Draft', 'Scheduled', 'Active', 'Paused', 'Completed', 'Cancelled')");
+                        });
 
                     b.HasData(
                         new
@@ -1191,9 +1202,20 @@ namespace SEF_Project.Api.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Launch promotion for the new season.",
                             EndDate = new DateTime(2026, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
                             Name = "Summer Launch",
                             StartDate = new DateTime(2026, 9, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Status = "Active",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000054"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Weekend beverage deals.",
+                            EndDate = new DateTime(2027, 3, 31, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "Weekend Refresh",
+                            StartDate = new DateTime(2027, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Status = "Scheduled",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
@@ -1240,7 +1262,14 @@ namespace SEF_Project.Api.Migrations
 
                     b.HasIndex("PromotionId");
 
-                    b.ToTable("Coupons", (string)null);
+                    b.ToTable("Coupons", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Coupons_DateRange", "\"EndsAt\" >= \"StartsAt\"");
+
+                            t.HasCheckConstraint("CK_Coupons_PerCustomerLimit", "\"PerCustomerLimit\" IS NULL OR \"PerCustomerLimit\" > 0");
+
+                            t.HasCheckConstraint("CK_Coupons_UsageLimit", "\"UsageLimit\" IS NULL OR \"UsageLimit\" > 0");
+                        });
 
                     b.HasData(
                         new
@@ -1255,6 +1284,19 @@ namespace SEF_Project.Api.Migrations
                             StartsAt = new DateTime(2026, 9, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             UsageLimit = 100
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000058"),
+                            Code = "FREEDELIVERY",
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EndsAt = new DateTime(2026, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            PerCustomerLimit = 3,
+                            PromotionId = new Guid("00000000-0000-0000-0000-000000000057"),
+                            StartsAt = new DateTime(2026, 9, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            UsageLimit = 500
                         });
                 });
 
@@ -1284,11 +1326,14 @@ namespace SEF_Project.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CouponId");
-
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("OrderId");
+
+                    b.HasIndex("RedeemedAt");
+
+                    b.HasIndex("CouponId", "OrderId")
+                        .IsUnique();
 
                     b.ToTable("CouponRedemptions", (string)null);
                 });
@@ -1343,7 +1388,11 @@ namespace SEF_Project.Api.Migrations
 
                     b.ToTable("Promotions", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Promotions_DiscountValue", "\"DiscountValue\" >= 0");
+                            t.HasCheckConstraint("CK_Promotions_DateRange", "\"EndDate\" >= \"StartDate\"");
+
+                            t.HasCheckConstraint("CK_Promotions_DiscountValue", "CAST(\"DiscountValue\" AS REAL) >= 0 AND (\"Type\" <> 'PercentageDiscount' OR (CAST(\"DiscountValue\" AS REAL) > 0 AND CAST(\"DiscountValue\" AS REAL) <= 100)) AND (\"Type\" <> 'FixedAmountDiscount' OR CAST(\"DiscountValue\" AS REAL) > 0)");
+
+                            t.HasCheckConstraint("CK_Promotions_Type", "\"Type\" IN ('PercentageDiscount', 'FixedAmountDiscount', 'BuyXGetY', 'FreeShipping')");
                         });
 
                     b.HasData(
@@ -1359,6 +1408,47 @@ namespace SEF_Project.Api.Migrations
                             Name = "Tops 20% Off",
                             StartDate = new DateTime(2026, 9, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Type = "PercentageDiscount",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000056"),
+                            CampaignId = new Guid("00000000-0000-0000-0000-000000000051"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "10% off every dessert.",
+                            DiscountValue = 10m,
+                            EndDate = new DateTime(2026, 10, 31, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Dessert Week 10% Off",
+                            StartDate = new DateTime(2026, 10, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Type = "PercentageDiscount",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000055"),
+                            CampaignId = new Guid("00000000-0000-0000-0000-000000000054"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Rs. 50 off each cola.",
+                            DiscountValue = 50m,
+                            EndDate = new DateTime(2027, 3, 31, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Cola Rs. 50 Off",
+                            StartDate = new DateTime(2027, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Type = "FixedAmountDiscount",
+                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000057"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Free delivery with a coupon code.",
+                            DiscountValue = 0m,
+                            EndDate = new DateTime(2026, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Free Delivery",
+                            StartDate = new DateTime(2026, 9, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Type = "FreeShipping",
                             UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
@@ -1376,6 +1466,13 @@ namespace SEF_Project.Api.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("PromotionCategories", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            PromotionId = new Guid("00000000-0000-0000-0000-000000000056"),
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000004")
+                        });
                 });
 
             modelBuilder.Entity("SEF_Project.Api.Models.Marketing.PromotionProduct", b =>
@@ -1402,6 +1499,11 @@ namespace SEF_Project.Api.Migrations
                         {
                             PromotionId = new Guid("00000000-0000-0000-0000-000000000052"),
                             ProductId = new Guid("00000000-0000-0000-0000-000000000022")
+                        },
+                        new
+                        {
+                            PromotionId = new Guid("00000000-0000-0000-0000-000000000055"),
+                            ProductId = new Guid("00000000-0000-0000-0000-000000000024")
                         });
                 });
 

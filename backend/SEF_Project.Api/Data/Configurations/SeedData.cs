@@ -42,4 +42,9 @@ public static class SeedData
     public static readonly Guid CampaignSummer = new("00000000-0000-0000-0000-000000000051");
     public static readonly Guid PromotionTops20 = new("00000000-0000-0000-0000-000000000052");
     public static readonly Guid CouponSummer20 = new("00000000-0000-0000-0000-000000000053");
+    public static readonly Guid CampaignWeekendRefresh = new("00000000-0000-0000-0000-000000000054");
+    public static readonly Guid PromotionDenimFixed = new("00000000-0000-0000-0000-000000000055");
+    public static readonly Guid PromotionFootwear10 = new("00000000-0000-0000-0000-000000000056");
+    public static readonly Guid PromotionFreeDelivery = new("00000000-0000-0000-0000-000000000057");
+    public static readonly Guid CouponFreeDelivery = new("00000000-0000-0000-0000-000000000058");
 }
