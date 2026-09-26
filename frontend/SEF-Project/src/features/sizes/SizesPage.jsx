@@ -129,7 +129,7 @@ export function SizesPage() {
           <input
             aria-label="Search sizes"
             onChange={(event) => updateFilter('search', event.target.value)}
-            placeholder="Search by size name or code"
+            placeholder="Search by size name or description"
             value={filters.search}
           />
 
@@ -175,12 +175,13 @@ export function SizesPage() {
         <div className="table-card">
           <table className="data-table">
             <caption className="table-caption">
-              Product sizes with code, status and management actions
+              Product sizes with description, display order, status and management actions
             </caption>
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Code</th>
+                <th>Description</th>
+                <th>Order</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -189,7 +190,8 @@ export function SizesPage() {
               {visibleSizes.map((size) => (
                 <tr key={size.id}>
                   <td>{size.name}</td>
-                  <td>{size.code}</td>
+                  <td>{size.description || '—'}</td>
+                  <td>{size.displayOrder}</td>
                   <td>
                     <span className={`status-pill ${size.isActive ? 'is-active' : 'is-inactive'}`}>
                       {size.isActive ? 'Active' : 'Inactive'}
@@ -204,13 +206,11 @@ export function SizesPage() {
                       >
                         Edit
                       </button>
-                      <button
+                      {size.isActive && <button
                         className="button-danger"
                         onClick={() => handleDelete(size)}
                         type="button"
-                      >
-                        Deactivate
-                      </button>
+                      >Deactivate</button>}
                     </div>
                   </td>
                 </tr>

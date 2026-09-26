@@ -2,6 +2,7 @@ import { Outlet, Route, Routes } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { PlaceholderPage } from '../components/ui/PlaceholderPage';
 import LoginPage from '../features/auth/LoginPage';
+import RegisterPage from '../features/auth/RegisterPage';
 import { CartPage } from '../features/cart/CartPage';
 import { CheckoutPage } from '../features/cart/CheckoutPage';
 import AgentWorkflowDetailPage from '../features/marketing/agent/AgentWorkflowDetailPage';
@@ -21,6 +22,7 @@ import PromotionListPage from '../features/marketing/promotions/PromotionListPag
 import OrderDetailPage from '../features/orders/OrderDetailPage';
 import { ProductDetailPage } from '../features/storefront/ProductDetailPage';
 import { StorefrontPage } from '../features/storefront/StorefrontPage';
+import { StorefrontChrome } from '../features/storefront/StorefrontChrome';
 import { STAFF_ROLES } from '../utils/roles';
 import { memberOneRoutes } from './routeConfig.jsx';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -40,12 +42,13 @@ function AppRoutes() {
     <Routes>
       {/* Public storefront: browsable without signing in. */}
       <Route path="/" element={<StorefrontPage />} />
-      <Route path="/shop/:id" element={<ProductDetailPage />} />
-      <Route path="/cart" element={<CartPage />} />
+      <Route path="/shop/:id" element={<StorefrontChrome><ProductDetailPage /></StorefrontChrome>} />
+      <Route path="/cart" element={<StorefrontChrome><CartPage /></StorefrontChrome>} />
+      <Route path="/checkout" element={<ProtectedRoute><StorefrontChrome><CheckoutPage /></StorefrontChrome></ProtectedRoute>} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
       <Route element={<ProtectedLayout />}>
-        <Route path="/checkout" element={<CheckoutPage />} />
         {/* Nav-only entries carry no element: their routes are declared below. */}
         {memberOneRoutes.filter((route) => route.element).map((route) => (
           <Route

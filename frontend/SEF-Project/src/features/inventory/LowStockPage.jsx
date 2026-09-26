@@ -6,12 +6,10 @@ import { PageShell } from '../../components/ui/PageShell';
 import { useCatalogApi } from '../../hooks/useCatalogApi';
 import { normalizeApiError } from '../../utils/apiErrorUtils';
 import {
-  buildLowStockQuery,
   defaultLowStockQuery,
   getColourName,
   getInventoryQuantity,
   getInventoryStatus,
-  getPaginationMeta,
   getProductName,
   getReorderLevel,
   getShortageAmount,
@@ -19,6 +17,8 @@ import {
   getSku,
   getVariantId,
   normalizeInventoryItems,
+  paginateItems,
+  sortLowStockItems,
   updateLowStockQuery,
 } from './inventoryDashboardUtils';
 
@@ -40,37 +40,29 @@ export function LowStockPage() {
   const api = useCatalogApi();
   const navigate = useNavigate();
   const [query, setQuery] = useState(defaultLowStockQuery);
-  const [response, setResponse] = useState(null);
-  const [items, setItems] = useState([]);
+  const [allItems, setAllItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRefreshedAt, setLastRefreshedAt] = useState(null);
 
-  const lowStockQuery = useMemo(
-    () => buildLowStockQuery(query),
-    [query],
-  );
-
-  const paginationMeta = useMemo(
-    () => getPaginationMeta(response, query),
-    [query, response],
-  );
+  const sortedItems = useMemo(() => sortLowStockItems(allItems, query), [allItems, query]);
+  const paginationMeta = useMemo(() => paginateItems(sortedItems, query.page, query.pageSize), [sortedItems, query.page, query.pageSize]);
+  const items = paginationMeta.items;
 
   const loadLowStock = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const lowStockResponse = await api.getLowStock(lowStockQuery);
-      setResponse(lowStockResponse);
-      setItems(normalizeInventoryItems(lowStockResponse));
+      const lowStockResponse = await api.getLowStock();
+      setAllItems(normalizeInventoryItems(lowStockResponse));
       setLastRefreshedAt(new Date());
     } catch (err) {
       setError(normalizeApiError(err));
     } finally {
       setIsLoading(false);
     }
-  }, [api, lowStockQuery]);
+  }, [api]);
 
   useEffect(() => {
     // This effect intentionally reloads low-stock data when sorting or
@@ -155,7 +147,7 @@ export function LowStockPage() {
 
       {isLoading ? (
         <LoadingState message="Loading low-stock variants..." />
-      ) : items.length === 0 ? (
+      ) : error && !allItems.length ? null : items.length === 0 ? (
         <div className="empty-state">
           No low-stock variants were returned by the API.
         </div>

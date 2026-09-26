@@ -241,6 +241,14 @@ export function createInventoryWorkflow(request, options) {
   return jsonRequest('/inventory/agent/workflows', 'POST', request, options);
 }
 
+export function listInventoryWorkflows(query, options) {
+  return apiRequest('/inventory/agent/workflows', {
+    ...options,
+    method: 'GET',
+    query,
+  });
+}
+
 export function getInventoryWorkflow(id, options) {
   return apiRequest(`/inventory/agent/workflows/${id}`, {
     ...options,

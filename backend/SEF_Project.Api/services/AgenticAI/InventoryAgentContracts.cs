@@ -48,6 +48,12 @@ public interface IInventoryAnalysisAgentService
 
 public interface IInventoryAgentWorkflowService
 {
+    Task<SEF_Project.Api.DTOs.Common.PagedResponse<InventoryAgentWorkflowSummaryDto>> ListWorkflowsAsync(
+        string? status,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+
     Task<InventoryAgentWorkflowResponseDto> CreateWorkflowAsync(
         InventoryAnalysisRequestDto request,
         CancellationToken cancellationToken = default);

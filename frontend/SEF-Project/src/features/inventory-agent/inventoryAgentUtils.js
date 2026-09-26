@@ -13,14 +13,12 @@ const HIDDEN_REASONING_KEYS = new Set([
 
 export const INVENTORY_AGENT_STATUSES = [
   'Pending',
-  'Running',
-  'Validation',
-  'PendingApproval',
-  'Approved',
-  'Rejected',
-  'RevisionRequested',
+  'Planning',
+  'InProgress',
+  'AwaitingApproval',
   'Completed',
   'Failed',
+  'Cancelled',
 ];
 
 export function validateWorkflowRequest(request) {
@@ -38,10 +36,9 @@ export function validateWorkflowRequest(request) {
 }
 
 export function buildWorkflowRequest(request) {
-  const variantIds = request.variantIds
-    ?.split(',')
-    .map((id) => id.trim())
-    .filter(Boolean) ?? [];
+  const variantIds = Array.isArray(request.variantIds)
+    ? request.variantIds
+    : request.variantIds?.split(',').map((id) => id.trim()).filter(Boolean) ?? [];
 
   return {
     objective: request.objective.trim(),
@@ -62,7 +59,8 @@ export function getWorkflowObjective(workflow) {
 }
 
 export function getApprovalStatus(workflow) {
-  return workflow?.approvalStatus ?? workflow?.approval?.status ?? getWorkflowStatus(workflow);
+  return workflow?.approvals?.at(-1)?.status
+    ?? workflow?.approvalStatus ?? workflow?.approval?.status ?? 'Not requested';
 }
 
 export function getWorkflowPlan(workflow) {
@@ -70,22 +68,26 @@ export function getWorkflowPlan(workflow) {
 }
 
 export function getCompletedSteps(workflow) {
-  return workflow?.completedSteps ?? workflow?.execution?.completedSteps ?? [];
+  return workflow?.steps?.filter((step) => step.status === 'Completed')
+    ?? workflow?.completedSteps ?? workflow?.execution?.completedSteps ?? [];
 }
 
 export function getToolSummaries(workflow) {
-  return workflow?.toolExecutionSummaries
+  return workflow?.steps?.flatMap((step) => step.toolExecutions ?? [])
+    ?? workflow?.toolExecutionSummaries
     ?? workflow?.toolResults
     ?? workflow?.execution?.toolSummaries
     ?? [];
 }
 
 export function getValidationResult(workflow) {
-  return workflow?.validationResult ?? workflow?.validation ?? null;
+  return workflow?.steps?.flatMap((step) => step.validationSummaries ?? [])
+    ?? workflow?.validationResult ?? workflow?.validation ?? null;
 }
 
 export function getRecommendations(workflow) {
-  return workflow?.recommendations
+  return workflow?.steps?.filter((step) => step.result?.recommendations).at(-1)?.result.recommendations
+    ?? workflow?.recommendations
     ?? workflow?.agentOutput?.recommendations
     ?? workflow?.output?.recommendations
     ?? [];
@@ -174,25 +176,25 @@ export function canReviewWorkflow(user, approverRoles) {
 
 export function buildApprovalPayload(note) {
   return {
-    note: note?.trim() || null,
+    comment: note?.trim() || null,
   };
 }
 
 export function buildRejectionPayload(reason) {
   return {
-    reason: reason?.trim() || 'Rejected from frontend review.',
+    comment: reason?.trim() || 'Rejected by staff.',
   };
 }
 
 export function buildRevisionPayload(revisionRequest) {
   return {
-    revisionRequest: revisionRequest.trim(),
+    comment: revisionRequest.trim(),
   };
 }
 
 export function getReviewSuccessMessage(action) {
   if (action === 'approve') {
-    return 'Workflow approved. Inventory and stock history were refreshed from the backend.';
+    return 'Workflow approved. Review the inventory refresh result below.';
   }
 
   if (action === 'reject') {

@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Alert } from '../../components/ui/Alert';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
@@ -6,6 +7,7 @@ import { PageShell } from '../../components/ui/PageShell';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCatalogApi } from '../../hooks/useCatalogApi';
 import { STAFF_ROLES } from '../../utils/roles';
+import { getProductName, getSku, getVariantId, normalizeInventoryItems, normalizeStockHistoryItems } from '../inventory/inventoryDashboardUtils';
 import {
   buildApprovalPayload,
   buildRejectionPayload,
@@ -19,13 +21,11 @@ import {
   getFinalOutcome,
   getRecommendations,
   getRecommendationAction,
-  getRecommendationColour,
   getRecommendationCurrentStock,
   getRecommendationProduct,
   getRecommendationProposedQuantity,
   getRecommendationReason,
   getRecommendationReorderLevel,
-  getRecommendationSize,
   getRecommendationSku,
   getReviewSuccessMessage,
   normalizeAgentApiError,
@@ -42,19 +42,19 @@ import {
 
 const initialForm = {
   objective: 'Analyze the current inventory and identify variants that should be restocked.',
-  variantIds: '',
+  variantIds: [],
 };
 
 function getStatusClass(status) {
-  if (['Failed', 'Rejected'].includes(status)) {
+  if (['Failed', 'Cancelled'].includes(status)) {
     return 'is-danger';
   }
 
-  if (['PendingApproval', 'RevisionRequested', 'Validation'].includes(status)) {
+  if (['AwaitingApproval', 'Planning'].includes(status)) {
     return 'is-warning';
   }
 
-  if (['Approved', 'Completed'].includes(status)) {
+  if (status === 'Completed') {
     return 'is-active';
   }
 
@@ -79,7 +79,16 @@ function StructuredSection({ title, value }) {
 export function InventoryAgentPage() {
   const api = useCatalogApi();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [form, setForm] = useState(initialForm);
+  const [availableVariants, setAvailableVariants] = useState([]);
+  const [variantSearch, setVariantSearch] = useState('');
+  const [inventoryLoadError, setInventoryLoadError] = useState(null);
+  const [workflowList, setWorkflowList] = useState({ items: [], page: 1, totalPages: 1, totalItems: 0 });
+  const [workflowListStatus, setWorkflowListStatus] = useState('AwaitingApproval');
+  const [workflowListPage, setWorkflowListPage] = useState(1);
+  const [workflowListLoading, setWorkflowListLoading] = useState(true);
+  const [workflowListError, setWorkflowListError] = useState(null);
   const [workflowIdInput, setWorkflowIdInput] = useState('');
   const [workflow, setWorkflow] = useState(null);
   const [postApprovalRefresh, setPostApprovalRefresh] = useState(null);
@@ -100,6 +109,33 @@ export function InventoryAgentPage() {
   const finalOutcome = getFinalOutcome(workflow);
   const toolSummaries = getToolSummaries(workflow);
   const completedSteps = getCompletedSteps(workflow);
+  const linkedWorkflowId = searchParams.get('workflowId');
+  const matchingVariants = availableVariants.filter((item) => `${getProductName(item)} ${getSku(item)}`.toLowerCase().includes(variantSearch.toLowerCase()));
+
+  const loadInventoryOptions = useCallback(async () => {
+    setInventoryLoadError(null);
+    try {
+      setAvailableVariants(normalizeInventoryItems(await api.getInventory()));
+    } catch (err) {
+      setInventoryLoadError(normalizeAgentApiError(err));
+    }
+  }, [api]);
+
+  const loadWorkflowList = useCallback(async () => {
+    setWorkflowListLoading(true);
+    setWorkflowListError(null);
+    try {
+      const response = await api.listInventoryWorkflows({ status: workflowListStatus || undefined, page: workflowListPage, pageSize: 10 });
+      if (workflowListPage > (response.totalPages ?? 1)) {
+        setWorkflowListPage(response.totalPages ?? 1);
+      }
+      setWorkflowList({ items: response.items ?? [], page: response.page ?? 1, totalPages: response.totalPages ?? 1, totalItems: response.totalItems ?? 0 });
+    } catch (err) {
+      setWorkflowListError(normalizeAgentApiError(err));
+    } finally {
+      setWorkflowListLoading(false);
+    }
+  }, [api, workflowListStatus, workflowListPage]);
 
   const loadWorkflow = useCallback(async (id) => {
     if (!id) {
@@ -121,10 +157,39 @@ export function InventoryAgentPage() {
     }
   }, [api]);
 
+  useEffect(() => {
+    // Load inventory choices once for the authenticated API client.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadInventoryOptions();
+  }, [loadInventoryOptions]);
+
+  useEffect(() => {
+    // Keep the approval queue current when its filter or page changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadWorkflowList();
+  }, [loadWorkflowList]);
+
+  useEffect(() => {
+    if (linkedWorkflowId && linkedWorkflowId !== workflowId) {
+      // A copied workflow URL restores its review state after a refresh.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      loadWorkflow(linkedWorkflowId);
+    }
+  }, [linkedWorkflowId, loadWorkflow, workflowId]);
+
   function updateForm(field, value) {
     setForm((current) => ({
       ...current,
       [field]: value,
+    }));
+  }
+
+  function toggleVariant(variantId) {
+    setForm((current) => ({
+      ...current,
+      variantIds: current.variantIds.includes(variantId)
+        ? current.variantIds.filter((id) => id !== variantId)
+        : [...current.variantIds, variantId],
     }));
   }
 
@@ -146,7 +211,9 @@ export function InventoryAgentPage() {
       const response = await api.createInventoryWorkflow(buildWorkflowRequest(form));
       setWorkflow(response);
       setWorkflowIdInput(getWorkflowId(response));
+      setSearchParams({ workflowId: getWorkflowId(response) });
       setMessage('Inventory analysis workflow started.');
+      await loadWorkflowList();
     } catch (err) {
       setError(normalizeAgentApiError(err));
     } finally {
@@ -154,9 +221,11 @@ export function InventoryAgentPage() {
     }
   }
 
-  async function handleLoadWorkflow(event) {
+  function handleLoadWorkflow(event) {
     event.preventDefault();
-    await loadWorkflow(workflowIdInput.trim());
+    const id = workflowIdInput.trim();
+    if (id === linkedWorkflowId) loadWorkflow(id);
+    else setSearchParams({ workflowId: id });
   }
 
   async function refreshInventoryAfterApproval(reviewedWorkflow) {
@@ -175,8 +244,9 @@ export function InventoryAgentPage() {
 
       setPostApprovalRefresh({
         refreshedAt: new Date().toISOString(),
-        inventory: inventoryResponse,
-        stockHistoryByVariant: Object.fromEntries(historyResults),
+        inventoryCount: normalizeInventoryItems(inventoryResponse).length,
+        affectedVariantIds,
+        stockHistoryCount: historyResults.reduce((total, [, history]) => total + normalizeStockHistoryItems(history).length, 0),
       });
     } catch (err) {
       setPostApprovalRefresh({
@@ -190,6 +260,15 @@ export function InventoryAgentPage() {
     if (!workflowId) {
       setError('Load a workflow before submitting a review action.');
       return;
+    }
+
+    if (action === 'approve') {
+      const restocks = recommendations.filter((item) => getRecommendationAction(item).toUpperCase() === 'RESTOCK');
+      const units = restocks.reduce((total, item) => {
+        const quantity = Number(getRecommendationProposedQuantity(item));
+        return total + (Number.isFinite(quantity) ? quantity : 0);
+      }, 0);
+      if (!window.confirm(`Approve this workflow? It may add ${units} units across ${restocks.length} ${restocks.length === 1 ? 'variant' : 'variants'} immediately.`)) return;
     }
 
     setIsReviewing(true);
@@ -222,6 +301,7 @@ export function InventoryAgentPage() {
       setWorkflow(response);
       setWorkflowIdInput(getWorkflowId(response));
       setMessage(getReviewSuccessMessage(action));
+      await loadWorkflowList();
       setApprovalNote('');
       setRevisionRequest('');
     } catch (err) {
@@ -237,9 +317,7 @@ export function InventoryAgentPage() {
       title="Inventory AI Analysis"
       description="Start and review Inventory Analysis Agent workflows using the backend workflow state as the source of truth."
     >
-      <Alert>
-        This page displays structured workflow state only. Hidden model reasoning and chain-of-thought are not shown.
-      </Alert>
+      <Alert>Review every recommendation before approval. Stock changes happen only after a staff member approves the workflow.</Alert>
 
       <section className="panel">
         <h2>Start inventory analysis workflow</h2>
@@ -265,14 +343,20 @@ export function InventoryAgentPage() {
             />
           </label>
 
-          <label>
-            Relevant variant IDs
-            <input
-              onChange={(event) => updateForm('variantIds', event.target.value)}
-              placeholder="Optional comma-separated variant IDs"
-              value={form.variantIds}
-            />
-          </label>
+          <div className="agent-variant-picker">
+            <label>Focus on products (optional)
+              <input onChange={(event) => setVariantSearch(event.target.value)} placeholder="Search products or SKUs" type="search" value={variantSearch} />
+            </label>
+            <p>{form.variantIds.length ? `${form.variantIds.length} selected` : 'No selection analyzes the full inventory.'}</p>
+            <ApiErrorAlert message={inventoryLoadError} onRetry={loadInventoryOptions} />
+            <div aria-label="Variants to analyze" className="agent-variant-options" role="group">
+              {matchingVariants.map((item) => {
+                const variantId = String(getVariantId(item));
+                return <label key={variantId}><input aria-label={`${getProductName(item)} ${getSku(item)}`} checked={form.variantIds.includes(variantId)} onChange={() => toggleVariant(variantId)} type="checkbox" /><span><strong>{getProductName(item)}</strong><small>{getSku(item)}</small></span></label>;
+              })}
+              {!inventoryLoadError && !matchingVariants.length && <p>No matching variants. The full inventory can still be analyzed.</p>}
+            </div>
+          </div>
 
           <div className="form-actions">
             <button disabled={isStarting} type="submit">
@@ -280,6 +364,14 @@ export function InventoryAgentPage() {
             </button>
           </div>
         </form>
+      </section>
+
+      <section className="panel" aria-label="Recent inventory workflows">
+        <div className="panel__header"><div><h2>Analysis workflows</h2><p>Open a pending analysis to review its recommendation and decision history.</p></div></div>
+        <div className="toolbar"><div className="toolbar__filters"><select aria-label="Filter workflows by status" onChange={(event) => { setWorkflowListStatus(event.target.value); setWorkflowListPage(1); }} value={workflowListStatus}><option value="">All statuses</option>{INVENTORY_AGENT_STATUSES.map((item) => <option key={item} value={item}>{item.replace(/([a-z])([A-Z])/g, '$1 $2')}</option>)}</select></div><button className="button button-secondary" disabled={workflowListLoading} onClick={loadWorkflowList} type="button">Refresh list</button></div>
+        <ApiErrorAlert message={workflowListError} onRetry={loadWorkflowList} />
+        {workflowListLoading ? <LoadingState message="Loading analyses..." /> : workflowList.items.length ? <div className="table-card"><table className="data-table"><caption className="sr-only">Inventory agent workflow queue</caption><thead><tr><th>Objective</th><th>Status</th><th>Started</th><th>Action</th></tr></thead><tbody>{workflowList.items.map((item) => <tr key={item.workflowId}><td>{item.objective}</td><td><span className={`status-pill ${getStatusClass(item.status)}`}>{item.status.replace(/([a-z])([A-Z])/g, '$1 $2')}</span></td><td>{item.startedAt ? new Date(item.startedAt).toLocaleString() : '—'}</td><td><button className="button-secondary" onClick={() => { setWorkflowIdInput(item.workflowId); setSearchParams({ workflowId: item.workflowId }); }} type="button">Open workflow</button></td></tr>)}</tbody></table></div> : !workflowListError && <div className="empty-state">No workflows match this status. Start an analysis or choose another status.</div>}
+        <nav className="pagination-bar" aria-label="Workflow pagination"><button className="button-secondary" disabled={workflowListPage <= 1 || workflowListLoading} onClick={() => setWorkflowListPage((page) => page - 1)} type="button">Previous</button><span>Page {workflowList.page} of {workflowList.totalPages} ({workflowList.totalItems} workflows)</span><button className="button-secondary" disabled={workflowListPage >= workflowList.totalPages || workflowListLoading} onClick={() => setWorkflowListPage((page) => page + 1)} type="button">Next</button></nav>
       </section>
 
       <section className="panel">
@@ -347,8 +439,8 @@ export function InventoryAgentPage() {
                 <dd>{getApprovalStatus(workflow)}</dd>
               </div>
               <div>
-                <dt>Known workflow states</dt>
-                <dd>{INVENTORY_AGENT_STATUSES.join(', ')}</dd>
+                <dt>Started</dt>
+                <dd>{workflow.startedAt ? new Date(workflow.startedAt).toLocaleString() : '—'}</dd>
               </div>
             </dl>
           </section>
@@ -379,7 +471,7 @@ export function InventoryAgentPage() {
           <StructuredSection title="Final Outcome" value={finalOutcome} />
           <StructuredSection title="Errors / Safe Failure" value={getWorkflowErrors(workflow)} />
 
-          {status === 'PendingApproval' && (
+          {status === 'AwaitingApproval' && (
             <section className="panel approval-review-panel">
               <div className="panel__header">
                 <div>
@@ -431,8 +523,6 @@ export function InventoryAgentPage() {
                       <tr>
                         <th>Product</th>
                         <th>SKU</th>
-                        <th>Size</th>
-                        <th>Colour</th>
                         <th>Current stock</th>
                         <th>Reorder level</th>
                         <th>Recommended action</th>
@@ -445,8 +535,6 @@ export function InventoryAgentPage() {
                         <tr key={`${getRecommendationSku(recommendation)}-${index}`}>
                           <td>{getRecommendationProduct(recommendation)}</td>
                           <td>{getRecommendationSku(recommendation)}</td>
-                          <td>{getRecommendationSize(recommendation)}</td>
-                          <td>{getRecommendationColour(recommendation)}</td>
                           <td>{getRecommendationCurrentStock(recommendation)}</td>
                           <td>{getRecommendationReorderLevel(recommendation)}</td>
                           <td>{getRecommendationAction(recommendation)}</td>
@@ -516,12 +604,13 @@ export function InventoryAgentPage() {
             </section>
           )}
 
-          {postApprovalRefresh && (
-            <StructuredSection
-              title="Post-approval Inventory / Stock History Refresh"
-              value={postApprovalRefresh}
-            />
-          )}
+          {postApprovalRefresh && <section className="panel" aria-label="Inventory refresh result">
+            <h2>Inventory after review</h2>
+            {postApprovalRefresh.refreshError ? <ApiErrorAlert message={postApprovalRefresh.refreshError} /> : <>
+              <p>Refreshed {postApprovalRefresh.inventoryCount} stock records and {postApprovalRefresh.stockHistoryCount} movement records for {postApprovalRefresh.affectedVariantIds.length} affected variants.</p>
+              <div className="form-actions"><Link className="button button-secondary" to="/inventory">Open inventory</Link>{postApprovalRefresh.affectedVariantIds[0] && <Link className="button button-secondary" to={`/inventory/history?variantId=${postApprovalRefresh.affectedVariantIds[0]}`}>View stock history</Link>}</div>
+            </>}
+          </section>}
         </>
       ) : (
         <div className="empty-state">

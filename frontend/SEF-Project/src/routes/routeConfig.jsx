@@ -1,8 +1,9 @@
-import { PlaceholderPage } from '../components/ui/PlaceholderPage';
 import { CategoriesPage } from '../features/categories';
 import { CollectionsPage } from '../features/collections';
 import { ColoursPage } from '../features/colours';
+import DashboardPage from '../features/dashboard/DashboardPage';
 import { InventoryDashboardPage, LowStockPage } from '../features/inventory';
+import { StockHistoryPage } from '../features/inventory/StockHistoryPage';
 import { InventoryAgentPage } from '../features/inventory-agent';
 import OrdersListPage from '../features/orders/OrdersListPage';
 import { ProfilePage } from '../features/profile';
@@ -10,25 +11,25 @@ import { ProductsPage } from '../features/products';
 import { PurchaseOrdersPage } from '../features/purchase-orders';
 import { ReviewsModerationPage } from '../features/reviews';
 import { SizesPage } from '../features/sizes';
+import StylistPage from '../features/stylist/StylistPage';
 import { SuppliersPage } from '../features/suppliers';
 import { VariantsPage } from '../features/variants';
 import { WishlistPage } from '../features/wishlist';
-import { STAFF_ROLES } from '../utils/roles';
-
-function createPlaceholder(feature) {
-  return (
-    <PlaceholderPage
-      area={feature.area}
-      description={feature.description}
-    />
-  );
-}
+import { ROLES, STAFF_ROLES } from '../utils/roles';
 
 export const memberOneRoutes = [
+  {
+    path: '/dashboard',
+    label: 'Overview',
+    element: <DashboardPage />,
+    roles: STAFF_ROLES,
+    showInNavigation: true,
+  },
   {
     path: '/products',
     label: 'Products',
     element: <ProductsPage />,
+    roles: STAFF_ROLES,
     showInNavigation: true,
   },
   {
@@ -41,6 +42,13 @@ export const memberOneRoutes = [
     path: '/wishlist',
     label: 'Wishlist',
     element: <WishlistPage />,
+    showInNavigation: true,
+  },
+  {
+    path: '/stylist',
+    label: 'Personal Stylist',
+    element: <StylistPage />,
+    roles: [ROLES.customer],
     showInNavigation: true,
   },
   {
@@ -121,10 +129,8 @@ export const memberOneRoutes = [
   {
     path: '/inventory/history',
     label: 'Stock History',
-    element: createPlaceholder({
-      area: 'Stock History',
-      description: 'Transaction history for inventory stock movements.',
-    }),
+    element: <StockHistoryPage />,
+    roles: STAFF_ROLES,
     showInNavigation: true,
   },
   {

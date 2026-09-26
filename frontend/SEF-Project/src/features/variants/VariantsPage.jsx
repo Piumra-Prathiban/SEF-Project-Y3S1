@@ -71,7 +71,11 @@ export function VariantsPage() {
         api.getColours(),
       ]);
 
-      setProducts(normalizeProductList(productResponse));
+      const remainingPages = await Promise.all(
+        Array.from({ length: Math.max(0, (productResponse.totalPages ?? 1) - 1) }, (_, index) =>
+          api.getProducts({ page: index + 2, pageSize: 100, sortBy: 'name', sortDirection: 'asc' })),
+      );
+      setProducts([productResponse, ...remainingPages].flatMap(normalizeProductList));
       setSizes(sizeResponse);
       setColours(colourResponse);
     } catch (err) {
@@ -242,13 +246,13 @@ export function VariantsPage() {
         <section className="panel">
           <h2>{formMode === 'edit' ? 'Edit variant' : 'Create variant'}</h2>
           <VariantForm
-            colours={activeColours}
+            colours={formMode === 'edit' ? colours : activeColours}
             initialValue={editingVariant}
             isSubmitting={isSaving}
             key={editingVariant?.id ?? formMode}
             onCancel={closeForm}
             onSubmit={handleSubmitVariant}
-            sizes={activeSizes}
+            sizes={formMode === 'edit' ? sizes : activeSizes}
           />
         </section>
       )}
@@ -302,13 +306,11 @@ export function VariantsPage() {
                       >
                         Edit
                       </button>
-                      <button
+                      {variant.isActive && <button
                         className="button-danger"
                         onClick={() => handleDelete(variant)}
                         type="button"
-                      >
-                        Deactivate
-                      </button>
+                      >Deactivate</button>}
                     </div>
                   </td>
                 </tr>

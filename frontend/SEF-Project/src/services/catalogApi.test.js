@@ -12,6 +12,7 @@ import {
   deleteProduct,
   deleteVariant,
   getInventory,
+  listInventoryWorkflows,
   getLowStock,
   getProducts,
   getProductVariants,
@@ -134,42 +135,46 @@ describe('catalog API integration functions', () => {
     ).rejects.toMatchObject({ status: 409, isConflict: true });
   });
 
-  it('covers inventory query, adjustment success/failure and low-stock route', async () => {
-    let calls = mockFetch({ items: [] });
-    await getInventory({ sku: 'TSH', page: 1 });
-    expect(new URL(calls[0].url).searchParams.get('sku')).toBe('TSH');
+  it('covers inventory list, adjustment success/failure and low-stock route', async () => {
+    let calls = mockFetch([]);
+    await getInventory();
+    expect(new URL(calls[0].url).pathname).toBe('/api/inventory');
 
     calls = mockFetch({ quantityOnHand: 12 });
     await adjustStock('variant-1', {
-      transactionType: 'StockIn',
+      type: 1,
       quantity: 5,
       reason: 'Delivery',
     });
     expect(calls[0].url.endsWith('/api/inventory/variant-1/adjust')).toBe(true);
     expect(calls[0].options.method).toBe('POST');
+    expect(JSON.parse(calls[0].options.body)).toMatchObject({ type: 1, quantity: 5, reason: 'Delivery' });
 
     mockFetch({ detail: 'Insufficient stock' }, false, 400);
     await expect(
       adjustStock('variant-1', {
-        transactionType: 'StockOut',
+        type: 2,
         quantity: 999,
         reason: 'Sale',
       }),
     ).rejects.toMatchObject({ status: 400, isValidationError: true });
 
-    calls = mockFetch({ items: [] });
-    await getLowStock({ sortBy: 'quantity', page: 2 });
+    calls = mockFetch([]);
+    await getLowStock();
     expect(new URL(calls[0].url).pathname).toBe('/api/inventory/low-stock');
-    expect(new URL(calls[0].url).searchParams.get('sortBy')).toBe('quantity');
 
-    calls = mockFetch([{ transactionType: 'StockIn' }]);
+    calls = mockFetch([{ type: 1 }]);
     await getStockHistory('variant-1');
     expect(calls[0].url.endsWith('/api/inventory/variant-1/history')).toBe(true);
     expect(calls[0].options.method).toBe('GET');
   });
 
   it('covers inventory agent workflow create, approve, reject and revise endpoints', async () => {
-    let calls = mockFetch({ workflowId: 'wf-1' });
+    let calls = mockFetch({ items: [], totalItems: 0, page: 1, totalPages: 1 });
+    await listInventoryWorkflows({ status: 'AwaitingApproval', page: 1 });
+    expect(new URL(calls[0].url).searchParams.get('status')).toBe('AwaitingApproval');
+
+    calls = mockFetch({ workflowId: 'wf-1' });
     await createInventoryWorkflow({ objective: 'Analyze stock' });
     expect(calls[0].url.endsWith('/api/inventory/agent/workflows')).toBe(true);
 

@@ -226,13 +226,11 @@ export function ColoursPage() {
                       >
                         Edit
                       </button>
-                      <button
+                      {colour.isActive && <button
                         className="button-danger"
                         onClick={() => handleDelete(colour)}
                         type="button"
-                      >
-                        Deactivate
-                      </button>
+                      >Deactivate</button>}
                     </div>
                   </td>
                 </tr>

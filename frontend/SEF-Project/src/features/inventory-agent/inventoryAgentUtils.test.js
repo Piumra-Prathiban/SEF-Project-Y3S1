@@ -37,7 +37,7 @@ describe('inventory agent utilities', () => {
     expect(
       buildWorkflowRequest({
         objective: ' Analyze low stock ',
-        variantIds: ' variant-1, variant-2 ,, ',
+        variantIds: ['variant-1', 'variant-2'],
       }),
     ).toEqual({
       objective: 'Analyze low stock',
@@ -45,24 +45,20 @@ describe('inventory agent utilities', () => {
     });
   });
 
-  it('reads common workflow response fields', () => {
+  it('reads the actual persisted workflow response from the API', () => {
     const workflow = {
       workflowId: 'wf-1',
-      status: 'PendingApproval',
-      approval: { status: 'PendingApproval' },
-      validation: { isValid: true },
-      toolResults: [{ tool: 'GetLowStockProducts' }],
-      agentOutput: {
-        recommendations: [{ variantId: 'variant-1' }],
-      },
+      status: 'AwaitingApproval',
+      approvals: [{ status: 'Pending' }],
+      steps: [{ status: 'Completed', result: { recommendations: [{ variantId: 'variant-1' }] }, toolExecutions: [{ toolName: 'GetLowStockProducts', status: 'Completed' }], validationSummaries: ['Valid stock'] }],
     };
 
     expect(getWorkflowId(workflow)).toBe('wf-1');
-    expect(getWorkflowStatus(workflow)).toBe('PendingApproval');
-    expect(getApprovalStatus(workflow)).toBe('PendingApproval');
-    expect(getValidationResult(workflow)).toEqual({ isValid: true });
+    expect(getWorkflowStatus(workflow)).toBe('AwaitingApproval');
+    expect(getApprovalStatus(workflow)).toBe('Pending');
+    expect(getValidationResult(workflow)).toEqual(['Valid stock']);
     expect(getToolSummaries(workflow)).toEqual([
-      { tool: 'GetLowStockProducts' },
+      { toolName: 'GetLowStockProducts', status: 'Completed' },
     ]);
     expect(getRecommendations(workflow)).toEqual([{ variantId: 'variant-1' }]);
   });
@@ -106,10 +102,10 @@ describe('inventory agent utilities', () => {
   });
 
   it('builds approval, rejection and revision payloads for backend endpoints', () => {
-    expect(buildApprovalPayload(' Approved ')).toEqual({ note: 'Approved' });
-    expect(buildRejectionPayload(' Unsafe ')).toEqual({ reason: 'Unsafe' });
+    expect(buildApprovalPayload(' Approved ')).toEqual({ comment: 'Approved' });
+    expect(buildRejectionPayload(' Unsafe ')).toEqual({ comment: 'Unsafe' });
     expect(buildRevisionPayload(' Re-check size M ')).toEqual({
-      revisionRequest: 'Re-check size M',
+      comment: 'Re-check size M',
     });
   });
 
@@ -146,11 +142,15 @@ describe('inventory agent utilities', () => {
         ],
       }),
     ).toEqual(['variant-1', 'variant-2']);
+    expect(getRecommendations({ steps: [
+      { result: { recommendations: [{ variantId: 'old' }] } },
+      { result: { recommendations: [{ variantId: 'latest' }] } },
+    ] })).toEqual([{ variantId: 'latest' }]);
   });
 
   it('returns explicit review result messages for approval, rejection and revision', () => {
     expect(getReviewSuccessMessage('approve')).toBe(
-      'Workflow approved. Inventory and stock history were refreshed from the backend.',
+      'Workflow approved. Review the inventory refresh result below.',
     );
     expect(getReviewSuccessMessage('reject')).toBe(
       'Workflow rejected. No stock modification was executed from React.',

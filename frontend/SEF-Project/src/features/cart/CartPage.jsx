@@ -77,14 +77,18 @@ export function CartPage() {
   } = useCart();
 
   function handleCheckout() {
-    // Checkout needs an account; signing in returns here through the dashboard.
-    navigate(isAuthenticated ? '/checkout' : '/login');
+    if (isAuthenticated) {
+      navigate('/checkout');
+    } else {
+      navigate('/login', { state: { from: { pathname: '/checkout', search: '' } } });
+    }
   }
 
   return (
-    <div className="storefront">
-      <div className="storefront__catalogue">
+    <main className="storefront__catalogue cart-page">
+        <p className="eyebrow">YOUR SELECTION</p>
         <h1>Your cart</h1>
+        <p className="cart-page__intro">A few good things, almost yours.</p>
 
         {items.length === 0 ? (
           <div className="empty-state">
@@ -94,7 +98,7 @@ export function CartPage() {
             </Link>
           </div>
         ) : (
-          <>
+          <div className="cart-page__layout">
             <ul className="cart-list">
               {items.map((item) => (
                 <li className="cart-item" key={item.variantId}>
@@ -134,7 +138,8 @@ export function CartPage() {
               ))}
             </ul>
 
-            <div className="cart-summary">
+            <aside className="cart-summary">
+              <h2>Order summary</h2>
               <p>
                 Estimated subtotal ({itemCount}{' '}
                 {itemCount === 1 ? 'item' : 'items'}):{' '}
@@ -147,11 +152,11 @@ export function CartPage() {
               <button onClick={handleCheckout} type="button">
                 Proceed to checkout
               </button>
-            </div>
-          </>
+              <Link className="cart-summary__continue" to="/">← Continue shopping</Link>
+            </aside>
+          </div>
         )}
-      </div>
-    </div>
+    </main>
   );
 }
 

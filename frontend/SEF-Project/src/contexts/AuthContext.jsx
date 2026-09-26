@@ -7,6 +7,7 @@ import {
 } from 'react';
 import {
   login as loginRequest,
+  register as registerRequest,
   getMe,
 } from '../services/authService';
 
@@ -38,20 +39,22 @@ export function AuthProvider({ children }) {
   const token = authState?.token ?? null;
   const expiresAt = authState?.expiresAt ?? null;
 
-  const login = useCallback(async (email, password) => {
-    const response = await loginRequest(email, password);
-
+  const persistResponse = useCallback((response) => {
     const nextState = {
       token: response.token,
       expiresAt: response.expiresAt,
       user: response.user,
     };
-
     setAuthState(nextState);
     writeStoredAuth(nextState);
-
     return response;
   }, []);
+
+  const login = useCallback(async (email, password) =>
+    persistResponse(await loginRequest(email, password)), [persistResponse]);
+
+  const register = useCallback(async (userData) =>
+    persistResponse(await registerRequest(userData)), [persistResponse]);
 
   const fetchCurrentUser = useCallback(async () => {
     if (!token) {
@@ -90,10 +93,11 @@ export function AuthProvider({ children }) {
       isStaffOrAdmin:
         user?.role === 'Staff' || user?.role === 'Administrator',
       login,
+      register,
       logout,
       fetchCurrentUser,
     }),
-    [user, token, expiresAt, login, logout, fetchCurrentUser],
+    [user, token, expiresAt, login, register, logout, fetchCurrentUser],
   );
 
   return (

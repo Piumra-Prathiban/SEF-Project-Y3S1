@@ -131,7 +131,7 @@ export function ProductDetailPage() {
 
     if (buyNow) {
       // Checkout needs an account; browsing and the cart itself do not.
-      navigate(isAuthenticated ? '/cart' : '/login');
+      navigate(isAuthenticated ? '/cart' : '/login', isAuthenticated ? undefined : { state: { from: { pathname: '/cart', search: '' } } });
       return;
     }
 

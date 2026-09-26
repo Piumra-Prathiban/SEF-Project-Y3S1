@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SEF_Project.Api.Data;
 using SEF_Project.Api.DTOs.AgenticAI;
 using SEF_Project.Api.DTOs.Catalog;
+using SEF_Project.Api.DTOs.Common;
 using SEF_Project.Api.Models.AgenticAI;
 using SEF_Project.Api.Models.Enums;
 using SEF_Project.Api.Services.Catalog;
@@ -36,6 +37,54 @@ public class InventoryAgentWorkflowService : IInventoryAgentWorkflowService
             cancellationToken);
 
         return MapWorkflow(workflow!);
+    }
+
+    public async Task<PagedResponse<InventoryAgentWorkflowSummaryDto>> ListWorkflowsAsync(
+        string? status,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _context.AgentWorkflows
+            .AsNoTracking()
+            .Where(workflow => workflow.Steps.Any(step => step.AgentName == InventoryAgentConstants.AgentName));
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            if (!Enum.TryParse<AgentWorkflowStatus>(status, true, out var parsedStatus)
+                || !Enum.IsDefined(parsedStatus))
+            {
+                throw new ArgumentException("Workflow status is not valid.");
+            }
+
+            query = query.Where(workflow => workflow.Status == parsedStatus);
+        }
+
+        var safePage = Math.Max(1, page);
+        var safePageSize = Math.Clamp(pageSize, 1, 50);
+        var totalItems = await query.CountAsync(cancellationToken);
+        var workflows = await query
+            .OrderByDescending(workflow => workflow.CreatedAt)
+            .ThenByDescending(workflow => workflow.Id)
+            .Skip((safePage - 1) * safePageSize)
+            .Take(safePageSize)
+            .Select(workflow => new InventoryAgentWorkflowSummaryDto
+            {
+                WorkflowId = workflow.Id,
+                Objective = workflow.Objective,
+                Status = workflow.Status.ToString(),
+                StartedAt = workflow.StartedAt,
+                CompletedAt = workflow.CompletedAt
+            })
+            .ToListAsync(cancellationToken);
+
+        return new PagedResponse<InventoryAgentWorkflowSummaryDto>
+        {
+            Items = workflows,
+            Page = safePage,
+            PageSize = safePageSize,
+            TotalItems = totalItems,
+            TotalPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)safePageSize))
+        };
     }
 
     public async Task<InventoryAgentWorkflowResponseDto?> GetWorkflowAsync(
@@ -376,7 +425,8 @@ public class InventoryAgentWorkflowService : IInventoryAgentWorkflowService
                 .ThenInclude(s => s.ValidationResults)
             .Include(w => w.Approvals)
             .Include(w => w.Errors)
-            .FirstOrDefaultAsync(w => w.Id == workflowId, cancellationToken);
+            .FirstOrDefaultAsync(w => w.Id == workflowId
+                && w.Steps.Any(step => step.AgentName == InventoryAgentConstants.AgentName), cancellationToken);
 
     private async Task RecordValidationAsync(
         AgentWorkflowStep step,

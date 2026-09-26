@@ -15,9 +15,12 @@ export function VariantForm({
 }) {
   const [form, setForm] = useState(() => ({
     sku: initialValue?.sku ?? '',
+    name: initialValue?.name ?? '',
     sizeId: initialValue?.sizeId ?? initialValue?.size?.id ?? '',
     colourId: initialValue?.colourId ?? initialValue?.colour?.id ?? '',
     price: initialValue?.price ?? '',
+    initialQuantityOnHand: '0',
+    reorderLevel: initialValue?.inventory?.reorderLevel ?? '0',
     isActive: initialValue?.isActive ?? true,
   }));
   const [validationErrors, setValidationErrors] = useState([]);
@@ -32,14 +35,15 @@ export function VariantForm({
   function handleSubmit(event) {
     event.preventDefault();
 
-    const errors = validateVariantForm(form, sizes, colours);
+    const isEdit = Boolean(initialValue);
+    const errors = validateVariantForm(form, sizes, colours, isEdit);
     setValidationErrors(errors);
 
     if (errors.length > 0) {
       return;
     }
 
-    onSubmit(buildVariantPayload(form));
+    onSubmit(buildVariantPayload(form, isEdit));
   }
 
   return (
@@ -61,6 +65,17 @@ export function VariantForm({
           onChange={(event) => updateField('sku', event.target.value)}
           required
           value={form.sku}
+        />
+      </label>
+
+      <label>
+        Variant name
+        <input
+          maxLength={200}
+          onChange={(event) => updateField('name', event.target.value)}
+          placeholder="e.g. Medium / Black"
+          required
+          value={form.name}
         />
       </label>
 
@@ -109,6 +124,19 @@ export function VariantForm({
           value={form.price}
         />
       </label>
+
+      <div className="form-grid">
+        {!initialValue && <label>
+          Initial stock
+          <input min="0" onChange={(event) => updateField('initialQuantityOnHand', event.target.value)} required step="1" type="number" value={form.initialQuantityOnHand} />
+          <small>Use stock management for later changes.</small>
+        </label>}
+        <label>
+          Reorder level
+          <input min="0" onChange={(event) => updateField('reorderLevel', event.target.value)} required step="1" type="number" value={form.reorderLevel} />
+          <small>Mark this variant as low stock when on-hand stock reaches this level.</small>
+        </label>
+      </div>
 
       <label className="checkbox-field">
         <input

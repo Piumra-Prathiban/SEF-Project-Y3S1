@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
-import { PageShell } from '../../components/ui/PageShell';
 import { useAuth } from '../../contexts/AuthContext';
 import { isStaff } from '../../utils/roles';
 import { normalizeApiError } from '../../utils/apiErrorUtils';
 import './LoginPage.css';
 
 export function LoginPage() {
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, login, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const returnTo = location.state?.from
@@ -18,9 +17,10 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   if (isAuthenticated) {
-    return <Navigate to={returnTo ?? '/orders'} replace />;
+    return <Navigate to={returnTo ?? (isStaff(user) ? '/dashboard' : '/orders')} replace />;
   }
 
   async function handleSubmit(event) {
@@ -31,7 +31,7 @@ export function LoginPage() {
 
     try {
       const response = await login(email, password);
-      const landing = isStaff(response?.user) ? '/products' : '/orders';
+      const landing = isStaff(response?.user) ? '/dashboard' : '/orders';
 
       navigate(returnTo ?? landing, { replace: true });
     } catch (err) {
@@ -43,16 +43,23 @@ export function LoginPage() {
 
   return (
     <main className="auth-page">
-      <PageShell
-        eyebrow="SE3090 Group Project"
-        title="Sign in"
-        description="Sign in to shop the Clothic collection and manage products, inventory and orders."
-      >
-        <form className="auth-form" onSubmit={handleSubmit}>
+      <section className="auth-story" aria-label="About Clothic">
+        <Link className="auth-story__brand" to="/">CLOTHIC<span>®</span></Link>
+        <div className="auth-story__content"><p className="eyebrow">THE ART OF EVERYDAY DRESSING</p><h2>Style that stays with you.</h2><p>Discover pieces you love, keep every order close, and make room for what comes next.</p></div>
+        <p className="auth-story__foot">Thoughtful fashion. Effortless shopping.</p>
+      </section>
+      <section className="auth-content" aria-labelledby="auth-title">
+        <div className="auth-content__top"><Link to="/">← Back to the store</Link><span>New here? <Link state={{ from: location.state?.from }} to="/register">Create an account</Link></span></div>
+        <div className="auth-content__center">
+          <p className="eyebrow">WELCOME BACK</p>
+          <h1 id="auth-title">Sign in</h1>
+          <p>Pick up where you left off.</p>
+          <form className="auth-form" onSubmit={handleSubmit}>
           <label>
-            Email
+            Email address
             <input
               autoComplete="email"
+              placeholder="you@example.com"
               onChange={(event) => setEmail(event.target.value)}
               required
               type="email"
@@ -62,22 +69,25 @@ export function LoginPage() {
 
           <label>
             Password
-            <input
+            <span className="auth-password"><input
               autoComplete="current-password"
               onChange={(event) => setPassword(event.target.value)}
               required
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               value={password}
-            />
+            /><button aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword((visible) => !visible)} type="button">{showPassword ? 'Hide' : 'Show'}</button></span>
           </label>
 
-          <button disabled={isSubmitting} type="submit">
-            {isSubmitting ? 'Signing in...' : 'Login'}
+          <button className="auth-submit" disabled={isSubmitting} type="submit">
+            {isSubmitting ? 'Signing in...' : 'Sign in'} <span aria-hidden="true">→</span>
           </button>
         </form>
 
         <ApiErrorAlert message={error} />
-      </PageShell>
+        <p className="auth-content__switch">Don’t have an account? <Link state={{ from: location.state?.from }} to="/register">Join Clothic</Link></p>
+        </div>
+        <p className="auth-content__bottom">Clothic © {new Date().getFullYear()}</p>
+      </section>
     </main>
   );
 }

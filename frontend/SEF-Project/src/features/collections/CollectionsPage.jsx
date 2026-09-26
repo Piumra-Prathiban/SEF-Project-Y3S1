@@ -224,13 +224,11 @@ export function CollectionsPage() {
                       >
                         Edit
                       </button>
-                      <button
+                      {collection.isActive && <button
                         className="button-danger"
                         onClick={() => handleDelete(collection)}
                         type="button"
-                      >
-                        Deactivate
-                      </button>
+                      >Deactivate</button>}
                     </div>
                   </td>
                 </tr>

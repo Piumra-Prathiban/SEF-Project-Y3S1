@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { CartProvider } from '../cart/CartContext';
@@ -138,6 +138,17 @@ describe('StorefrontPage', () => {
     expect(
       screen.getByRole('heading', { name: 'Leather Ankle Boots' }),
     ).toBeInTheDocument();
+  });
+
+  it('passes search, size and sort choices to the storefront API', async () => {
+    const user = userEvent.setup();
+    renderStorefront();
+    await screen.findByRole('heading', { name: 'Classic Cotton T-Shirt' });
+    await user.type(screen.getByLabelText('Search'), 'cotton');
+    await user.selectOptions(screen.getByLabelText('Size'), 'M');
+    await user.selectOptions(screen.getByLabelText('Sort products'), 'price:asc');
+    await user.click(screen.getByRole('button', { name: /Apply filters/ }));
+    await waitFor(() => expect(getStorefrontProducts).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'cotton', size: 'M', sortBy: 'price', sortDirection: 'asc' })));
   });
 
   it('shows an empty state when the catalogue has no products', async () => {

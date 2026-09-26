@@ -88,6 +88,19 @@ public class InventoryAgentWorkflowResponseDto
     public List<string> Errors { get; set; } = new();
 }
 
+public class InventoryAgentWorkflowSummaryDto
+{
+    public Guid WorkflowId { get; set; }
+
+    public string Objective { get; set; } = string.Empty;
+
+    public string Status { get; set; } = string.Empty;
+
+    public DateTime? StartedAt { get; set; }
+
+    public DateTime? CompletedAt { get; set; }
+}
+
 public class InventoryAgentWorkflowStepDto
 {
     public Guid Id { get; set; }

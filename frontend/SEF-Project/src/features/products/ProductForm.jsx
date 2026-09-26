@@ -9,6 +9,7 @@ import {
 export function ProductForm({
   categories,
   collections,
+  suppliers = [],
   initialValue,
   isSubmitting,
   onCancel,
@@ -100,7 +101,7 @@ export function ProductForm({
             value={form.categoryId}
           >
             <option value="">Select category</option>
-            {categories.map((category) => (
+            {categories.filter((category) => category.isActive !== false || category.id === form.categoryId).map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
               </option>
@@ -116,7 +117,7 @@ export function ProductForm({
             value={form.collectionId}
           >
             <option value="">Select collection</option>
-            {collections.map((collection) => (
+            {collections.filter((collection) => collection.isActive !== false || collection.id === form.collectionId).map((collection) => (
               <option key={collection.id} value={collection.id}>
                 {collection.name}
               </option>
@@ -124,6 +125,14 @@ export function ProductForm({
           </select>
         </label>
       </div>
+
+      <label>
+        Supplier (optional)
+        <select onChange={(event) => updateField('supplierId', event.target.value)} value={form.supplierId}>
+          <option value="">No supplier linked</option>
+          {suppliers.filter((supplier) => supplier.isActive || supplier.id === form.supplierId).map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}
+        </select>
+      </label>
 
       <label className="checkbox-field">
         <input

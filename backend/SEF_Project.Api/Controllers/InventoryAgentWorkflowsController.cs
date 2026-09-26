@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SEF_Project.Api.DTOs.AgenticAI;
+using SEF_Project.Api.DTOs.Common;
 using SEF_Project.Api.Services.AgenticAI;
 
 namespace SEF_Project.Api.Controllers;
@@ -19,6 +20,19 @@ public class InventoryAgentWorkflowsController : ControllerBase
         IInventoryAgentWorkflowService workflowService)
     {
         _workflowService = workflowService;
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(PagedResponse<InventoryAgentWorkflowSummaryDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PagedResponse<InventoryAgentWorkflowSummaryDto>>> ListWorkflows(
+        [FromQuery] string? status,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        return Ok(await _workflowService.ListWorkflowsAsync(
+            status, page, pageSize, cancellationToken));
     }
 
     [HttpPost]

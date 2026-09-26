@@ -21,6 +21,9 @@ function stubFetch() {
         return [];
       }
 
+      const pathname = new URL(String(url), window.location.origin).pathname.toLowerCase();
+      if (pathname !== '/api/products' && pathname !== '/api/orders') return [];
+
       return {
         items: [],
         page: 1,
@@ -151,7 +154,7 @@ describe('application routing', () => {
     );
   });
 
-  it('disables staff-only navigation entries for customers', async () => {
+  it('shows customers only the pages they can use', async () => {
     mockAuth = {
       ...mockAuth,
       user: { ...mockAuth.user, role: 'Customer' },
@@ -164,12 +167,13 @@ describe('application routing', () => {
       name: 'Main navigation',
     });
 
-    expect(within(nav).getByText('Categories')).toHaveAttribute(
-      'aria-disabled',
-      'true',
-    );
+    expect(within(nav).queryByText('Categories')).not.toBeInTheDocument();
+    expect(within(nav).queryByText('Products')).not.toBeInTheDocument();
     expect(
       within(nav).getByRole('link', { name: 'Orders' }),
+    ).toBeInTheDocument();
+    expect(
+      within(nav).getByRole('link', { name: 'Personal Stylist' }),
     ).toBeInTheDocument();
   });
 
@@ -190,6 +194,22 @@ describe('application routing', () => {
       await screen.findByRole('heading', { name: 'Stock History' }),
     ).toBeInTheDocument();
     expect(window.location.pathname).toBe('/inventory/history');
+  });
+
+  it.each([
+    ['/products', 'Product Management'],
+    ['/categories', 'Category Management'],
+    ['/collections', 'Collection Management'],
+    ['/sizes', 'Size Management'],
+    ['/colours', 'Colour Management'],
+    ['/variants', 'Product Variant Management'],
+    ['/inventory', 'Inventory Dashboard'],
+    ['/inventory/low-stock', 'Low Stock Monitoring'],
+    ['/inventory/history', 'Stock History'],
+    ['/inventory-agent', 'Inventory AI Analysis'],
+  ])('opens the Member 1 page at %s', async (path, heading) => {
+    renderApp(path);
+    expect(await screen.findByRole('heading', { name: heading, level: 1 })).toBeInTheDocument();
   });
 
   it('shows a not-found page for unknown routes', async () => {

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using SEF_Project.Api.DTOs.Common;
 using SEF_Project.Api.Models.Enums;
 
@@ -9,6 +10,7 @@ public class StockAdjustmentDto
     public Guid ProductVariantId { get; set; }
 
     [Required]
+    [JsonRequired]
     [EnumDataType(typeof(InventoryTransactionType))]
     public InventoryTransactionType Type { get; set; }
 
@@ -29,11 +31,19 @@ public class InventoryResponseDto
 
     public Guid ProductVariantId { get; set; }
 
+    public Guid ProductId { get; set; }
+
+    public Guid CategoryId { get; set; }
+
     public string Sku { get; set; } = string.Empty;
 
     public string ProductName { get; set; } = string.Empty;
 
     public string VariantName { get; set; } = string.Empty;
+
+    public string SizeName { get; set; } = string.Empty;
+
+    public string ColourName { get; set; } = string.Empty;
 
     public int QuantityOnHand { get; set; }
 

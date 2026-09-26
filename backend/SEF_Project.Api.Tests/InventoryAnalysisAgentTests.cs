@@ -8,6 +8,7 @@ using SEF_Project.Api.Data;
 using SEF_Project.Api.DTOs.AgenticAI;
 using SEF_Project.Api.DTOs.Catalog;
 using SEF_Project.Api.Models;
+using SEF_Project.Api.Models.AgenticAI;
 using SEF_Project.Api.Models.Enums;
 using SEF_Project.Api.Services.AgenticAI;
 using SEF_Project.Api.Services.Catalog;
@@ -52,6 +53,33 @@ public class InventoryAnalysisAgentTests
             .Single();
 
         Assert.Equal("Staff,Administrator", attribute.Roles);
+    }
+
+    [Fact]
+    public async Task ListWorkflowsAsync_ShouldFilterAndPagePersistedWorkflows()
+    {
+        var (connection, context) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        context.AgentWorkflows.AddRange(
+            new AgentWorkflow { Objective = "Review shirts", Status = AgentWorkflowStatus.AwaitingApproval, StartedAt = DateTime.UtcNow, Steps = new List<AgentWorkflowStep> { new() { AgentName = InventoryAgentConstants.AgentName, Title = "Analyze shirts" } } },
+            new AgentWorkflow { Objective = "Completed jackets", Status = AgentWorkflowStatus.Completed, StartedAt = DateTime.UtcNow, Steps = new List<AgentWorkflowStep> { new() { AgentName = InventoryAgentConstants.AgentName, Title = "Analyze jackets" } } },
+            new AgentWorkflow { Objective = "Other agent", Status = AgentWorkflowStatus.AwaitingApproval, StartedAt = DateTime.UtcNow, Steps = new List<AgentWorkflowStep> { new() { AgentName = "Marketing Agent", Title = "Analyze campaign" } } });
+        await context.SaveChangesAsync();
+
+        var service = CreateWorkflowService(context);
+        var result = await service.ListWorkflowsAsync("AwaitingApproval", 1, 20);
+
+        Assert.Equal(1, result.TotalItems);
+        Assert.Equal("Review shirts", Assert.Single(result.Items).Objective);
+        Assert.Equal("AwaitingApproval", result.Items[0].Status);
+        var secondPage = await service.ListWorkflowsAsync(null, 2, 1);
+        Assert.Equal(2, secondPage.TotalItems);
+        Assert.Equal(2, secondPage.TotalPages);
+        Assert.Single(secondPage.Items);
+        Assert.Null(await service.GetWorkflowAsync(context.AgentWorkflows.Single(workflow => workflow.Objective == "Other agent").Id));
+        await Assert.ThrowsAsync<ArgumentException>(() => service.ListWorkflowsAsync("Unknown", 1, 20));
     }
 
     [Fact]

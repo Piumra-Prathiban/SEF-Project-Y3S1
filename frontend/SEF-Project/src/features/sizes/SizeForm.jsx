@@ -13,7 +13,8 @@ export function SizeForm({
 }) {
   const [form, setForm] = useState(() => ({
     name: initialValue?.name ?? '',
-    code: initialValue?.code ?? '',
+    description: initialValue?.description ?? '',
+    displayOrder: initialValue?.displayOrder ?? 0,
     isActive: initialValue?.isActive ?? true,
   }));
   const [validationErrors, setValidationErrors] = useState([]);
@@ -61,13 +62,14 @@ export function SizeForm({
       </label>
 
       <label>
-        Size code
-        <input
-          maxLength={20}
-          onChange={(event) => updateField('code', event.target.value)}
-          required
-          value={form.code}
-        />
+        Description
+        <textarea maxLength={500} onChange={(event) => updateField('description', event.target.value)} rows={3} value={form.description} />
+      </label>
+
+      <label>
+        Display order
+        <input min="0" onChange={(event) => updateField('displayOrder', event.target.value)} required step="1" type="number" value={form.displayOrder} />
+        <small>Lower numbers appear first in size lists.</small>
       </label>
 
       <label className="checkbox-field">

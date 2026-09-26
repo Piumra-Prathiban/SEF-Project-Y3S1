@@ -48,8 +48,8 @@ describe('colour utilities', () => {
     expect(results).toEqual([colours[1]]);
   });
 
-  it('validates three and six character hex values', () => {
-    expect(isValidHexCode('#fff')).toBe(true);
+  it('matches the API six-digit hex format', () => {
+    expect(isValidHexCode('#fff')).toBe(false);
     expect(isValidHexCode('#ffffff')).toBe(true);
     expect(isValidHexCode('ffffff')).toBe(false);
   });

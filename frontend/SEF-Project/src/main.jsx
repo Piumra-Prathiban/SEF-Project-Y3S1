@@ -5,6 +5,7 @@ import './index.css';
 import App from './App.jsx';
 import { AuthProvider } from './contexts/AuthContext.jsx';
 import { CartProvider } from './features/cart/CartContext.jsx';
+import './styles/clothic.css';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

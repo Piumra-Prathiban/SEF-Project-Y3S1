@@ -42,6 +42,10 @@ public class InventoryServiceTests
             response.Count);
         Assert.Contains(response, item =>
             item.Sku == "JKT-QFD-L"
+            && item.ProductId != Guid.Empty
+            && item.CategoryId != Guid.Empty
+            && item.SizeName == "L"
+            && item.ColourName == "Navy"
             && item.QuantityOnHand == 200
             && item.AvailableQuantity == 200);
     }

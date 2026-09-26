@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using SEF_Project.Api.DTOs.Auth;
 using SEF_Project.Api.DTOs.Catalog;
 using SEF_Project.Api.Models.Enums;
@@ -303,5 +304,12 @@ public class RequestValidationTests
         Assert.Contains(
             results,
             result => result.MemberNames.Contains(nameof(StockAdjustmentDto.Reason)));
+    }
+
+    [Fact]
+    public void StockAdjustmentDto_ShouldRejectMissingTransactionTypeInJson()
+    {
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<StockAdjustmentDto>(
+            """{"quantity":5,"reason":"Supplier delivery"}"""));
     }
 }

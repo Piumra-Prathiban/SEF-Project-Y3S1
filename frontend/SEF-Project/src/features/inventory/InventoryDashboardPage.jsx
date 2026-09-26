@@ -6,7 +6,6 @@ import { PageShell } from '../../components/ui/PageShell';
 import { useCatalogApi } from '../../hooks/useCatalogApi';
 import { normalizeApiError } from '../../utils/apiErrorUtils';
 import {
-  buildInventoryQuery,
   buildInventorySummary,
   buildStockAdjustmentPayload,
   defaultInventoryQuery,
@@ -20,14 +19,15 @@ import {
   getHistoryType,
   getInventoryQuantity,
   getInventoryStatus,
-  getPaginationMeta,
   getProductName,
   getReorderLevel,
   getSizeName,
   getSku,
   getVariantId,
+  filterInventoryItems,
   normalizeInventoryItems,
   normalizeStockHistoryItems,
+  paginateItems,
   STOCK_TRANSACTION_TYPES,
   updateInventoryQuery,
   validateStockAdjustment,
@@ -70,8 +70,7 @@ function getInitialSelectedVariantId() {
 
 export function InventoryDashboardPage() {
   const api = useCatalogApi();
-  const [inventoryItems, setInventoryItems] = useState([]);
-  const [inventoryResponse, setInventoryResponse] = useState(null);
+  const [allInventoryItems, setAllInventoryItems] = useState([]);
   const [lowStockItems, setLowStockItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [query, setQuery] = useState(defaultInventoryQuery);
@@ -87,19 +86,19 @@ export function InventoryDashboardPage() {
   const [message, setMessage] = useState(null);
   const [lastRefreshedAt, setLastRefreshedAt] = useState(null);
 
-  const inventoryQuery = useMemo(
-    () => buildInventoryQuery(query),
-    [query],
+  const filteredInventory = useMemo(
+    () => filterInventoryItems(allInventoryItems, query),
+    [allInventoryItems, query],
   );
-
   const paginationMeta = useMemo(
-    () => getPaginationMeta(inventoryResponse, query),
-    [inventoryResponse, query],
+    () => paginateItems(filteredInventory, query.page, query.pageSize),
+    [filteredInventory, query.page, query.pageSize],
   );
+  const inventoryItems = paginationMeta.items;
 
   const summary = useMemo(
-    () => buildInventorySummary(inventoryItems, lowStockItems, paginationMeta),
-    [inventoryItems, lowStockItems, paginationMeta],
+    () => buildInventorySummary(filteredInventory, lowStockItems),
+    [filteredInventory, lowStockItems],
   );
 
   const loadDashboard = useCallback(async () => {
@@ -107,17 +106,12 @@ export function InventoryDashboardPage() {
     setError(null);
 
     try {
-      const inventoryRequest = query.lowStockOnly
-        ? api.getLowStock(inventoryQuery)
-        : api.getInventory(inventoryQuery);
-
       const [inventoryResponse, lowStockResponse] = await Promise.all([
-        inventoryRequest,
+        api.getInventory(),
         api.getLowStock(),
       ]);
 
-      setInventoryResponse(inventoryResponse);
-      setInventoryItems(normalizeInventoryItems(inventoryResponse));
+      setAllInventoryItems(normalizeInventoryItems(inventoryResponse));
       setLowStockItems(normalizeInventoryItems(lowStockResponse));
       setLastRefreshedAt(new Date());
     } catch (err) {
@@ -125,7 +119,7 @@ export function InventoryDashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [api, inventoryQuery, query.lowStockOnly]);
+  }, [api]);
 
   const loadLookups = useCallback(async () => {
     try {
@@ -175,7 +169,7 @@ export function InventoryDashboardPage() {
       return;
     }
 
-    const matchingItem = inventoryItems.find(
+    const matchingItem = allInventoryItems.find(
       (item) => String(getVariantId(item)) === String(selectedVariantId),
     );
 
@@ -183,7 +177,7 @@ export function InventoryDashboardPage() {
     // page once inventory data is available.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadSelectedVariant(selectedVariantId, matchingItem);
-  }, [inventoryItems, loadSelectedVariant, selectedInventoryItem, selectedVariantId]);
+  }, [allInventoryItems, loadSelectedVariant, selectedInventoryItem, selectedVariantId]);
 
   useEffect(() => {
     // This effect intentionally loads category filter data when the
@@ -344,7 +338,7 @@ export function InventoryDashboardPage() {
         <>
           <section className="summary-grid" aria-label="Inventory summary">
             <article className="summary-card">
-              <span>Visible products</span>
+              <span>Matching products</span>
               <strong>{summary.totalProducts}</strong>
             </article>
             <article className="summary-card">
@@ -352,22 +346,22 @@ export function InventoryDashboardPage() {
               <strong>{summary.totalVariants}</strong>
             </article>
             <article className="summary-card">
-              <span>Visible stock</span>
+              <span>Matching stock</span>
               <strong>{summary.totalStock}</strong>
             </article>
             <article className="summary-card">
-              <span>Low-stock variants</span>
+              <span>All low-stock variants</span>
               <strong>{summary.lowStockVariants}</strong>
             </article>
             <article className="summary-card">
-              <span>Visible out-of-stock variants</span>
+              <span>Matching out-of-stock variants</span>
               <strong>{summary.outOfStockVariants}</strong>
             </article>
           </section>
 
-          {inventoryItems.length === 0 ? (
+          {error && !allInventoryItems.length ? null : inventoryItems.length === 0 ? (
             <div className="empty-state">
-              No inventory records were returned by the API.
+              No inventory records match these filters.
             </div>
           ) : (
             <div className="table-card">
@@ -381,7 +375,9 @@ export function InventoryDashboardPage() {
                     <th>SKU</th>
                     <th>Size</th>
                     <th>Colour</th>
-                    <th>Current stock</th>
+                    <th>On hand</th>
+                    <th>Reserved</th>
+                    <th>Available</th>
                     <th>Reorder level</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -402,6 +398,8 @@ export function InventoryDashboardPage() {
                         <td>{getSizeName(item)}</td>
                         <td>{getColourName(item)}</td>
                         <td>{getInventoryQuantity(item)}</td>
+                        <td>{item.reservedQuantity ?? 0}</td>
+                        <td>{item.availableQuantity ?? Number(getInventoryQuantity(item)) - Number(item.reservedQuantity ?? 0)}</td>
                         <td>{getReorderLevel(item)}</td>
                         <td>
                           <span className={`status-pill ${getStatusClass(status)}`}>
@@ -484,13 +482,21 @@ export function InventoryDashboardPage() {
                   <dd>{getInventoryQuantity(selectedInventoryItem)}</dd>
                 </div>
                 <div>
+                  <dt>Reserved for orders</dt>
+                  <dd>{selectedInventoryItem.reservedQuantity ?? 0}</dd>
+                </div>
+                <div>
+                  <dt>Available to sell</dt>
+                  <dd>{selectedInventoryItem.availableQuantity ?? Number(getInventoryQuantity(selectedInventoryItem)) - Number(selectedInventoryItem.reservedQuantity ?? 0)}</dd>
+                </div>
+                <div>
                   <dt>Reorder level</dt>
                   <dd>{getReorderLevel(selectedInventoryItem)}</dd>
                 </div>
               </dl>
 
               <Alert>
-                Stock-changing actions are submitted to the backend inventory service. The frontend does not calculate or overwrite stock.
+                Removing stock cannot reduce on-hand quantity below the amount reserved for orders.
               </Alert>
 
               <form className="entity-form" onSubmit={handleSubmitAdjustment}>

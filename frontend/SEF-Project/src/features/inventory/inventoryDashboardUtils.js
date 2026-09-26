@@ -35,51 +35,12 @@ export function updateLowStockQuery(currentQuery, field, value) {
   };
 }
 
-export function buildInventoryQuery(query) {
-  return {
-    product: query.product,
-    sku: query.sku,
-    categoryId: query.categoryId,
-    stockStatus: query.stockStatus,
-    lowStockOnly: query.lowStockOnly ? true : '',
-    page: query.page,
-    pageSize: query.pageSize,
-  };
-}
-
-export function buildLowStockQuery(query) {
-  return {
-    sortBy: query.sortBy,
-    sortDirection: query.sortDirection,
-    page: query.page,
-    pageSize: query.pageSize,
-  };
-}
-
 export function normalizeInventoryItems(response) {
   if (Array.isArray(response)) {
     return response;
   }
 
   return response?.items ?? [];
-}
-
-export function getPaginationMeta(response, fallbackQuery) {
-  if (!response || Array.isArray(response)) {
-    return {
-      page: fallbackQuery.page,
-      pageSize: fallbackQuery.pageSize,
-      totalItems: Array.isArray(response) ? response.length : 0,
-      totalPages: 1,
-    };
-  }
-
-  return {
-    page: response.page ?? fallbackQuery.page,
-    pageSize: response.pageSize ?? fallbackQuery.pageSize,
-    totalItems: response.totalItems ?? response.items?.length ?? 0,
-    totalPages: response.totalPages ?? 1,
-  };
 }
 
 export function normalizeStockHistoryItems(response) {
@@ -213,7 +174,55 @@ export function getColourName(item) {
   );
 }
 
-export function buildInventorySummary(inventoryItems, lowStockItems, paginationMeta = null) {
+export function filterInventoryItems(items, query) {
+  const productSearch = query.product.trim().toLocaleLowerCase();
+  const skuSearch = query.sku.trim().toLocaleLowerCase();
+
+  return items.filter((item) => {
+    const matchesProduct = !productSearch || getProductName(item).toLocaleLowerCase().includes(productSearch);
+    const matchesSku = !skuSearch || getSku(item).toLocaleLowerCase().includes(skuSearch);
+    const matchesCategory = !query.categoryId || String(item.categoryId) === String(query.categoryId);
+    const matchesStatus = !query.stockStatus || getInventoryStatus(item) === query.stockStatus;
+    const matchesLowStock = !query.lowStockOnly || item.isLowStock === true || Number(getInventoryQuantity(item)) <= Number(getReorderLevel(item));
+    return matchesProduct && matchesSku && matchesCategory && matchesStatus && matchesLowStock;
+  });
+}
+
+export function sortLowStockItems(items, query) {
+  const fieldValue = (item) => {
+    switch (query.sortBy) {
+      case 'sku': return getSku(item);
+      case 'quantity': return Number(getInventoryQuantity(item));
+      case 'reorderLevel': return Number(getReorderLevel(item));
+      case 'shortage': return Number(getShortageAmount(item));
+      default: return getProductName(item);
+    }
+  };
+  const direction = query.sortDirection === 'desc' ? -1 : 1;
+  return [...items].sort((left, right) => {
+    const first = fieldValue(left);
+    const second = fieldValue(right);
+    const result = typeof first === 'number' && typeof second === 'number'
+      ? first - second
+      : String(first).localeCompare(String(second));
+    return (result || getSku(left).localeCompare(getSku(right))) * direction;
+  });
+}
+
+export function paginateItems(items, requestedPage, requestedPageSize) {
+  const pageSize = Math.max(1, Number(requestedPageSize) || 10);
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const page = Math.min(Math.max(1, Number(requestedPage) || 1), totalPages);
+  return {
+    items: items.slice((page - 1) * pageSize, page * pageSize),
+    page,
+    pageSize,
+    totalItems: items.length,
+    totalPages,
+  };
+}
+
+export function buildInventorySummary(inventoryItems, lowStockItems) {
   const productIds = new Set(
     inventoryItems
       .map((item) => firstDefined(
@@ -237,7 +246,7 @@ export function buildInventorySummary(inventoryItems, lowStockItems, paginationM
 
   return {
     totalProducts: productIds.size,
-    totalVariants: paginationMeta?.totalItems ?? inventoryItems.length,
+    totalVariants: inventoryItems.length,
     totalStock,
     lowStockVariants: lowStockItems.length,
     outOfStockVariants,
@@ -245,10 +254,12 @@ export function buildInventorySummary(inventoryItems, lowStockItems, paginationM
 }
 
 export const STOCK_TRANSACTION_TYPES = [
-  { value: 'StockIn', label: 'Stock In' },
-  { value: 'StockOut', label: 'Stock Out' },
-  { value: 'Adjustment', label: 'Adjustment' },
+  { value: 'StockIn', apiValue: 1, label: 'Add stock' },
+  { value: 'StockOut', apiValue: 2, label: 'Remove stock' },
+  { value: 'Adjustment', apiValue: 0, label: 'Positive correction' },
 ];
+
+const TRANSACTION_TYPE_NAMES = ['Adjustment', 'Stock in', 'Stock out', 'Receipt', 'Sale', 'Reservation', 'Reservation release', 'Transfer'];
 
 export function validateStockAdjustment(adjustment) {
   const errors = [];
@@ -262,8 +273,8 @@ export function validateStockAdjustment(adjustment) {
 
   if (adjustment.quantity === '' || Number.isNaN(quantity)) {
     errors.push('Quantity is required.');
-  } else if (quantity <= 0) {
-    errors.push('Quantity must be greater than zero.');
+  } else if (!Number.isInteger(quantity) || quantity <= 0) {
+    errors.push('Quantity must be a whole number greater than zero.');
   }
 
   if (!adjustment.reason?.trim()) {
@@ -275,7 +286,7 @@ export function validateStockAdjustment(adjustment) {
 
 export function buildStockAdjustmentPayload(adjustment) {
   return {
-    transactionType: adjustment.transactionType,
+    type: STOCK_TRANSACTION_TYPES.find((item) => item.value === adjustment.transactionType).apiValue,
     quantity: Number(adjustment.quantity),
     reason: adjustment.reason.trim(),
   };
@@ -293,12 +304,13 @@ export function getHistoryDate(transaction) {
 }
 
 export function getHistoryType(transaction) {
-  return firstDefined(
+  const type = firstDefined(
     transaction.transactionType,
     transaction.type,
     transaction.adjustmentType,
     '-',
   );
+  return typeof type === 'number' ? TRANSACTION_TYPE_NAMES[type] ?? 'Unknown movement' : type;
 }
 
 export function getHistoryQuantity(transaction) {
@@ -308,6 +320,7 @@ export function getHistoryQuantity(transaction) {
 export function getHistoryPreviousQuantity(transaction) {
   return firstDefined(
     transaction.previousQuantity,
+    transaction.previousQuantityOnHand,
     transaction.previousStock,
     transaction.oldQuantity,
     '-',
@@ -317,6 +330,7 @@ export function getHistoryPreviousQuantity(transaction) {
 export function getHistoryNewQuantity(transaction) {
   return firstDefined(
     transaction.newQuantity,
+    transaction.quantityOnHandAfter,
     transaction.newStock,
     transaction.resultingQuantity,
     '-',
@@ -331,6 +345,7 @@ export function getHistoryResponsibleUser(transaction) {
   return firstDefined(
     transaction.responsibleUserName,
     transaction.responsibleUserEmail,
+    transaction.performedByUserEmail,
     transaction.responsibleUser,
     transaction.userName,
     transaction.userEmail,

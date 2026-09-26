@@ -1,4 +1,4 @@
-const HEX_CODE_PATTERN = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+const HEX_CODE_PATTERN = /^#[0-9a-f]{6}$/i;
 
 export function validateColourForm(colour) {
   const errors = [];

@@ -413,8 +413,8 @@ Recommendation shape:
 ```json
 {
   "variantId": "00000000-0000-0000-0000-000000000000",
-  "sku": "TSH-CLS-XS",
-  "productName": "Classic Cotton T-Shirt",
+  "sku": "PIZ-MARG-S",
+  "productName": "Margherita Pizza",
   "currentStock": 3,
   "reorderLevel": 5,
   "recommendedAction": "RESTOCK",

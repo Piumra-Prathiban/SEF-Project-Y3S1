@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Alert } from '../../components/ui/Alert';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
@@ -48,12 +48,14 @@ export function ProductsPage() {
   const [productsResponse, setProductsResponse] = useState(null);
   const [categories, setCategories] = useState([]);
   const [collections, setCollections] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [formMode, setFormMode] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState(null);
+  const [createdProductId, setCreatedProductId] = useState(null);
   const [error, setError] = useState(null);
 
   const productItems = productsResponse?.items ?? [];
@@ -80,13 +82,15 @@ export function ProductsPage() {
 
   const loadLookups = useCallback(async () => {
     try {
-      const [categoryResponse, collectionResponse] = await Promise.all([
+      const [categoryResponse, collectionResponse, supplierResponse] = await Promise.all([
         api.getCategories(),
         api.getCollections(),
+        api.getSuppliers(),
       ]);
 
       setCategories(categoryResponse);
       setCollections(collectionResponse);
+      setSuppliers(supplierResponse);
     } catch (err) {
       setError(normalizeApiError(err));
     }
@@ -113,6 +117,7 @@ export function ProductsPage() {
   async function handleView(productId) {
     setError(null);
     setMessage(null);
+    setCreatedProductId(null);
 
     try {
       const product = await api.getProduct(productId);
@@ -126,6 +131,7 @@ export function ProductsPage() {
     setEditingProduct(null);
     setFormMode('create');
     setMessage(null);
+    setCreatedProductId(null);
     setError(null);
   }
 
@@ -133,6 +139,7 @@ export function ProductsPage() {
     setEditingProduct(product);
     setFormMode('edit');
     setMessage(null);
+    setCreatedProductId(null);
     setError(null);
   }
 
@@ -151,8 +158,9 @@ export function ProductsPage() {
         await api.updateProduct(editingProduct.id, product);
         setMessage('Product updated successfully.');
       } else {
-        await api.createProduct(product);
-        setMessage('Product created successfully.');
+        const created = await api.createProduct(product);
+        setCreatedProductId(created.id);
+        setMessage('Product created. Add a size and colour variant to make it sellable.');
       }
 
       closeForm();
@@ -175,6 +183,7 @@ export function ProductsPage() {
 
     setError(null);
     setMessage(null);
+    setCreatedProductId(null);
 
     try {
       await api.deleteProduct(product.id);
@@ -296,7 +305,7 @@ export function ProductsPage() {
         )}
       </div>
 
-      {message && <Alert>{message}</Alert>}
+      {message && <Alert>{message} {createdProductId && <Link to={`/variants?productId=${encodeURIComponent(createdProductId)}`}>Add variants →</Link>}</Alert>}
       <ApiErrorAlert message={error} onRetry={loadProducts} />
 
       {formMode && (
@@ -305,6 +314,7 @@ export function ProductsPage() {
           <ProductForm
             categories={categories}
             collections={collections}
+            suppliers={suppliers}
             initialValue={editingProduct}
             isSubmitting={isSaving}
             key={editingProduct?.id ?? formMode}
@@ -377,13 +387,11 @@ export function ProductsPage() {
                           >
                             Edit
                           </button>
-                          <button
+                          {product.isActive && <button
                             className="button-danger"
                             onClick={() => handleDelete(product)}
                             type="button"
-                          >
-                            Deactivate
-                          </button>
+                          >Deactivate</button>}
                         </>
                       )}
                     </div>
@@ -442,6 +450,10 @@ export function ProductsPage() {
             <div>
               <dt>Collection</dt>
               <dd>{selectedProduct.collectionName || '-'}</dd>
+            </div>
+            <div>
+              <dt>Supplier</dt>
+              <dd>{selectedProduct.supplierName || 'None linked'}</dd>
             </div>
             <div>
               <dt>Status</dt>

@@ -218,13 +218,11 @@ export function CategoriesPage() {
                       >
                         Edit
                       </button>
-                      <button
+                      {category.isActive && <button
                         className="button-danger"
                         onClick={() => handleDelete(category)}
                         type="button"
-                      >
-                        Deactivate
-                      </button>
+                      >Deactivate</button>}
                     </div>
                   </td>
                 </tr>

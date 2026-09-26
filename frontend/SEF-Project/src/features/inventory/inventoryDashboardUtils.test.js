@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildInventorySummary,
-  buildInventoryQuery,
-  buildLowStockQuery,
   buildStockAdjustmentPayload,
   defaultInventoryQuery,
   defaultLowStockQuery,
@@ -20,9 +18,11 @@ import {
   getSizeName,
   getSku,
   getVariantId,
-  getPaginationMeta,
+  filterInventoryItems,
   normalizeInventoryItems,
   normalizeStockHistoryItems,
+  paginateItems,
+  sortLowStockItems,
   updateInventoryQuery,
   updateLowStockQuery,
   validateStockAdjustment,
@@ -53,27 +53,13 @@ describe('inventory dashboard utilities', () => {
     expect(query.page).toBe(2);
   });
 
-  it('passes server-side inventory query parameters through to the API', () => {
-    expect(
-      buildInventoryQuery({
-        ...defaultInventoryQuery,
-        product: 'shirt',
-        sku: 'TSH',
-        categoryId: 'category-1',
-        stockStatus: 'Low Stock',
-        lowStockOnly: true,
-        page: 3,
-        pageSize: 25,
-      }),
-    ).toEqual({
-      product: 'shirt',
-      sku: 'TSH',
-      categoryId: 'category-1',
-      stockStatus: 'Low Stock',
-      lowStockOnly: true,
-      page: 3,
-      pageSize: 25,
-    });
+  it('filters the full inventory list by product, SKU, category and stock state', () => {
+    const items = [
+      { productName: 'Cotton Shirt', sku: 'TSH-M', categoryId: 'tops', quantityOnHand: 3, reorderLevel: 5 },
+      { productName: 'Cotton Shirt', sku: 'TSH-L', categoryId: 'tops', quantityOnHand: 12, reorderLevel: 5 },
+      { productName: 'Wide Trousers', sku: 'TRS-M', categoryId: 'bottoms', quantityOnHand: 0, reorderLevel: 5 },
+    ];
+    expect(filterInventoryItems(items, { ...defaultInventoryQuery, product: 'shirt', sku: 'm', categoryId: 'tops', stockStatus: 'Low Stock', lowStockOnly: true })).toEqual([items[0]]);
   });
 
   it('resets pagination when low-stock sorting changes', () => {
@@ -87,41 +73,19 @@ describe('inventory dashboard utilities', () => {
     expect(query.page).toBe(1);
   });
 
-  it('passes server-side low-stock sorting and pagination parameters through to the API', () => {
-    expect(
-      buildLowStockQuery({
-        ...defaultLowStockQuery,
-        sortBy: 'quantity',
-        sortDirection: 'desc',
-        page: 2,
-        pageSize: 25,
-      }),
-    ).toEqual({
-      sortBy: 'quantity',
-      sortDirection: 'desc',
-      page: 2,
-      pageSize: 25,
-    });
+  it('sorts low stock and paginates the returned full list', () => {
+    const items = [
+      { sku: 'A', productName: 'Shirt', quantityOnHand: 3, reorderLevel: 5 },
+      { sku: 'B', productName: 'Jacket', quantityOnHand: 1, reorderLevel: 5 },
+      { sku: 'C', productName: 'Dress', quantityOnHand: 0, reorderLevel: 5 },
+    ];
+    const sorted = sortLowStockItems(items, { ...defaultLowStockQuery, sortBy: 'quantity', sortDirection: 'desc' });
+    expect(sorted.map((item) => item.sku)).toEqual(['A', 'B', 'C']);
+    expect(paginateItems(sorted, 2, 2)).toMatchObject({ items: [items[2]], page: 2, totalItems: 3, totalPages: 2 });
   });
 
-  it('extracts pagination metadata from server responses', () => {
-    expect(
-      getPaginationMeta(
-        {
-          items: [{ id: 'stock-1' }],
-          page: 2,
-          pageSize: 25,
-          totalItems: 60,
-          totalPages: 3,
-        },
-        defaultInventoryQuery,
-      ),
-    ).toEqual({
-      page: 2,
-      pageSize: 25,
-      totalItems: 60,
-      totalPages: 3,
-    });
+  it('clamps a page after filters reduce the result count', () => {
+    expect(paginateItems([{ id: 'one' }], 9, 10)).toMatchObject({ page: 1, totalPages: 1, totalItems: 1 });
   });
 
   it('reads inventory table fields from supported response shapes', () => {
@@ -180,12 +144,11 @@ describe('inventory dashboard utilities', () => {
         { productId: 'product-2', quantityOnHand: 3 },
       ],
       [{ id: 'low-1' }, { id: 'low-2' }],
-      { totalItems: 10 },
     );
 
     expect(summary).toEqual({
       totalProducts: 2,
-      totalVariants: 10,
+      totalVariants: 3,
       totalStock: 13,
       lowStockVariants: 2,
       outOfStockVariants: 1,
@@ -209,12 +172,12 @@ describe('inventory dashboard utilities', () => {
       }),
     ).toEqual([
       'Transaction type is not valid.',
-      'Quantity must be greater than zero.',
+      'Quantity must be a whole number greater than zero.',
       'Reason is required.',
     ]);
   });
 
-  it('builds stock adjustment payload without calculating stock on the frontend', () => {
+  it('builds the numeric enum payload required by the stock adjustment endpoint', () => {
     expect(
       buildStockAdjustmentPayload({
         transactionType: 'StockOut',
@@ -222,7 +185,7 @@ describe('inventory dashboard utilities', () => {
         reason: 'Damaged items',
       }),
     ).toEqual({
-      transactionType: 'StockOut',
+      type: 2,
       quantity: 3,
       reason: 'Damaged items',
     });
@@ -242,6 +205,10 @@ describe('inventory dashboard utilities', () => {
       transaction,
     ]);
     expect(getHistoryType(transaction)).toBe('StockIn');
+    expect(getHistoryType({ type: 1 })).toBe('Stock in');
+    expect(getHistoryPreviousQuantity({ previousQuantityOnHand: 10 })).toBe(10);
+    expect(getHistoryNewQuantity({ quantityOnHandAfter: 15 })).toBe(15);
+    expect(getHistoryResponsibleUser({ performedByUserEmail: 'staff@example.com' })).toBe('staff@example.com');
     expect(getHistoryPreviousQuantity(transaction)).toBe(10);
     expect(getHistoryNewQuantity(transaction)).toBe(15);
     expect(getHistoryReason(transaction)).toBe('Restock');

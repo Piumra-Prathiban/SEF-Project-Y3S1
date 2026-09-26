@@ -184,7 +184,11 @@ public class InventoryService : IInventoryService
     private IQueryable<InventoryStock> InventoryQuery() =>
         _context.Inventory
             .Include(i => i.ProductVariant)
-                .ThenInclude(v => v.Product);
+                .ThenInclude(v => v.Product)
+            .Include(i => i.ProductVariant)
+                .ThenInclude(v => v.Size)
+            .Include(i => i.ProductVariant)
+                .ThenInclude(v => v.Colour);
 
     public static InventoryResponseDto MapInventory(InventoryStock inventory)
     {
@@ -195,9 +199,13 @@ public class InventoryService : IInventoryService
         {
             Id = inventory.Id,
             ProductVariantId = inventory.ProductVariantId,
+            ProductId = inventory.ProductVariant?.ProductId ?? Guid.Empty,
+            CategoryId = inventory.ProductVariant?.Product?.CategoryId ?? Guid.Empty,
             Sku = inventory.ProductVariant?.Sku ?? string.Empty,
             ProductName = inventory.ProductVariant?.Product?.Name ?? string.Empty,
             VariantName = inventory.ProductVariant?.Name ?? string.Empty,
+            SizeName = inventory.ProductVariant?.Size?.Name ?? string.Empty,
+            ColourName = inventory.ProductVariant?.Colour?.Name ?? string.Empty,
             QuantityOnHand = inventory.QuantityOnHand,
             ReservedQuantity = inventory.ReservedQuantity,
             AvailableQuantity = availableQuantity,
