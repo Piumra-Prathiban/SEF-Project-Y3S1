@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using SEF_Project.Api.DTOs.Common;
 
 namespace SEF_Project.Api.DTOs.Analytics;
 
@@ -52,7 +53,7 @@ public class SalesOverTimeQuery : AnalyticsDateRangeQuery
 
 public class ProductPerformanceQuery : AnalyticsDateRangeQuery
 {
-    [Range(1, int.MaxValue)]
+    [Range(1, PagingLimits.MaxPage)]
     public int Page { get; set; } = 1;
 
     [Range(1, 100)]
@@ -71,7 +72,7 @@ public class ProductPerformanceQuery : AnalyticsDateRangeQuery
 
 public class InventoryStockQuery
 {
-    [Range(1, int.MaxValue)]
+    [Range(1, PagingLimits.MaxPage)]
     public int Page { get; set; } = 1;
 
     [Range(1, 100)]
@@ -96,7 +97,7 @@ public class InventoryStockQuery
 
 public class PromotionPerformanceQuery : AnalyticsDateRangeQuery
 {
-    [Range(1, int.MaxValue)]
+    [Range(1, PagingLimits.MaxPage)]
     public int Page { get; set; } = 1;
 
     [Range(1, 100)]
@@ -115,7 +116,7 @@ public class PromotionPerformanceQuery : AnalyticsDateRangeQuery
 
 public class DemandQuery : AnalyticsDateRangeQuery
 {
-    [Range(1, int.MaxValue)]
+    [Range(1, PagingLimits.MaxPage)]
     public int Page { get; set; } = 1;
 
     [Range(1, 100)]

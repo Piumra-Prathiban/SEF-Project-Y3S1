@@ -1,11 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using SEF_Project.Api.DTOs.Common;
 using SEF_Project.Api.Models.Enums;
 
 namespace SEF_Project.Api.DTOs.Marketing;
 
 public class PromotionQuery
 {
-    [Range(1, int.MaxValue)]
+    [Range(1, PagingLimits.MaxPage)]
     public int Page { get; set; } = 1;
 
     [Range(1, 100)]

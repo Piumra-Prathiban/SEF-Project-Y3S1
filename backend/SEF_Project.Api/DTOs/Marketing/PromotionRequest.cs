@@ -6,6 +6,9 @@ namespace SEF_Project.Api.DTOs.Marketing;
 // Used for both POST (create) and PUT (full replace).
 public class PromotionRequest : IValidatableObject
 {
+    // Bounds the IN (...) lists built from the targets.
+    public const int MaxTargets = 500;
+
     [Required]
     [StringLength(200, MinimumLength = 1)]
     public string Name { get; set; } = string.Empty;
@@ -30,8 +33,10 @@ public class PromotionRequest : IValidatableObject
 
     public Guid? CampaignId { get; set; }
 
+    [MaxLength(MaxTargets)]
     public List<Guid> ProductIds { get; set; } = new();
 
+    [MaxLength(MaxTargets)]
     public List<Guid> CategoryIds { get; set; } = new();
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

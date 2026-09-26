@@ -24,7 +24,7 @@ public class CampaignService : ICampaignService
         CampaignQuery query,
         CancellationToken cancellationToken = default)
     {
-        var page = Math.Max(query.Page, 1);
+        var page = Math.Clamp(query.Page, 1, PagingLimits.MaxPage);
         var pageSize = Math.Clamp(query.PageSize, 1, 100);
 
         var campaigns = _context.Campaigns.AsNoTracking();

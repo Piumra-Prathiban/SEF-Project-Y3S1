@@ -116,7 +116,12 @@ void main() {
       expect(find.text('LKR 960.00'), findsOneWidget);
       final original = tester.widget<Text>(find.text('LKR 1,200.00'));
       expect(original.style?.decoration, TextDecoration.lineThrough);
-      expect(find.bySemanticsLabel('Now LKR 960.00, was LKR 1,200.00'), findsOneWidget);
+      // The price label is merged into the product card's semantics node
+      // (name, indicator, SKU, ...), so match within it rather than exactly.
+      expect(
+        find.bySemanticsLabel(RegExp(r'Now LKR 960\.00, was LKR 1,200\.00')),
+        findsOneWidget,
+      );
       expect(find.text('LKR 500.00'), findsOneWidget);
 
       // Only the discounted product carries the indicator.

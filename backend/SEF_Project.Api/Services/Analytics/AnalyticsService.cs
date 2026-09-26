@@ -160,25 +160,34 @@ public class AnalyticsService : IAnalyticsService
             products = products.Where(p => p.IsActive);
         }
 
+        // Sales are aggregated once per product (a single GROUP BY) rather than
+        // with correlated subqueries per product row, which re-scanned the
+        // order items for every product and again for the sort key.
+        var sales = items
+            .GroupBy(i => i.ProductVariant.ProductId)
+            .Select(g => new
+            {
+                ProductId = g.Key,
+                UnitsSold = g.Sum(i => i.Quantity),
+                OrderCount = g.Select(i => i.OrderId).Distinct().Count(),
+                Revenue = g.Sum(i => (double)i.LineTotal)
+            });
+
         // Starts from Products so products with no sales are included
         // (needed for low performers).
-        var rows = products.Select(p => new ProductRow
-        {
-            ProductId = p.Id,
-            ProductName = p.Name,
-            IsActive = p.IsActive,
-            UnitsSold = items
-                .Where(i => i.ProductVariant.ProductId == p.Id)
-                .Sum(i => (int?)i.Quantity) ?? 0,
-            OrderCount = items
-                .Where(i => i.ProductVariant.ProductId == p.Id)
-                .Select(i => i.OrderId)
-                .Distinct()
-                .Count(),
-            Revenue = items
-                .Where(i => i.ProductVariant.ProductId == p.Id)
-                .Sum(i => (double?)i.LineTotal) ?? 0
-        });
+        var rows =
+            from p in products
+            join s in sales on p.Id equals s.ProductId into productSales
+            from s in productSales.DefaultIfEmpty()
+            select new ProductRow
+            {
+                ProductId = p.Id,
+                ProductName = p.Name,
+                IsActive = p.IsActive,
+                UnitsSold = (int?)s!.UnitsSold ?? 0,
+                OrderCount = (int?)s!.OrderCount ?? 0,
+                Revenue = (double?)s!.Revenue ?? 0
+            };
 
         var descending = IsDescending(query.SortDirection, defaultDescending: true);
 
@@ -428,9 +437,6 @@ public class AnalyticsService : IAnalyticsService
         var (from, to) = ResolveRange(query);
         var span = to - from;
 
-        var current = SaleItems(from, to);
-        var previous = SaleItems(from - span, from);
-
         var variants = _context.ProductVariants.AsNoTracking();
 
         if (!query.IncludeInactive)
@@ -438,22 +444,36 @@ public class AnalyticsService : IAnalyticsService
             variants = variants.Where(v => v.IsActive && v.Product.IsActive);
         }
 
-        var rows = variants.Select(v => new DemandRow
-        {
-            ProductVariantId = v.Id,
-            ProductId = v.ProductId,
-            ProductName = v.Product.Name,
-            Sku = v.Sku,
-            UnitsSold = current
-                .Where(i => i.ProductVariantId == v.Id)
-                .Sum(i => (int?)i.Quantity) ?? 0,
-            PreviousUnitsSold = previous
-                .Where(i => i.ProductVariantId == v.Id)
-                .Sum(i => (int?)i.Quantity) ?? 0,
-            AvailableQuantity = v.Inventory == null
-                ? 0
-                : v.Inventory.QuantityOnHand - v.Inventory.ReservedQuantity
-        });
+        // Each window is aggregated once per variant (a plain GROUP BY) and
+        // joined to the variants. Correlated per-variant subqueries, or a
+        // conditional sum across both windows, made EF re-scan the order
+        // items for every variant.
+        var current = SaleItems(from, to)
+            .GroupBy(i => i.ProductVariantId)
+            .Select(g => new { ProductVariantId = g.Key, UnitsSold = g.Sum(i => i.Quantity) });
+
+        var previous = SaleItems(from - span, from)
+            .GroupBy(i => i.ProductVariantId)
+            .Select(g => new { ProductVariantId = g.Key, UnitsSold = g.Sum(i => i.Quantity) });
+
+        var rows =
+            from v in variants
+            join c in current on v.Id equals c.ProductVariantId into currentSales
+            from c in currentSales.DefaultIfEmpty()
+            join p in previous on v.Id equals p.ProductVariantId into previousSales
+            from p in previousSales.DefaultIfEmpty()
+            select new DemandRow
+            {
+                ProductVariantId = v.Id,
+                ProductId = v.ProductId,
+                ProductName = v.Product.Name,
+                Sku = v.Sku,
+                UnitsSold = (int?)c!.UnitsSold ?? 0,
+                PreviousUnitsSold = (int?)p!.UnitsSold ?? 0,
+                AvailableQuantity = v.Inventory == null
+                    ? 0
+                    : v.Inventory.QuantityOnHand - v.Inventory.ReservedQuantity
+            };
 
         var descending = IsDescending(query.SortDirection, defaultDescending: true);
 
@@ -665,7 +685,7 @@ public class AnalyticsService : IAnalyticsService
         int pageSize,
         CancellationToken cancellationToken)
     {
-        page = Math.Max(page, 1);
+        page = Math.Clamp(page, 1, PagingLimits.MaxPage);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
         var totalCount = await source.CountAsync(cancellationToken);

@@ -63,6 +63,7 @@ public class RevisePromotionAgentRequest
     [Range(1, 10)]
     public int? MaxProposals { get; set; }
 
+    [MaxLength(100)]
     public List<Guid> ExcludeProductIds { get; set; } = new();
 }
 

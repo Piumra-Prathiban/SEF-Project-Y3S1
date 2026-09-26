@@ -771,4 +771,94 @@ public class InventoryPromotionAgentTests
         Assert.Null(await agent.ApproveAsync(Guid.NewGuid(), h.StaffUserId, true, null));
         Assert.Null(await agent.RejectAsync(Guid.NewGuid(), h.StaffUserId, null));
     }
+
+    // ---- Concurrent reviews --------------------------------------------------------
+
+    /// <summary>
+    /// A second reviewer (or a double click) whose request read the workflow
+    /// before the first decision was saved. Its context still holds the stale
+    /// "awaiting approval" state, exactly as a concurrent request would.
+    /// </summary>
+    private static async Task<(InventoryPromotionAgentService Agent, AppDbContext Context)> StaleReviewerAsync(
+        Harness h,
+        Guid workflowId)
+    {
+        var context = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
+            .UseSqlite(h.Context.Database.GetDbConnection())
+            .Options);
+
+        await context.AgentWorkflows
+            .Include(w => w.Steps)
+            .Include(w => w.Approvals)
+            .SingleAsync(w => w.Id == workflowId);
+
+        var agent = new InventoryPromotionAgentService(
+            context, h.Registry(), new LocalPromotionProposalModel(), h.PromotionService(),
+            Options.Create(h.AgentOptions), h.Clock, NullLogger<InventoryPromotionAgentService>.Instance);
+
+        return (agent, context);
+    }
+
+    [Fact]
+    public async Task ApproveAsync_ShouldNotCreatePromotionsTwice_WhenAnotherReviewerAlreadyApproved()
+    {
+        await using var h = await Harness.CreateAsync();
+        await h.SeedDecliningSalesAsync(4, 3);
+        var agent = h.Agent();
+        var started = await agent.StartAsync(StartRequest());
+        var (secondAgent, secondContext) = await StaleReviewerAsync(h, started.WorkflowId);
+        await using var _ = secondContext;
+
+        await agent.ApproveAsync(started.WorkflowId, h.StaffUserId, reviewerIsAdministrator: false, null);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            secondAgent.ApproveAsync(started.WorkflowId, h.AdminUserId, reviewerIsAdministrator: true, null));
+
+        var created = await h.Context.Promotions
+            .CountAsync(p => p.Description!.Contains(started.WorkflowId.ToString()));
+        Assert.Equal(1, created);
+    }
+
+    [Fact]
+    public async Task RejectAsync_ShouldNotOverrideAnApproval_WhenAnotherReviewerAlreadyApproved()
+    {
+        await using var h = await Harness.CreateAsync();
+        await h.SeedDecliningSalesAsync(4, 3);
+        var agent = h.Agent();
+        var started = await agent.StartAsync(StartRequest());
+        var (secondAgent, secondContext) = await StaleReviewerAsync(h, started.WorkflowId);
+        await using var _ = secondContext;
+
+        await agent.ApproveAsync(started.WorkflowId, h.StaffUserId, reviewerIsAdministrator: false, null);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            secondAgent.RejectAsync(started.WorkflowId, h.AdminUserId, "Changed my mind."));
+
+        var final = await agent.GetAsync(started.WorkflowId);
+        Assert.Equal(AgentWorkflowStatus.Completed, final!.Status);
+        var approval = Assert.Single(final.Approvals);
+        Assert.Equal(ApprovalStatus.Approved, approval.Status);
+        Assert.Equal(h.StaffUserId, approval.ReviewedByUserId);
+    }
+
+    [Fact]
+    public async Task ReviseAsync_ShouldNotRestartTheWorkflow_WhenAnotherReviewerAlreadyApproved()
+    {
+        await using var h = await Harness.CreateAsync();
+        await h.SeedDecliningSalesAsync(4, 3);
+        var agent = h.Agent();
+        var started = await agent.StartAsync(StartRequest());
+        var (secondAgent, secondContext) = await StaleReviewerAsync(h, started.WorkflowId);
+        await using var _ = secondContext;
+
+        await agent.ApproveAsync(started.WorkflowId, h.StaffUserId, reviewerIsAdministrator: false, null);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            secondAgent.ReviseAsync(started.WorkflowId, h.AdminUserId,
+                new RevisePromotionAgentRequest { Comment = "Lower the discount." }));
+
+        var final = await agent.GetAsync(started.WorkflowId);
+        Assert.Equal(AgentWorkflowStatus.Completed, final!.Status);
+        Assert.Single(final.Approvals);
+    }
 }

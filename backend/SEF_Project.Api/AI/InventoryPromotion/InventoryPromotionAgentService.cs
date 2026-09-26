@@ -363,9 +363,8 @@ public sealed class InventoryPromotionAgentService : IInventoryPromotionAgent
             throw new InvalidOperationException("High-impact proposals must be approved by an Administrator.");
         }
 
-        Decide(approval, ApprovalStatus.Approved, reviewerUserId, comment, $"Approved by user {reviewerUserId}.");
-        workflow.Status = AgentWorkflowStatus.InProgress;
-        await _context.SaveChangesAsync(cancellationToken);
+        await DecideAtomicallyAsync(workflow, approval, ApprovalStatus.Approved, reviewerUserId, comment,
+            $"Approved by user {reviewerUserId}.", w => w.Status = AgentWorkflowStatus.InProgress, cancellationToken);
 
         _logger.LogInformation("Workflow {WorkflowId} approved by user {UserId}.", workflow.Id, reviewerUserId);
 
@@ -451,12 +450,13 @@ public sealed class InventoryPromotionAgentService : IInventoryPromotionAgent
         }
 
         var approval = PendingApproval(workflow, "rejected");
-        Decide(approval, ApprovalStatus.Rejected, reviewerUserId, comment, $"Rejected by user {reviewerUserId}.");
-
-        workflow.Status = AgentWorkflowStatus.Cancelled;
-        workflow.CompletedAt = Now();
-        workflow.FinalOutcome = "Proposal rejected by the reviewer; nothing was changed.";
-        await _context.SaveChangesAsync(cancellationToken);
+        await DecideAtomicallyAsync(workflow, approval, ApprovalStatus.Rejected, reviewerUserId, comment,
+            $"Rejected by user {reviewerUserId}.", w =>
+            {
+                w.Status = AgentWorkflowStatus.Cancelled;
+                w.CompletedAt = Now();
+                w.FinalOutcome = "Proposal rejected by the reviewer; nothing was changed.";
+            }, cancellationToken);
 
         _logger.LogInformation("Workflow {WorkflowId} rejected by user {UserId}.", workflow.Id, reviewerUserId);
 
@@ -484,9 +484,6 @@ public sealed class InventoryPromotionAgentService : IInventoryPromotionAgent
         }
 
         var comment = request.Comment.Trim();
-        Decide(approval, ApprovalStatus.RevisionRequested, reviewerUserId, comment,
-            $"Revision requested by user {reviewerUserId}.");
-
         var current = ReadInput(workflow);
         var input = current with
         {
@@ -497,9 +494,12 @@ public sealed class InventoryPromotionAgentService : IInventoryPromotionAgent
                 .ToList()
         };
 
-        workflow.PlanSummary = SerializePlan(input);
-        workflow.Status = AgentWorkflowStatus.Planning;
-        await _context.SaveChangesAsync(cancellationToken);
+        await DecideAtomicallyAsync(workflow, approval, ApprovalStatus.RevisionRequested, reviewerUserId, comment,
+            $"Revision requested by user {reviewerUserId}.", w =>
+            {
+                w.PlanSummary = SerializePlan(input);
+                w.Status = AgentWorkflowStatus.Planning;
+            }, cancellationToken);
 
         _logger.LogInformation("Workflow {WorkflowId} revision {Revision} requested by user {UserId}.",
             workflow.Id, revisions + 1, reviewerUserId);
@@ -629,6 +629,42 @@ public sealed class InventoryPromotionAgentService : IInventoryPromotionAgent
             StartedAt = startedAt,
             CompletedAt = Now()
         });
+    }
+
+    /// <summary>
+    /// Records a review decision so that only one reviewer can decide an
+    /// approval. The conditional UPDATE matches only while the approval is
+    /// still pending, so of two concurrent reviews (two reviewers, or a double
+    /// click) exactly one wins and the other gets a conflict before anything
+    /// is created. The check on the loaded entity alone is not enough: both
+    /// requests can read "pending" before either one saves.
+    /// </summary>
+    private async Task DecideAtomicallyAsync(
+        AgentWorkflow workflow,
+        AgentApproval approval,
+        ApprovalStatus status,
+        int reviewerUserId,
+        string? comment,
+        string stepSummary,
+        Action<AgentWorkflow> updateWorkflow,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        var claimed = await _context.AgentApprovals
+            .Where(a => a.Id == approval.Id && a.Status == ApprovalStatus.Pending)
+            .ExecuteUpdateAsync(s => s.SetProperty(a => a.Status, status), cancellationToken);
+
+        if (claimed == 0)
+        {
+            throw new InvalidOperationException(
+                "This proposal has already been reviewed. Reload the workflow to see the decision.");
+        }
+
+        Decide(approval, status, reviewerUserId, comment, stepSummary);
+        updateWorkflow(workflow);
+        await _context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     private void Decide(AgentApproval approval, ApprovalStatus status, int reviewerUserId, string? comment, string stepSummary)

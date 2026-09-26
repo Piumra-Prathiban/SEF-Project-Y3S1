@@ -31,7 +31,7 @@ public class PromotionService : IPromotionService
         PromotionQuery query,
         CancellationToken cancellationToken = default)
     {
-        var page = Math.Max(query.Page, 1);
+        var page = Math.Clamp(query.Page, 1, PagingLimits.MaxPage);
         var pageSize = Math.Clamp(query.PageSize, 1, 100);
 
         var promotions = VisiblePromotions(canManagePromotions);
