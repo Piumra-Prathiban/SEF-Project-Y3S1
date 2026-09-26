@@ -37,6 +37,13 @@ public class MarketingApiFactory : WebApplicationFactory<Program>
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
     private readonly MutableTimeProvider _timeProvider = new(Now);
 
+    // A real, persisted User per role, keyed by role name. CreateClientAs's
+    // tokens carry these ids (never a made-up one), so any code path that
+    // saves "who did this" as a foreign key (e.g. AgentApproval.
+    // ReviewedByUserId) finds a row that actually exists -- exactly like a
+    // real login always would.
+    private readonly Dictionary<string, int> _fixtureUserIds = new();
+
     public MarketingApiFactory()
     {
         _connection.Open();
@@ -60,10 +67,10 @@ public class MarketingApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Jwt:ExpiryMinutes", TestJwtSettings.ExpiryMinutes.ToString());
         builder.UseSetting("ConnectionStrings:DefaultConnection", "Host=unused");
 
-        // The app's own console logging (including EF Core's verbose SQL
-        // logs) otherwise interleaves with each test's own captured output;
-        // this keeps that output readable.
-        builder.ConfigureLogging(logging => logging.ClearProviders());
+        // EF Core's verbose SQL logging otherwise interleaves with each
+        // test's own captured output; Warning+ keeps that output readable
+        // while still surfacing real exceptions (Error) when a test fails.
+        builder.ConfigureLogging(logging => logging.SetMinimumLevel(LogLevel.Warning));
 
         builder.ConfigureServices(services =>
         {
@@ -80,13 +87,44 @@ public class MarketingApiFactory : WebApplicationFactory<Program>
         var host = base.CreateHost(builder);
 
         using var scope = host.Services.CreateScope();
-        scope.ServiceProvider.GetRequiredService<AppDbContext>()
-            .Database.EnsureCreated();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        context.Database.EnsureCreated();
+        SeedFixtureUsers(context);
 
         return host;
     }
 
-    /// <summary>Creates a client; pass a role name to send a matching JWT.</summary>
+    private void SeedFixtureUsers(AppDbContext context)
+    {
+        // RoleId matches the seeded Roles table: 1 Customer, 2 Staff, 3 Administrator.
+        foreach (var (role, roleId) in new[] { ("Customer", 1), ("Staff", 2), ("Administrator", 3) })
+        {
+            var user = new User
+            {
+                Email = $"fixture-{role.ToLowerInvariant()}@test.com",
+                PasswordHash = "not-used-tokens-are-minted-directly",
+                FirstName = "Fixture",
+                LastName = role,
+                RoleId = roleId,
+                IsActive = true,
+            };
+            context.Users.Add(user);
+            _fixtureUserIds[role] = 0; // placeholder; replaced with the real id below
+        }
+
+        context.SaveChanges();
+
+        foreach (var user in context.Users.Local)
+        {
+            if (_fixtureUserIds.ContainsKey(user.LastName))
+            {
+                _fixtureUserIds[user.LastName] = user.Id;
+            }
+        }
+    }
+
+    /// <summary>Creates a client; pass a role name to send a matching JWT
+    /// for that role's real, persisted fixture user.</summary>
     public HttpClient CreateClientAs(string? role)
     {
         var client = CreateClient();
@@ -100,14 +138,23 @@ public class MarketingApiFactory : WebApplicationFactory<Program>
         return client;
     }
 
-    private static string CreateToken(string role)
+    /// <summary>The database id backing <see cref="CreateClientAs"/> for this role.</summary>
+    public int FixtureUserId(string role) => _fixtureUserIds[role];
+
+    private string CreateToken(string role)
     {
         var jwtService = new JwtService(Options.Create(TestJwtSettings));
 
+        if (!_fixtureUserIds.TryGetValue(role, out var userId))
+        {
+            throw new ArgumentException(
+                $"No fixture user is seeded for role '{role}'. Add it to SeedFixtureUsers.", nameof(role));
+        }
+
         return jwtService.GenerateToken(new User
         {
-            Id = 1000,
-            Email = $"{role.ToLowerInvariant()}@test.com",
+            Id = userId,
+            Email = $"fixture-{role.ToLowerInvariant()}@test.com",
             Role = new Role { Name = role }
         });
     }
