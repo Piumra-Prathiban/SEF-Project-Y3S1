@@ -38,14 +38,14 @@ If no product qualifies, the workflow completes without asking for approval.
 ```json
 {
   "objective": "Find products with declining sales and recommend suitable promotions.",
-  "focus": "DecliningSales",
+  "focus": 0,
   "analysisDays": 30,
   "maxProposals": 5,
   "maxDiscountPercent": 30
 }
 ```
 
-`objective` 10–500 chars; `focus` `DecliningSales` | `SlowMoving`;
+`objective` 10–500 chars; `focus` is numeric over HTTP (`0` = `DecliningSales`, `1` = `SlowMoving`);
 `analysisDays` 7–90; `maxProposals` 1–10; `maxDiscountPercent` 1–50.
 Staff or Administrator only.
 
@@ -134,7 +134,7 @@ Any failure means the workflow ends as `Failed` (`ValidationFailed`) and nothing
   - records `RevisionRequested`
   - runs a new proposal cycle under the new limits
   - is capped at 3 revisions
-- Decisions are only accepted while the workflow is `AwaitingApproval`.
+- Decisions are only accepted while the workflow is `AwaitingApproval`, and each approval can be decided once: approve, reject and revise claim it with a conditional `UPDATE … WHERE Status = 'Pending'` inside a transaction, so concurrent reviews cannot both act (the loser gets 409).
 
 ## Safe failure
 

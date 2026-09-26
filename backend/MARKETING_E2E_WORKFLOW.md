@@ -269,8 +269,8 @@ dotnet test backend/SEF_Project.Api.Tests --filter FullyQualifiedName~ClientBoun
 
 ## What is and is not covered here
 
-- **Flutter was not actually run** for this phase — there is no Flutter SDK
-  on this machine (noted since Phase 08). Step 15–16 is verified by
+- **Flutter was not run when this phase was written** (no Flutter SDK on the machine). It was
+  run later, in Phase 13: 38 / 38 Flutter tests pass. Step 15–16 is verified by
   exercising the exact HTTP contract Flutter's `ApiClient` and
   `ProductDetailScreen` depend on, with real data produced by the real
   agent and a real approval, which is the strongest check available
