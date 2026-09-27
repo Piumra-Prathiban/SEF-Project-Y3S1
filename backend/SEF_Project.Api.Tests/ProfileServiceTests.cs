@@ -19,8 +19,11 @@ public class ProfileServiceTests
     [Fact]
     public void ProfileController_RequiresAuthentication()
     {
-        Assert.NotNull(typeof(ProfileController)
-            .GetCustomAttribute<AuthorizeAttribute>());
+        var authorization = typeof(ProfileController)
+            .GetCustomAttribute<AuthorizeAttribute>();
+
+        Assert.NotNull(authorization);
+        Assert.Equal("Customer", authorization.Roles);
     }
 
     [Fact]

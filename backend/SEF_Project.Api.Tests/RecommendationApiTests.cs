@@ -83,8 +83,11 @@ public class RecommendationApiTests
     [Fact]
     public void RecommendationsController_RequiresAuthentication()
     {
-        Assert.NotNull(typeof(RecommendationsController)
-            .GetCustomAttribute<AuthorizeAttribute>());
+        var authorization = typeof(RecommendationsController)
+            .GetCustomAttribute<AuthorizeAttribute>();
+
+        Assert.NotNull(authorization);
+        Assert.Equal("Customer", authorization.Roles);
     }
 
     [Fact]

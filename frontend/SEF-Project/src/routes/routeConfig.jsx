@@ -6,6 +6,7 @@ import { InventoryDashboardPage, LowStockPage } from '../features/inventory';
 import { StockHistoryPage } from '../features/inventory/StockHistoryPage';
 import { InventoryAgentPage } from '../features/inventory-agent';
 import OrdersListPage from '../features/orders/OrdersListPage';
+import ReturnsListPage from '../features/orders/ReturnsListPage';
 import { ProfilePage } from '../features/profile';
 import { ProductsPage } from '../features/products';
 import { PurchaseOrdersPage } from '../features/purchase-orders';
@@ -39,9 +40,16 @@ export const memberOneRoutes = [
     showInNavigation: true,
   },
   {
+    path: '/returns',
+    label: 'Returns',
+    element: <ReturnsListPage />,
+    showInNavigation: true,
+  },
+  {
     path: '/wishlist',
     label: 'Wishlist',
     element: <WishlistPage />,
+    roles: [ROLES.customer],
     showInNavigation: true,
   },
   {
@@ -55,6 +63,7 @@ export const memberOneRoutes = [
     path: '/profile',
     label: 'Profile',
     element: <ProfilePage />,
+    roles: [ROLES.customer],
     showInNavigation: true,
   },
   {

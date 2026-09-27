@@ -4,11 +4,13 @@ import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSessionGuard } from '../../hooks/useSessionGuard';
 import { formatCurrency } from '../../utils/format';
 import { getWishlist, removeWishlistItem } from './wishlistService';
 
 export function WishlistPage() {
   const { token } = useAuth();
+  const guardSessionExpiry = useSessionGuard();
 
   const [wishlist, setWishlist] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,11 +24,13 @@ export function WishlistPage() {
     try {
       setWishlist(await getWishlist(token));
     } catch (requestError) {
-      setError(requestError?.message || 'Your wishlist could not be loaded.');
+      if (!guardSessionExpiry(requestError)) {
+        setError(requestError?.message || 'Your wishlist could not be loaded.');
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [token, guardSessionExpiry]);
 
   useEffect(() => {
     // This effect intentionally loads the wishlist for the signed-in customer.
@@ -46,7 +50,9 @@ export function WishlistPage() {
         count: current.count - 1,
       }));
     } catch (requestError) {
-      setError(requestError?.message || 'The product could not be removed.');
+      if (!guardSessionExpiry(requestError)) {
+        setError(requestError?.message || 'The product could not be removed.');
+      }
     } finally {
       setBusyProductId('');
     }

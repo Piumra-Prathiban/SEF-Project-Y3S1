@@ -101,7 +101,15 @@ authoritatively verified.
   agent workflow tables.
 - Tool summaries omit names, free-form preferences, and hidden reasoning. No chain-of-thought is recorded.
 
-`IPersonalStylistRecommendationModel` is the replaceable model boundary. The registered implementation uses a deterministic, catalogue-grounded selection policy, so the feature remains safe and testable without giving a model direct database access. Any future AI provider implementation must retain the same structured output contract and final grounding validator.
+`IPersonalStylistRecommendationModel` is the replaceable model boundary. The
+safe default is the deterministic `GroundedPersonalStylistModel`. Setting
+`PersonalStylistAgent__Provider=OpenAI` and supplying
+`PersonalStylistAgent__ApiKey` selects `OpenAiPersonalStylistModel`, which calls
+the Responses API with a strict JSON schema. The model sees only structured
+results already collected through the allow-listed tools; it never receives a
+database connection, authentication token, or customer identity. Both providers
+use the same final grounding validator, so model output cannot override current
+catalogue, price, stock, option, or budget facts.
 
 ## Shared workflow integration
 

@@ -1955,6 +1955,119 @@ namespace SEF_Project.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("SEF_Project.Api.Models.Orders.ProductReturn", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CustomerNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("ReceivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("RefundAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime?>("RefundedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReturnNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ReviewedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StaffNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RequestedAt");
+
+                    b.HasIndex("ReturnNumber")
+                        .IsUnique();
+
+                    b.HasIndex("ReviewedByUserId");
+
+                    b.HasIndex("OrderId", "Status");
+
+                    b.ToTable("Returns", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Returns_RefundAmount", "\"RefundAmount\" >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Orders.ReturnItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OrderItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProductReturnId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("UnitRefundAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderItemId");
+
+                    b.HasIndex("ProductReturnId");
+
+                    b.ToTable("ReturnItems", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ReturnItems_Quantity", "\"Quantity\" > 0");
+
+                            t.HasCheckConstraint("CK_ReturnItems_UnitRefundAmount", "\"UnitRefundAmount\" >= 0");
+                        });
+                });
+
             modelBuilder.Entity("SEF_Project.Api.Models.Orders.Shipment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2564,6 +2677,43 @@ namespace SEF_Project.Api.Migrations
                     b.Navigation("Order");
                 });
 
+            modelBuilder.Entity("SEF_Project.Api.Models.Orders.ProductReturn", b =>
+                {
+                    b.HasOne("SEF_Project.Api.Models.Orders.Order", "Order")
+                        .WithMany("Returns")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SEF_Project.Api.Models.User", "ReviewedByUser")
+                        .WithMany()
+                        .HasForeignKey("ReviewedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Order");
+
+                    b.Navigation("ReviewedByUser");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Orders.ReturnItem", b =>
+                {
+                    b.HasOne("SEF_Project.Api.Models.Orders.OrderItem", "OrderItem")
+                        .WithMany("ReturnItems")
+                        .HasForeignKey("OrderItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SEF_Project.Api.Models.Orders.ProductReturn", "ProductReturn")
+                        .WithMany("Items")
+                        .HasForeignKey("ProductReturnId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OrderItem");
+
+                    b.Navigation("ProductReturn");
+                });
+
             modelBuilder.Entity("SEF_Project.Api.Models.Orders.Shipment", b =>
                 {
                     b.HasOne("SEF_Project.Api.Models.Orders.Order", "Order")
@@ -2740,9 +2890,21 @@ namespace SEF_Project.Api.Migrations
 
                     b.Navigation("Payments");
 
+                    b.Navigation("Returns");
+
                     b.Navigation("Shipments");
 
                     b.Navigation("StatusHistory");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Orders.OrderItem", b =>
+                {
+                    b.Navigation("ReturnItems");
+                });
+
+            modelBuilder.Entity("SEF_Project.Api.Models.Orders.ProductReturn", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("SEF_Project.Api.Models.Role", b =>

@@ -23,7 +23,7 @@ export function StorefrontChrome({ children }) {
             <Link className="storefront__account" to={isStaff(user) ? '/dashboard' : '/profile'}>{isStaff(user) ? 'Dashboard' : 'Account'}</Link>
             <button className="storefront__logout" onClick={logout} type="button">Sign out</button>
           </> : <Link className="storefront__sign-in" to="/login">Sign in</Link>}
-          <Link className="storefront__cart" to="/cart">Cart{itemCount > 0 ? ` (${itemCount})` : ''}<span aria-hidden="true">↗</span></Link>
+          {(!isAuthenticated || !isStaff(user)) && <Link className="storefront__cart" to="/cart">Cart{itemCount > 0 ? ` (${itemCount})` : ''}<span aria-hidden="true">↗</span></Link>}
         </div>
       </header>
       {children}

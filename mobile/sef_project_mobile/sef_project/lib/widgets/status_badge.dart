@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/order_enums.dart';
 
-enum StatusKind { order, payment, shipment }
+enum StatusKind { order, payment, shipment, productReturn }
 
 /// Mirrors the React `StatusBadge` component: a pill showing the status name
 /// resolved from the shared integer wire values.
@@ -16,6 +16,7 @@ class StatusBadge extends StatelessWidget {
     StatusKind.order: orderStatusNames,
     StatusKind.payment: paymentStatusNames,
     StatusKind.shipment: shipmentStatusNames,
+    StatusKind.productReturn: returnStatusNames,
   };
 
   static const Map<String, Color> _colors = {
@@ -29,6 +30,10 @@ class StatusBadge extends StatelessWidget {
     'Refunded': Color(0xFF4B5563),
     'Shipped': Color(0xFF1D4ED8),
     'Delivered': Color(0xFF15803D),
+    'Requested': Color(0xFF6B7280),
+    'Approved': Color(0xFF1D4ED8),
+    'Received': Color(0xFF15803D),
+    'Rejected': Color(0xFFB91C1C),
   };
 
   @override

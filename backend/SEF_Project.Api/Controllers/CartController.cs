@@ -8,7 +8,7 @@ namespace SEF_Project.Api.Controllers;
 
 [ApiController]
 [Route("api/cart")]
-[Authorize]
+[Authorize(Roles = "Customer")]
 public class CartController : ControllerBase
 {
     private readonly ICartService _cartService;

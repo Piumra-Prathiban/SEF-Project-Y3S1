@@ -8,7 +8,7 @@ namespace SEF_Project.Api.Controllers;
 
 [ApiController]
 [Route("api/profile")]
-[Authorize]
+[Authorize(Roles = "Customer")]
 public class ProfileController : ControllerBase
 {
     private readonly IProfileService _profileService;

@@ -166,3 +166,68 @@ public class ShipmentConfiguration : IEntityTypeConfiguration<Shipment>
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
+
+public class ProductReturnConfiguration : IEntityTypeConfiguration<ProductReturn>
+{
+    public void Configure(EntityTypeBuilder<ProductReturn> builder)
+    {
+        builder.ToTable("Returns", table =>
+        {
+            table.HasCheckConstraint(
+                "CK_Returns_RefundAmount",
+                "\"RefundAmount\" >= 0");
+        });
+
+        builder.HasKey(e => e.Id);
+        builder.Property(e => e.ReturnNumber).IsRequired().HasMaxLength(50);
+        builder.Property(e => e.Status).HasConversion<string>().HasMaxLength(50);
+        builder.Property(e => e.Reason).HasConversion<string>().HasMaxLength(50);
+        builder.Property(e => e.CustomerNote).HasMaxLength(1000);
+        builder.Property(e => e.StaffNote).HasMaxLength(1000);
+        builder.Property(e => e.RefundAmount).HasPrecision(18, 2);
+
+        builder.HasIndex(e => e.ReturnNumber).IsUnique();
+        builder.HasIndex(e => new { e.OrderId, e.Status });
+        builder.HasIndex(e => e.RequestedAt);
+
+        builder.HasOne(e => e.Order)
+            .WithMany(e => e.Returns)
+            .HasForeignKey(e => e.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(e => e.ReviewedByUser)
+            .WithMany()
+            .HasForeignKey(e => e.ReviewedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public class ReturnItemConfiguration : IEntityTypeConfiguration<ReturnItem>
+{
+    public void Configure(EntityTypeBuilder<ReturnItem> builder)
+    {
+        builder.ToTable("ReturnItems", table =>
+        {
+            table.HasCheckConstraint(
+                "CK_ReturnItems_Quantity",
+                "\"Quantity\" > 0");
+            table.HasCheckConstraint(
+                "CK_ReturnItems_UnitRefundAmount",
+                "\"UnitRefundAmount\" >= 0");
+        });
+
+        builder.HasKey(e => e.Id);
+        builder.Property(e => e.UnitRefundAmount).HasPrecision(18, 2);
+        builder.HasIndex(e => e.OrderItemId);
+
+        builder.HasOne(e => e.ProductReturn)
+            .WithMany(e => e.Items)
+            .HasForeignKey(e => e.ProductReturnId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(e => e.OrderItem)
+            .WithMany(e => e.ReturnItems)
+            .HasForeignKey(e => e.OrderItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}

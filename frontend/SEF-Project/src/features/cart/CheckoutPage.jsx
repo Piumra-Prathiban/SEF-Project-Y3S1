@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Alert } from '../../components/ui/Alert';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { useAuth } from '../../contexts/AuthContext';
-import { createOrder, createPayment, PaymentMethod } from '../../services/orderService';
+import { useSessionGuard } from '../../hooks/useSessionGuard';
+import { getAddresses, getProfile } from '../profile/profileService';
+import { createOrder, PaymentMethod } from '../../services/orderService';
 import { formatCurrency } from '../../utils/format';
 import { useCart } from './CartContext';
 import '../storefront/storefront.css';
@@ -17,6 +19,7 @@ const PAYMENT_METHOD_LABELS = {
 
 export function CheckoutPage() {
   const { token } = useAuth();
+  const guardSessionExpiry = useSessionGuard();
   const { items, estimatedSubtotal, clearCart } = useCart();
 
   const [address, setAddress] = useState({
@@ -30,9 +33,41 @@ export function CheckoutPage() {
     phone: '',
   });
   const [paymentMethod, setPaymentMethod] = useState(String(PaymentMethod.Card));
+  const [couponCode, setCouponCode] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [placedOrder, setPlacedOrder] = useState(null);
+  const [savedDetailsWarning, setSavedDetailsWarning] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+
+    Promise.all([getProfile(token), getAddresses(token)])
+      .then(([profile, addresses]) => {
+        if (!active) return;
+
+        const defaultAddress = addresses.find((item) => item.isDefault) ?? addresses[0];
+        setAddress((current) => ({
+          ...current,
+          fullName: current.fullName || [profile.firstName, profile.lastName].filter(Boolean).join(' '),
+          line1: current.line1 || defaultAddress?.addressLine1 || '',
+          line2: current.line2 || defaultAddress?.addressLine2 || '',
+          city: current.city || defaultAddress?.city || '',
+          province: current.province || defaultAddress?.province || '',
+          postalCode: current.postalCode || defaultAddress?.postalCode || '',
+          country: defaultAddress?.country || current.country || 'Sri Lanka',
+        }));
+      })
+      .catch((requestError) => {
+        if (active && !guardSessionExpiry(requestError)) {
+          setSavedDetailsWarning(
+            'Saved profile details could not be loaded. You can still enter the delivery address below.',
+          );
+        }
+      });
+
+    return () => { active = false; };
+  }, [token, guardSessionExpiry]);
 
   function updateAddress(field, value) {
     setAddress((current) => ({ ...current, [field]: value }));
@@ -61,23 +96,11 @@ export function CheckoutPage() {
           phone: address.phone || null,
         },
         paymentMethod: Number(paymentMethod),
+        couponCode: couponCode.trim() || null,
       });
 
-      // The order exists from here on, so a payment failure must not lose it:
-      // record the chosen method as a pending payment and warn instead.
-      let paymentWarning = null;
-
-      try {
-        await createPayment(token, order.id, {
-          method: Number(paymentMethod),
-          amount: order.total,
-        });
-      } catch {
-        paymentWarning = 'Your order is placed, but the payment could not be recorded. Record it from the order page.';
-      }
-
       clearCart();
-      setPlacedOrder({ ...order, paymentWarning });
+      setPlacedOrder(order);
     } catch (err) {
       setError(err?.message || 'The order could not be placed.');
     } finally {
@@ -95,8 +118,10 @@ export function CheckoutPage() {
             Your payment is recorded as pending until staff confirm it.
           </p>
 
-          {placedOrder.paymentWarning && (
-            <Alert tone="danger">{placedOrder.paymentWarning}</Alert>
+          {placedOrder.discountTotal > 0 && (
+            <Alert>
+              You saved {formatCurrency(placedOrder.discountTotal, placedOrder.currency)}.
+            </Alert>
           )}
           <p>
             <Link className="storefront__cta" to={`/orders/${placedOrder.id}`}>
@@ -132,6 +157,8 @@ export function CheckoutPage() {
         <div className="checkout">
           <form className="checkout__form" onSubmit={handleSubmit}>
             <h2>Delivery address</h2>
+
+            {savedDetailsWarning && <Alert>{savedDetailsWarning}</Alert>}
 
             <div className="checkout__grid">
               <label>
@@ -197,6 +224,15 @@ export function CheckoutPage() {
             </div>
 
             <h2>Payment</h2>
+            <label>
+              Coupon code <span className="checkout__optional">Optional</span>
+              <input
+                autoCapitalize="characters"
+                onChange={(event) => setCouponCode(event.target.value.toUpperCase())}
+                placeholder="Enter a code"
+                value={couponCode}
+              />
+            </label>
             <label>
               Payment method
               <select

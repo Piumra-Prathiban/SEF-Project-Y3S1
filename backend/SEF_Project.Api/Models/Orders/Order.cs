@@ -35,5 +35,8 @@ public class Order : GuidEntity
 
     public ICollection<Shipment> Shipments { get; set; } = new List<Shipment>();
 
+    public ICollection<ProductReturn> Returns { get; set; } =
+        new List<ProductReturn>();
+
     public OrderAddress? DeliveryAddress { get; set; }
 }

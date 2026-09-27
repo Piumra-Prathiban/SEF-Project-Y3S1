@@ -13,6 +13,17 @@ namespace SEF_Project.Api.Tests;
 public class OrderServiceTests
 {
     private const string TShirtXsSku = "TSH-CLS-XS";
+    private sealed class NoPromotionTimeProvider : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() =>
+            new(new DateTime(2030, 1, 1, 12, 0, 0, DateTimeKind.Utc));
+    }
+
+    private static OrderService Service(AppDbContext context) =>
+        new(
+            context,
+            NullLogger<OrderService>.Instance,
+            new NoPromotionTimeProvider());
 
     private static async Task<(SqliteConnection Connection, AppDbContext Context)>
         CreateContextAsync()
@@ -89,9 +100,7 @@ public class OrderServiceTests
         var variant = await context.ProductVariants
             .FirstAsync(v => v.Sku == TShirtXsSku);
 
-        var service = new OrderService(
-            context,
-            NullLogger<OrderService>.Instance);
+        var service = Service(context);
 
         var response = await service.CreateOrderAsync(
             userId,
@@ -100,6 +109,7 @@ public class OrderServiceTests
         var order = await context.Orders
             .Include(o => o.Items)
             .Include(o => o.DeliveryAddress)
+            .Include(o => o.Payments)
             .SingleAsync();
 
         Assert.Equal(OrderStatus.Pending, order.Status);
@@ -115,6 +125,10 @@ public class OrderServiceTests
 
         Assert.NotNull(order.DeliveryAddress);
         Assert.Equal("Colombo", order.DeliveryAddress.City);
+        var payment = Assert.Single(order.Payments);
+        Assert.Equal(PaymentMethod.Card, payment.Method);
+        Assert.Equal(PaymentStatus.Pending, payment.Status);
+        Assert.Equal(order.Total, payment.Amount);
         Assert.Single(response.StatusHistory);
     }
 
@@ -137,9 +151,7 @@ public class OrderServiceTests
             .SingleAsync(i => i.ProductVariantId == variant.Id))
             .ReservedQuantity;
 
-        var service = new OrderService(
-            context,
-            NullLogger<OrderService>.Instance);
+        var service = Service(context);
 
         await service.CreateOrderAsync(
             userId,
@@ -175,9 +187,7 @@ public class OrderServiceTests
         await context.Database.EnsureCreatedAsync();
 
         var userId = await SeedCustomerAsync(context);
-        var service = new OrderService(
-            context,
-            NullLogger<OrderService>.Instance);
+        var service = Service(context);
 
         await Assert.ThrowsAsync<ArgumentException>(() =>
             service.CreateOrderAsync(
@@ -201,9 +211,7 @@ public class OrderServiceTests
         var variant = await context.ProductVariants
             .FirstAsync(v => v.Sku == TShirtXsSku);
 
-        var service = new OrderService(
-            context,
-            NullLogger<OrderService>.Instance);
+        var service = Service(context);
 
         await Assert.ThrowsAsync<ArgumentException>(() =>
             service.CreateOrderAsync(
@@ -227,9 +235,7 @@ public class OrderServiceTests
         var variant = await context.ProductVariants
             .FirstAsync(v => v.Sku == TShirtXsSku);
 
-        var service = new OrderService(
-            context,
-            NullLogger<OrderService>.Instance);
+        var service = Service(context);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.CreateOrderAsync(
@@ -256,9 +262,7 @@ public class OrderServiceTests
             .SingleAsync(i => i.ProductVariantId == variant.Id))
             .ReservedQuantity;
 
-        var service = new OrderService(
-            context,
-            NullLogger<OrderService>.Instance);
+        var service = Service(context);
 
         var request = OrderRequest(variant.Id, 1);
         request.Items.Add(new CreateOrderItemRequest
@@ -298,9 +302,7 @@ public class OrderServiceTests
             .FirstAsync(v => v.Sku == TShirtXsSku);
         var originalPrice = variant.Price;
 
-        var service = new OrderService(
-            context,
-            NullLogger<OrderService>.Instance);
+        var service = Service(context);
 
         var response = await service.CreateOrderAsync(
             userId,

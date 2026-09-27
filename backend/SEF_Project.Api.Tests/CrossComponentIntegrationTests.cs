@@ -13,6 +13,12 @@ namespace SEF_Project.Api.Tests;
 
 public class CrossComponentIntegrationTests
 {
+    private sealed class NoPromotionTimeProvider : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() =>
+            new(new DateTime(2030, 1, 1, 12, 0, 0, DateTimeKind.Utc));
+    }
+
     [Fact]
     public async Task CartToCheckoutHandoff_ShouldUseAuthoritativeCatalogueData()
     {
@@ -79,7 +85,8 @@ public class CrossComponentIntegrationTests
 
         var orderService = new OrderService(
             context,
-            NullLogger<OrderService>.Instance);
+            NullLogger<OrderService>.Instance,
+            new NoPromotionTimeProvider());
         var order = await orderService.CreateOrderAsync(user.Id, request);
 
         var orderItem = Assert.Single(order.Items);

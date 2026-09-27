@@ -8,7 +8,7 @@ namespace SEF_Project.Api.Controllers;
 
 [ApiController]
 [Route("api/wishlist")]
-[Authorize]
+[Authorize(Roles = "Customer")]
 public class WishlistController : ControllerBase
 {
     private readonly IWishlistService _wishlistService;

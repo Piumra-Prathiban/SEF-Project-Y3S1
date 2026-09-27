@@ -190,13 +190,22 @@ export async function getSuppliers(token) {
  * @returns {Promise<Array<{id: string, sku: string, productName: string, variantName: string}>>}
  */
 export async function getVariantOptions(token) {
-  const response = await apiRequest('/products', {
+  const productQuery = { pageSize: 100, sortBy: 'name', sortDirection: 'asc' };
+  const firstPage = await apiRequest('/products', {
     method: 'GET',
     token,
-    query: { pageSize: 100 },
+    query: { ...productQuery, page: 1 },
   });
 
-  const products = response?.items ?? [];
+  const remainingPages = await Promise.all(
+    Array.from({ length: Math.max(0, (firstPage?.totalPages ?? 1) - 1) }, (_, index) =>
+      apiRequest('/products', {
+        method: 'GET',
+        token,
+        query: { ...productQuery, page: index + 2 },
+      })),
+  );
+  const products = [firstPage, ...remainingPages].flatMap((page) => page?.items ?? []);
 
   return products.flatMap((product) =>
     (product.variants ?? []).map((variant) => ({

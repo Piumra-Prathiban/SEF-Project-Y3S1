@@ -5,14 +5,17 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useSessionGuard } from '../../hooks/useSessionGuard';
 import { apiRequest } from '../../services/api';
 import { formatCurrency } from '../../utils/format';
+import { useCart } from '../cart/CartContext';
 
 export default function StylistPage() {
   const { token } = useAuth();
   const guardSessionExpiry = useSessionGuard();
+  const { addItem } = useCart();
   const [form, setForm] = useState({ occasion: '', budget: '', preferredSize: '', preferredColours: '', stylePreferences: '' });
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState(null);
 
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -23,6 +26,7 @@ export default function StylistPage() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setNotice(null);
     try {
       const response = await apiRequest('/recommendations', {
         method: 'POST', token,
@@ -43,6 +47,20 @@ export default function StylistPage() {
   }
 
   const recommendations = result?.recommendations ?? [];
+
+  function addRecommendation(item) {
+    addItem({
+      variantId: item.variantId,
+      productId: item.productId,
+      productName: item.productName,
+      imageUrl: null,
+      sizeName: item.size || item.variantName,
+      colourName: item.colour || 'Selected option',
+      price: item.price,
+      quantity: item.quantity || 1,
+    });
+    setNotice(`${item.productName} was added to your cart.`);
+  }
 
   return (
     <div className="stylist-page">
@@ -65,7 +83,8 @@ export default function StylistPage() {
             <div className="stylist-results__heading"><p className="eyebrow">YOUR EDIT</p><h2>{recommendations.length ? 'Pieces picked for you.' : 'No matching pieces yet.'}</h2><p>{recommendations.length ? `${recommendations.length} available ${recommendations.length === 1 ? 'piece' : 'pieces'} for ${result.criteria?.occasion || form.occasion}.` : (result.execution?.errorSummary || 'Try a different occasion, budget or set of preferences.')}</p></div>
             {result.relaxedCriteria?.length > 0 && <p className="stylist-results__note">We widened the search to find these pieces: {result.relaxedCriteria.join(', ')}.</p>}
             {result.unappliedPreferences?.length > 0 && <p className="stylist-results__note">Some preferences could not be applied: {result.unappliedPreferences.join(', ')}.</p>}
-            <div className="stylist-card-list">{recommendations.map((item) => <article className="stylist-card" key={item.variantId}><div className="stylist-card__mark" aria-hidden="true">C</div><div><p className="eyebrow">{item.variantName}</p><h3>{item.productName}</h3><p>{item.reason}</p><small>{[item.size, item.colour].filter(Boolean).join(' · ')}</small></div><div className="stylist-card__side"><strong>{formatCurrency(item.price, 'LKR')}</strong><Link to={`/shop/${item.productId}`}>View piece ↗</Link></div></article>)}</div>
+            {notice && <p className="stylist-results__note" role="status">{notice}</p>}
+            <div className="stylist-card-list">{recommendations.map((item) => <article className="stylist-card" key={item.variantId}><div className="stylist-card__mark" aria-hidden="true">C</div><div><p className="eyebrow">{item.variantName}</p><h3>{item.productName}</h3><p>{item.reason}</p><small>{[item.size, item.colour].filter(Boolean).join(' · ')}</small></div><div className="stylist-card__side"><strong>{formatCurrency(item.price, 'LKR')}</strong><button className="button-secondary" onClick={() => addRecommendation(item)} type="button">Add to cart</button><Link to={`/shop/${item.productId}`}>View piece ↗</Link></div></article>)}</div>
             {!recommendations.length && <Link className="button button-secondary" to="/">Browse the collection</Link>}
           </>}
         </section>

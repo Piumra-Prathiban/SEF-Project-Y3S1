@@ -8,7 +8,7 @@ namespace SEF_Project.Api.Controllers;
 
 [ApiController]
 [Route("api/recommendations")]
-[Authorize]
+[Authorize(Roles = "Customer")]
 public class RecommendationsController : ControllerBase
 {
     private readonly IRecommendationService _recommendationService;

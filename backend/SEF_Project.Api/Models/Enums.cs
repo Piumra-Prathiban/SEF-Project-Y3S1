@@ -43,7 +43,28 @@ public enum InventoryTransactionType
     Sale,
     Reservation,
     ReservationRelease,
-    Transfer
+    Transfer,
+    Return
+}
+
+public enum ReturnStatus
+{
+    Requested,
+    Approved,
+    Rejected,
+    Received,
+    Refunded,
+    Cancelled
+}
+
+public enum ReturnReason
+{
+    WrongSize,
+    Damaged,
+    NotAsDescribed,
+    ChangedMind,
+    WrongItem,
+    Other
 }
 
 public enum PromotionType

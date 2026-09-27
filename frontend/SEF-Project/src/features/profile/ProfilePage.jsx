@@ -4,6 +4,7 @@ import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { PageShell } from '../../components/ui/PageShell';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSessionGuard } from '../../hooks/useSessionGuard';
 import { formatDate } from '../../utils/format';
 import { AddressForm } from './AddressForm';
 import {
@@ -17,6 +18,7 @@ import {
 
 export function ProfilePage() {
   const { token } = useAuth();
+  const guardSessionExpiry = useSessionGuard();
 
   const [profile, setProfile] = useState(null);
   const [profileForm, setProfileForm] = useState({
@@ -50,11 +52,13 @@ export function ProfilePage() {
       });
       setAddresses(addressResponse);
     } catch (requestError) {
-      setError(requestError?.message || 'Your profile could not be loaded.');
+      if (!guardSessionExpiry(requestError)) {
+        setError(requestError?.message || 'Your profile could not be loaded.');
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [token, guardSessionExpiry]);
 
   useEffect(() => {
     // This effect intentionally loads the signed-in customer's profile.
@@ -83,7 +87,9 @@ export function ProfilePage() {
       });
       setNotice('Profile updated.');
     } catch (requestError) {
-      setError(requestError?.message || 'Your profile could not be saved.');
+      if (!guardSessionExpiry(requestError)) {
+        setError(requestError?.message || 'Your profile could not be saved.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -106,7 +112,9 @@ export function ProfilePage() {
       setAddresses(await getAddresses(token));
       setNotice(editingAddress ? 'Address updated.' : 'Address added.');
     } catch (requestError) {
-      setError(requestError?.message || 'The address could not be saved.');
+      if (!guardSessionExpiry(requestError)) {
+        setError(requestError?.message || 'The address could not be saved.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -122,7 +130,9 @@ export function ProfilePage() {
       setAddresses(await getAddresses(token));
       setNotice('Address removed.');
     } catch (requestError) {
-      setError(requestError?.message || 'The address could not be removed.');
+      if (!guardSessionExpiry(requestError)) {
+        setError(requestError?.message || 'The address could not be removed.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -148,7 +158,9 @@ export function ProfilePage() {
       setAddresses(await getAddresses(token));
       setNotice('Default address updated.');
     } catch (requestError) {
-      setError(requestError?.message || 'The default address could not be changed.');
+      if (!guardSessionExpiry(requestError)) {
+        setError(requestError?.message || 'The default address could not be changed.');
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -4,7 +4,9 @@ using SEF_Project.Api.DTOs.Orders;
 using SEF_Project.Api.Models;
 using SEF_Project.Api.Models.Catalog;
 using SEF_Project.Api.Models.Enums;
+using SEF_Project.Api.Models.Marketing;
 using SEF_Project.Api.Models.Orders;
+using SEF_Project.Api.Services.Marketing;
 
 namespace SEF_Project.Api.Services.Orders;
 
@@ -21,7 +23,9 @@ public class OrderService : IOrderService
                 { OrderStatus.Ready, OrderStatus.Cancelled },
             [OrderStatus.Ready] = new[]
                 { OrderStatus.Completed, OrderStatus.Cancelled },
-            [OrderStatus.Completed] = new[] { OrderStatus.Refunded },
+            // Refunds are completed through the return workflow so stock,
+            // returned quantities, payment records and audit history agree.
+            [OrderStatus.Completed] = Array.Empty<OrderStatus>(),
             [OrderStatus.Cancelled] = Array.Empty<OrderStatus>(),
             [OrderStatus.Refunded] = Array.Empty<OrderStatus>()
         };
@@ -48,13 +52,16 @@ public class OrderService : IOrderService
 
     private readonly AppDbContext _context;
     private readonly ILogger<OrderService> _logger;
+    private readonly TimeProvider _timeProvider;
 
     public OrderService(
         AppDbContext context,
-        ILogger<OrderService> logger)
+        ILogger<OrderService> logger,
+        TimeProvider? timeProvider = null)
     {
         _context = context;
         _logger = logger;
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     public async Task<OrderResponse> CreateOrderAsync(
@@ -96,7 +103,16 @@ public class OrderService : IOrderService
 
             ValidateAvailability(items, variants, stock);
 
-            var now = DateTime.UtcNow;
+            var now = _timeProvider.GetUtcNow().UtcDateTime;
+            var livePromotions = await GetLivePricePromotionsAsync(
+                now,
+                cancellationToken);
+            var coupon = await ValidateCouponAsync(
+                request.CouponCode,
+                customer.Id,
+                variants.Values,
+                now,
+                cancellationToken);
 
             var order = new Order
             {
@@ -108,27 +124,38 @@ public class OrderService : IOrderService
             };
 
             var subtotal = 0m;
+            var discountedSubtotal = 0m;
 
             foreach (var item in items)
             {
                 var variant = variants[item.ProductVariantId];
-                var lineTotal = Math.Round(variant.Price * item.Quantity, 2);
+                var unitPrice = GetEffectiveUnitPrice(variant, livePromotions, now);
+                var grossLineTotal = Math.Round(variant.Price * item.Quantity, 2);
+                var lineTotal = Math.Round(unitPrice * item.Quantity, 2);
 
                 order.Items.Add(new OrderItem
                 {
                     ProductVariant = variant,
                     Quantity = item.Quantity,
-                    UnitPrice = variant.Price,
+                    UnitPrice = unitPrice,
                     LineTotal = lineTotal
                 });
 
-                subtotal = Math.Round(subtotal + lineTotal, 2);
+                subtotal = Math.Round(subtotal + grossLineTotal, 2);
+                discountedSubtotal = Math.Round(discountedSubtotal + lineTotal, 2);
             }
 
             order.Subtotal = subtotal;
-            order.Total = subtotal;
+            order.DiscountTotal = Math.Round(subtotal - discountedSubtotal, 2);
+            order.Total = discountedSubtotal;
 
             order.DeliveryAddress = BuildAddress(request.DeliveryAddress);
+            order.Payments.Add(new Payment
+            {
+                Method = request.PaymentMethod,
+                Amount = order.Total,
+                Status = PaymentStatus.Pending
+            });
             order.StatusHistory.Add(new OrderStatusHistory
             {
                 Status = OrderStatus.Pending,
@@ -137,6 +164,17 @@ public class OrderService : IOrderService
             });
 
             _context.Orders.Add(order);
+
+            if (coupon is not null)
+            {
+                _context.CouponRedemptions.Add(new CouponRedemption
+                {
+                    Coupon = coupon,
+                    CustomerId = customer.Id,
+                    Order = order,
+                    RedeemedAt = now
+                });
+            }
 
             foreach (var item in items)
             {
@@ -173,6 +211,124 @@ public class OrderService : IOrderService
             throw;
         }
     }
+
+    private async Task<List<Promotion>> GetLivePricePromotionsAsync(
+        DateTime now,
+        CancellationToken cancellationToken) =>
+        await _context.Promotions
+            .AsNoTracking()
+            .Include(promotion => promotion.PromotionProducts)
+            .Include(promotion => promotion.PromotionCategories)
+            .Where(promotion =>
+                promotion.IsActive
+                && promotion.StartDate <= now
+                && promotion.EndDate >= now
+                && (promotion.Campaign == null
+                    || promotion.Campaign.Status == CampaignStatus.Active)
+                && (promotion.Type == PromotionType.PercentageDiscount
+                    || promotion.Type == PromotionType.FixedAmountDiscount))
+            .OrderBy(promotion => promotion.EndDate)
+            .ThenBy(promotion => promotion.Id)
+            .ToListAsync(cancellationToken);
+
+    private async Task<Coupon?> ValidateCouponAsync(
+        string? suppliedCode,
+        int customerId,
+        IEnumerable<ProductVariant> variants,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(suppliedCode))
+        {
+            return null;
+        }
+
+        var code = suppliedCode.Trim().ToUpperInvariant();
+        var coupon = await _context.Coupons
+            .Include(item => item.Promotion)
+                .ThenInclude(promotion => promotion!.Campaign)
+            .Include(item => item.Promotion)
+                .ThenInclude(promotion => promotion!.PromotionProducts)
+            .Include(item => item.Promotion)
+                .ThenInclude(promotion => promotion!.PromotionCategories)
+            .FirstOrDefaultAsync(item => item.Code == code, cancellationToken)
+            ?? throw new ArgumentException("Coupon code is invalid.");
+
+        var promotion = coupon.Promotion;
+        var couponIsLive = coupon.IsActive
+            && coupon.StartsAt <= now
+            && coupon.EndsAt >= now;
+        var promotionIsLive = promotion is not null
+            && promotion.IsActive
+            && promotion.StartDate <= now
+            && promotion.EndDate >= now
+            && (promotion.Campaign is null
+                || promotion.Campaign.Status == CampaignStatus.Active);
+
+        if (!couponIsLive || !promotionIsLive)
+        {
+            throw new InvalidOperationException(
+                "Coupon code is not active at this time.");
+        }
+
+        var totalUses = await _context.CouponRedemptions
+            .CountAsync(item => item.CouponId == coupon.Id, cancellationToken);
+        if (coupon.UsageLimit is not null && totalUses >= coupon.UsageLimit.Value)
+        {
+            throw new InvalidOperationException(
+                "Coupon code has reached its usage limit.");
+        }
+
+        var customerUses = await _context.CouponRedemptions
+            .CountAsync(
+                item => item.CouponId == coupon.Id
+                    && item.CustomerId == customerId,
+                cancellationToken);
+        if (coupon.PerCustomerLimit is not null
+            && customerUses >= coupon.PerCustomerLimit.Value)
+        {
+            throw new InvalidOperationException(
+                "Coupon code has already been used the maximum number of times.");
+        }
+
+        var cartContainsEligibleProduct = promotion!.Type == PromotionType.FreeShipping
+            || variants.Any(variant => AppliesTo(promotion, variant.Product));
+        if (!cartContainsEligibleProduct)
+        {
+            throw new InvalidOperationException(
+                "Coupon code does not apply to the selected products.");
+        }
+
+        return coupon;
+    }
+
+    private static decimal GetEffectiveUnitPrice(
+        ProductVariant variant,
+        IEnumerable<Promotion> livePromotions,
+        DateTime now)
+    {
+        var bestPrice = variant.Price;
+
+        foreach (var promotion in livePromotions.Where(item =>
+                     AppliesTo(item, variant.Product)))
+        {
+            var result = PromotionDiscountCalculator.Calculate(
+                promotion,
+                variant.Price,
+                now);
+            if (result.FinalPrice < bestPrice)
+            {
+                bestPrice = result.FinalPrice;
+            }
+        }
+
+        return bestPrice;
+    }
+
+    private static bool AppliesTo(Promotion promotion, Product product) =>
+        promotion.PromotionProducts.Any(item => item.ProductId == product.Id)
+        || promotion.PromotionCategories.Any(item =>
+            item.CategoryId == product.CategoryId);
 
     public async Task<OrderListResponse> GetOrdersAsync(
         int userId,

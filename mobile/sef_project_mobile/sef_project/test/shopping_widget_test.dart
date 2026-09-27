@@ -134,6 +134,47 @@ void main() {
     expect(find.text('LKR 9000.00'), findsWidgets);
   });
 
+  testWidgets('cart checkout creates an order and clears the cart', (
+    tester,
+  ) async {
+    final repository = FakeCustomerRepository();
+    repository.currentCart = await repository.addCart('variant-1', 1);
+    final store = CustomerStore(repository);
+
+    await tester.pumpWidget(_screen(store, const CartScreen()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continue to checkout'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Checkout'), findsOneWidget);
+    expect(find.text('Sam Perera'), findsOneWidget);
+
+    await tester.drag(find.byType(ListView).last, const Offset(0, -900));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Place order'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('Order placed'), findsOneWidget);
+    expect(find.textContaining('ORD-TEST-1'), findsOneWidget);
+    expect(repository.currentCart.items, isEmpty);
+  });
+
+  testWidgets('authenticated navigation opens current customer orders', (
+    tester,
+  ) async {
+    final store = CustomerStore(FakeCustomerRepository());
+    await store.initialize();
+
+    await tester.pumpWidget(CustomerShoppingApp(store: store));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Orders'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('My orders'), findsOneWidget);
+    expect(find.text('ORD-TEST-1'), findsOneWidget);
+  });
+
   testWidgets('profile displays customer and default address', (tester) async {
     final repository = FakeCustomerRepository();
     final store = CustomerStore(repository);

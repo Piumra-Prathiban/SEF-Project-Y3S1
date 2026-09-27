@@ -151,6 +151,44 @@ describe('StorefrontPage', () => {
     await waitFor(() => expect(getStorefrontProducts).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'cotton', size: 'M', sortBy: 'price', sortDirection: 'asc' })));
   });
 
+  it('rejects an inverted price range before calling the API', async () => {
+    const user = userEvent.setup();
+    renderStorefront();
+    await screen.findByRole('heading', { name: 'Classic Cotton T-Shirt' });
+    await user.type(screen.getByLabelText('Min price'), '5000');
+    await user.type(screen.getByLabelText('Max price'), '1000');
+    const callsBeforeSubmit = getStorefrontProducts.mock.calls.length;
+
+    await user.click(screen.getByRole('button', { name: /Apply filters/ }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Minimum price cannot be greater than maximum price.',
+    );
+    expect(getStorefrontProducts).toHaveBeenCalledTimes(callsBeforeSubmit);
+  });
+
+  it('loads the next catalogue page without replacing earlier products', async () => {
+    const firstPage = Array.from({ length: 24 }, (_, index) => ({
+      ...PRODUCTS[0],
+      id: `product-${index + 1}`,
+      name: `Collection piece ${index + 1}`,
+    }));
+    getStorefrontProducts.mockImplementation(({ page }) =>
+      Promise.resolve(page === 2 ? [{ ...PRODUCTS[1], id: 'product-25' }] : firstPage));
+
+    const user = userEvent.setup();
+    renderStorefront();
+
+    expect(await screen.findByRole('heading', { name: 'Collection piece 1' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Load more pieces' }));
+
+    expect(await screen.findByRole('heading', { name: 'Leather Ankle Boots' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Collection piece 1' })).toBeInTheDocument();
+    expect(getStorefrontProducts).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 2, limit: 24 }),
+    );
+  });
+
   it('shows an empty state when the catalogue has no products', async () => {
     getStorefrontProducts.mockResolvedValue([]);
 

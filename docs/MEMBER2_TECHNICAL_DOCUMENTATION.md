@@ -129,9 +129,11 @@ contain page metadata, active variants, current available quantity, and minimum
 active-variant price. A stable product-ID tie-breaker keeps pagination
 deterministic.
 
-Collection, size, and colour filters are intentionally not implemented against
-placeholder entities. They require Member 1's latest catalogue schema to be
-integrated first.
+The public React storefront uses `/api/storefront/products`, which adds the
+integrated Member 1 size and colour filters and returns image and colour-swatch
+data for product cards and variant selection. Variant-level size, colour, and
+price conditions are applied to the same active variant so the UI does not show
+a product for a combination that cannot actually be selected.
 
 ### Wishlist rules
 
@@ -310,15 +312,24 @@ represented explicitly where applicable.
 
 ## 7. React implementation
 
-The React application uses React Router and a shared API wrapper. Public product
-browsing lives at `/products`; `/wishlist`, `/cart`, and `/profile` use a
-`ProtectedRoute`. Server calls are in `shoppingService.js`; search and filters
-are sent as API query parameters rather than applied to a downloaded catalogue.
+The React application uses React Router and the shared API wrapper. Public
+browsing lives at `/`, product selection at `/shop/{id}`, and the anonymous
+local cart at `/cart`. Search, category, size, colour, price, and sorting choices
+are sent to the public storefront API. `/wishlist`, `/profile`, `/stylist`, and
+`/checkout` are explicitly restricted to the Customer role.
 
-Reusable UI includes the application shell, protected route, product card,
-pagination, address form, and loading/error/empty state components. Cart totals
-are rendered from the backend response. React deliberately does not implement
-checkout or recommendation UI owned elsewhere in the current phase split.
+The web cart is intentionally held in `localStorage` so an anonymous visitor can
+build a basket before signing in. It stores selected IDs and estimated display
+data only. `/checkout` sends variant IDs and quantities to Member 3's order API,
+where price and stock are revalidated and inventory is reserved. Checkout
+prefills the customer's name and default saved address when available. The
+server-side Member 2 cart API remains the authoritative cart implementation used
+by Flutter.
+
+The React Personal Stylist screen accepts occasion, budget, size, colour, and
+style preferences, displays grounded variants, links to their product pages,
+and can add a recommended variant to the local cart. Wishlist and profile pages
+include loading, empty, retry, mutation feedback, and expired-session handling.
 
 ## 8. Flutter implementation
 
@@ -375,18 +386,17 @@ search, wishlist, cart, profile, and loading/error/empty states. Flutter uses
 unit and widget tests for its API client, store, navigation, shopping screens,
 and recommendation states.
 
-Verified on 2026-09-24 from the Phase 17 working tree based on commit
-`a7aad98`:
+Verified again on 2026-09-26 after integrated Member 1 and Member 2 review:
 
 | Check | Result |
 |---|---|
-| `dotnet test backend/SEF_Project.Api.Tests/SEF_Project.Api.Tests.csproj -c Release --no-restore` | 214 passed, 0 failed, 0 skipped |
-| `npm test` | 11 passed, 0 failed |
+| `dotnet test SEF-Project.sln --no-restore` | 624 passed, 0 failed, 0 skipped |
+| `npm test` | 354 passed, 0 failed |
 | `npm run lint` | Passed |
 | `npm run build` | Passed |
 | `flutter analyze` | No issues |
-| `flutter test` | 20 passed, 0 failed |
-| Development Swagger JSON smoke check | Bearer scheme present; protected cart endpoint secured; anonymous product endpoint unsecured |
+| `flutter test` | 83 passed, 0 failed |
+| Live PostgreSQL/API smoke check | Database reachable; anonymous storefront and authenticated catalog endpoints responded successfully |
 
 The database tests validate relational behavior using SQLite. A disposable
 PostgreSQL end-to-end run remains necessary after Member 1 and Member 4 schema
@@ -396,32 +406,30 @@ migrations are integrated.
 
 | Component | Current integration | Required coordination |
 |---|---|---|
-| Member 1 Product/Inventory | Member 2 references Product and ProductVariant IDs and derives availability from inventory | Latest branch changes to single Category, Collection, Size, Colour, and `InventoryStock` require Member 2 query/navigation adaptation after merge |
-| Member 3 Orders | Order backend is present; checkout accepts variant ID/quantity and revalidates price and stock | A checkout screen/route and post-success cart-clearing policy are not yet supplied |
+| Member 1 Product/Inventory | Integrated single Category, Collection, Size, Colour, ProductVariant, and `InventoryStock`; web filters and variant picker use them | Keep DTO changes synchronized when catalogue fields change |
+| Member 3 Orders | React checkout posts variant ID/quantity, the backend revalidates price/stock, and the local cart clears only after order creation | Returns now use the separate `Return`/`ReturnItem` workflow documented with Member 3 |
 | Member 4 Marketing | No duplicate promotion calculation exists; current APIs use catalogue base price | Effective-pricing service and promotion precedence are not yet available |
 | Shared Auth | Both clients use shared login/JWT; APIs derive user ID from `NameIdentifier` | Team should confirm whether catalogue discovery stays anonymous |
 | Shared Agent Workflow | Existing workflow entities are reused and Personal Stylist participation is named and persisted | Downstream Inventory/Promotion and Validation agents remain owned by their respective members |
 
 ## 12. Known limitations
 
-1. Member 1's latest catalogue branch is not integrated. Current discovery
-   cannot authoritatively filter by collection, size, or colour; requested size
-   or colour recommendations fail closed or are reported as unapplied.
-2. Member 3 has no checkout route in the latest frontend branch. Member 2 only
-   exposes the cart handoff data and does not duplicate checkout.
-3. Member 4 has not supplied a shared effective-pricing service. Displayed and
+1. Member 4 has not supplied a shared effective-pricing service. Displayed and
    validated prices are current catalogue base prices.
-4. React has no Personal Stylist screen; the customer recommendation experience
-   is currently implemented in Flutter.
-5. Product details in Flutter are populated from the discovery response because
+2. Product details in Flutter are populated from the discovery response because
    there is no dedicated Member 2 product-details endpoint.
-6. The registered recommendation model is deterministic and catalogue-grounded.
-   A future external model may replace it only behind the same controlled
-   interface, tool restrictions, and deterministic validator.
-7. React session storage uses `localStorage` and therefore depends on strong XSS
+3. The safe default recommendation provider is deterministic and
+   catalogue-grounded. A real OpenAI Responses API provider is implemented and
+   can be enabled through backend-only environment configuration. A deployment
+   must provide its own API key; both providers retain the same controlled tools,
+   strict output contract, and deterministic grounding validator.
+4. React session storage uses `localStorage` and therefore depends on strong XSS
    prevention until a shared cookie-based web-auth design is adopted.
-8. Only-one-default-address behavior is enforced by the service. Concurrent
+5. Only-one-default-address behavior is enforced by the service. Concurrent
    default-address writes do not yet have a database-level partial unique index.
+6. The public storefront list uses incremental page loading without total-count
+   metadata. The paged `/api/shopping/products` endpoint exposes full page
+   metadata for clients that require numbered navigation.
 
 ## 13. Contribution evidence
 

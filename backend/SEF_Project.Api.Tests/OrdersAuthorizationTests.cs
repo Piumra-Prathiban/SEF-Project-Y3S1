@@ -40,7 +40,6 @@ public class OrdersAuthorizationTests
     }
 
     [Theory]
-    [InlineData(nameof(OrdersController.CreateOrder))]
     [InlineData(nameof(OrdersController.GetOrders))]
     [InlineData(nameof(OrdersController.GetOrderById))]
     [InlineData(nameof(OrdersController.GetOrderStatusHistory))]
@@ -56,6 +55,18 @@ public class OrdersAuthorizationTests
         var attribute = method!.GetCustomAttribute<AuthorizeAttribute>();
 
         Assert.True(attribute is null || attribute.Roles is null);
+    }
+
+    [Fact]
+    public void CreateOrder_ShouldRequireCustomerRole()
+    {
+        var method = typeof(OrdersController)
+            .GetMethod(nameof(OrdersController.CreateOrder));
+
+        var attribute = method!.GetCustomAttribute<AuthorizeAttribute>();
+
+        Assert.NotNull(attribute);
+        Assert.Equal("Customer", attribute!.Roles);
     }
 
     [Fact]

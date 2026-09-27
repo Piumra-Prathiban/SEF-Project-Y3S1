@@ -19,6 +19,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Customer")]
     public async Task<ActionResult<OrderResponse>> CreateOrder(
         CreateOrderRequest request,
         CancellationToken cancellationToken)

@@ -14,6 +14,12 @@ public class OrderCheckoutEdgeCaseTests
 {
     private const string TShirtXsSku = "TSH-CLS-XS";
 
+    private sealed class NoPromotionTimeProvider : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() =>
+            new(new DateTime(2030, 1, 1, 12, 0, 0, DateTimeKind.Utc));
+    }
+
     private static async Task<AppDbContext> CreateContextAsync(
         SqliteConnection connection)
     {
@@ -73,7 +79,10 @@ public class OrderCheckoutEdgeCaseTests
         };
 
     private static OrderService CreateService(AppDbContext context) =>
-        new(context, NullLogger<OrderService>.Instance);
+        new(
+            context,
+            NullLogger<OrderService>.Instance,
+            new NoPromotionTimeProvider());
 
     [Fact]
     public async Task CreateOrderAsync_ShouldRejectUserWithoutCustomerProfile()

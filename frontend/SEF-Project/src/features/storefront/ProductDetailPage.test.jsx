@@ -4,10 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { CartProvider } from '../cart/CartContext';
 import { ProductDetailPage } from './ProductDetailPage';
-import { getStorefrontProduct } from './storefrontService';
+import { getProductPromotions, getStorefrontProduct } from './storefrontService';
 
 vi.mock('./storefrontService', () => ({
   getStorefrontProduct: vi.fn(),
+  getProductPromotions: vi.fn(),
 }));
 
 let mockAuth;
@@ -86,6 +87,10 @@ beforeEach(() => {
   };
 
   getStorefrontProduct.mockResolvedValue(PRODUCT);
+  getProductPromotions.mockResolvedValue({
+    promotions: [],
+    variants: [],
+  });
 });
 
 describe('ProductDetailPage', () => {
@@ -164,6 +169,30 @@ describe('ProductDetailPage', () => {
     });
   });
 
+  it('shows the server-calculated promotion price and stores it in the cart', async () => {
+    getProductPromotions.mockResolvedValue({
+      promotions: [{ id: 'promotion-1', name: 'Tops 20% Off' }],
+      variants: [{
+        productVariantId: 'variant-xs-black',
+        originalPrice: 2500,
+        discountAmount: 500,
+        finalPrice: 2000,
+        promotionName: 'Tops 20% Off',
+      }],
+    });
+    const user = userEvent.setup();
+
+    renderDetail();
+
+    expect(await screen.findByText('LKR 2,000.00')).toBeInTheDocument();
+    expect(screen.getByText('LKR 2,500.00')).toHaveProperty('tagName', 'DEL');
+    expect(screen.getByText(/applied automatically at checkout/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Add to cart' }));
+
+    const stored = JSON.parse(window.localStorage.getItem('clothic.cart'));
+    expect(stored[0].price).toBe(2000);
+  });
+
   it('sends anonymous shoppers to sign in on Buy now', async () => {
     const user = userEvent.setup();
 
@@ -194,6 +223,23 @@ describe('ProductDetailPage', () => {
 
     expect(screen.getByText('Cart page')).toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent('/cart');
+  });
+
+  it('keeps customer purchase actions out of the staff storefront preview', async () => {
+    mockAuth = {
+      ...mockAuth,
+      isAuthenticated: true,
+      token: 'staff-token',
+      user: { email: 'staff@example.com', role: 'Staff' },
+    };
+
+    renderDetail();
+
+    await screen.findByRole('heading', { name: 'Classic Cotton T-Shirt' });
+    expect(screen.getByText(/Staff accounts can preview the storefront/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add to cart' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Buy now' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save to wishlist' })).not.toBeInTheDocument();
   });
 
   it('shows a not-found state for a missing product', async () => {

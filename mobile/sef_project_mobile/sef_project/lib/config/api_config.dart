@@ -5,5 +5,5 @@
 ///   flutter run --dart-define=API_BASE_URL=http://10.0.2.2:5193/api
 const String apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://localhost:5193/api',
+  defaultValue: 'http://10.0.2.2:5193/api',
 );

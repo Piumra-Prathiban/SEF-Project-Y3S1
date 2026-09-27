@@ -2,6 +2,7 @@ import {
   OrderStatusName,
   PaymentStatusName,
   ShipmentStatusName,
+  ReturnStatusName,
 } from '../services/orderService';
 import './StatusBadge.css';
 
@@ -9,6 +10,7 @@ const NAME_MAPS = {
   order: OrderStatusName,
   payment: PaymentStatusName,
   shipment: ShipmentStatusName,
+  return: ReturnStatusName,
 };
 
 function StatusBadge({ status, kind = 'order' }) {

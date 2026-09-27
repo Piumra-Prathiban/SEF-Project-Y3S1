@@ -20,8 +20,11 @@ public class CartServiceTests
     [Fact]
     public void CartController_RequiresAuthentication()
     {
-        Assert.NotNull(typeof(CartController)
-            .GetCustomAttribute<AuthorizeAttribute>());
+        var authorization = typeof(CartController)
+            .GetCustomAttribute<AuthorizeAttribute>();
+
+        Assert.NotNull(authorization);
+        Assert.Equal("Customer", authorization.Roles);
     }
 
     [Fact]

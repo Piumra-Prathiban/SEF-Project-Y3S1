@@ -249,6 +249,17 @@
   margin: 12px 0 0;
 }
 
+.storefront__load-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.storefront__load-more .storefront__filter-submit {
+  margin: 0;
+  width: auto;
+}
+
 .storefront__footer {
   border-top: 1px solid var(--border);
   color: var(--text);

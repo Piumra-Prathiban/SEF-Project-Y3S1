@@ -6,27 +6,36 @@ import { StorefrontChrome } from './StorefrontChrome';
 import { getStorefrontProducts } from './storefrontService';
 import './storefront.css';
 
+const PAGE_SIZE = 24;
+
 export function StorefrontPage() {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState(null);
   const [activeCategory, setActiveCategory] = useState('');
   const [filterOptions, setFilterOptions] = useState({ categories: [], sizes: [], colours: [] });
   const [draftFilters, setDraftFilters] = useState({ search: '', size: '', colour: '', minPrice: '', maxPrice: '', sortBy: 'name', sortDirection: 'asc' });
   const [appliedFilters, setAppliedFilters] = useState({});
 
-  const loadProducts = useCallback(async () => {
-    setIsLoading(true);
+  const loadProducts = useCallback(async (page = 1, append = false) => {
+    if (append) setIsLoadingMore(true);
+    else setIsLoading(true);
     setError(null);
 
     try {
-      const response = await getStorefrontProducts({ limit: 48, ...appliedFilters });
-      setProducts(response ?? []);
+      const response = await getStorefrontProducts({ limit: PAGE_SIZE, page, ...appliedFilters });
+      const pageProducts = response ?? [];
+      setProducts((current) => append ? [...current, ...pageProducts] : pageProducts);
+      setCurrentPage(page);
+      setHasMore(pageProducts.length === PAGE_SIZE);
       setFilterOptions((current) => {
         const categories = new Map(current.categories.map((category) => [category.id, category.name]));
         const sizes = new Set(current.sizes);
         const colours = new Set(current.colours);
-        (response ?? []).forEach((product) => {
+        pageProducts.forEach((product) => {
           if (product.categoryId && product.categoryName) categories.set(product.categoryId, product.categoryName);
           (product.sizes ?? []).forEach((size) => sizes.add(size));
           (product.colours ?? []).forEach((colour) => colours.add(colour.name));
@@ -40,14 +49,15 @@ export function StorefrontPage() {
     } catch (err) {
       setError(err?.message || 'The collection could not be loaded.');
     } finally {
-      setIsLoading(false);
+      if (append) setIsLoadingMore(false);
+      else setIsLoading(false);
     }
   }, [appliedFilters]);
 
   useEffect(() => {
     // This effect intentionally loads the public catalogue on mount.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadProducts();
+    loadProducts(1, false);
   }, [loadProducts]);
 
   const visibleProducts = activeCategory
@@ -63,6 +73,15 @@ export function StorefrontPage() {
 
   function applyFilters(event) {
     event.preventDefault();
+    const minimumPrice = draftFilters.minPrice === '' ? null : Number(draftFilters.minPrice);
+    const maximumPrice = draftFilters.maxPrice === '' ? null : Number(draftFilters.maxPrice);
+
+    if (minimumPrice !== null && maximumPrice !== null && minimumPrice > maximumPrice) {
+      setError('Minimum price cannot be greater than maximum price.');
+      return;
+    }
+
+    setError(null);
     setAppliedFilters({
       categoryId: activeCategory,
       search: draftFilters.search.trim(),
@@ -147,7 +166,7 @@ export function StorefrontPage() {
             </div>
           )}
 
-        <ApiErrorAlert message={error} onRetry={loadProducts} />
+        <ApiErrorAlert message={error} onRetry={() => loadProducts(1, false)} />
 
         {isLoading ? (
           <LoadingState message="Loading the collection..." />
@@ -160,6 +179,18 @@ export function StorefrontPage() {
             {visibleProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
+          </div>
+        )}
+        {!isLoading && !error && hasMore && (
+          <div className="storefront__load-more">
+            <button
+              className="storefront__filter-submit"
+              disabled={isLoadingMore}
+              onClick={() => loadProducts(currentPage + 1, true)}
+              type="button"
+            >
+              {isLoadingMore ? 'Loading more pieces…' : 'Load more pieces'}
+            </button>
           </div>
         )}
           </div>

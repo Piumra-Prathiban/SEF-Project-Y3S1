@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency } from '../../utils/format';
 import { resolveImageUrl } from '../../utils/images';
+import { isStaff } from '../../utils/roles';
 import { useCart } from './CartContext';
 import '../storefront/storefront.css';
 import './cart.css';
@@ -66,7 +67,7 @@ function CartQuantityInput({ item, onUpdate }) {
 }
 
 export function CartPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const {
     items,
@@ -77,8 +78,10 @@ export function CartPage() {
   } = useCart();
 
   function handleCheckout() {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isStaff(user)) {
       navigate('/checkout');
+    } else if (isStaff(user)) {
+      navigate('/dashboard');
     } else {
       navigate('/login', { state: { from: { pathname: '/checkout', search: '' } } });
     }
@@ -149,9 +152,16 @@ export function CartPage() {
                 Taxes and shipping are calculated by the server when the order
                 is placed.
               </p>
-              <button onClick={handleCheckout} type="button">
-                Proceed to checkout
-              </button>
+              {isStaff(user) ? (
+                <p className="cart-summary__note">
+                  Staff accounts cannot place customer orders. Sign in with a
+                  customer account to check out.
+                </p>
+              ) : (
+                <button onClick={handleCheckout} type="button">
+                  Proceed to checkout
+                </button>
+              )}
               <Link className="cart-summary__continue" to="/">← Continue shopping</Link>
             </aside>
           </div>

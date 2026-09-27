@@ -4,7 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { CartProvider } from './CartContext';
 import { CheckoutPage } from './CheckoutPage';
-import { createOrder, createPayment, PaymentMethod } from '../../services/orderService';
+import { createOrder, PaymentMethod } from '../../services/orderService';
+import { getAddresses, getProfile } from '../profile/profileService';
 
 vi.mock('../../services/orderService', async (importOriginal) => {
   const actual = await importOriginal();
@@ -12,9 +13,13 @@ vi.mock('../../services/orderService', async (importOriginal) => {
   return {
     ...actual,
     createOrder: vi.fn(),
-    createPayment: vi.fn(),
   };
 });
+
+vi.mock('../profile/profileService', () => ({
+  getProfile: vi.fn(),
+  getAddresses: vi.fn(),
+}));
 
 let mockAuth;
 
@@ -70,10 +75,35 @@ beforeEach(() => {
   };
 
   window.localStorage.setItem('clothic.cart', JSON.stringify([ITEM]));
-  createPayment.mockResolvedValue({ id: 'payment-1' });
+  getProfile.mockResolvedValue({ firstName: '', lastName: '' });
+  getAddresses.mockResolvedValue([]);
 });
 
 describe('CheckoutPage', () => {
+  it('prefills delivery details from the customer profile and default address', async () => {
+    getProfile.mockResolvedValue({ firstName: 'Asha', lastName: 'Perera' });
+    getAddresses.mockResolvedValue([
+      {
+        id: 4,
+        addressLine1: '12 Galle Road',
+        addressLine2: 'Apartment 2',
+        city: 'Colombo',
+        province: 'Western',
+        postalCode: '00300',
+        country: 'Sri Lanka',
+        isDefault: true,
+      },
+    ]);
+
+    renderCheckout();
+
+    expect(await screen.findByLabelText('Full name')).toHaveValue('Asha Perera');
+    expect(screen.getByLabelText('Address line 1')).toHaveValue('12 Galle Road');
+    expect(screen.getByLabelText('Address line 2')).toHaveValue('Apartment 2');
+    expect(screen.getByLabelText('City')).toHaveValue('Colombo');
+    expect(screen.getByLabelText('Postal code')).toHaveValue('00300');
+  });
+
   it('places the order and shows a confirmation', async () => {
     createOrder.mockResolvedValue(PLACED_ORDER);
 
@@ -82,6 +112,7 @@ describe('CheckoutPage', () => {
 
     await screen.findByRole('heading', { name: 'Checkout' });
     await fillAddress(user);
+    await user.type(screen.getByLabelText(/Coupon code/), 'summer20');
     await user.click(screen.getByRole('button', { name: 'Place order' }));
 
     await waitFor(() => {
@@ -98,6 +129,7 @@ describe('CheckoutPage', () => {
           phone: null,
         },
         paymentMethod: PaymentMethod.Card,
+        couponCode: 'SUMMER20',
       });
     });
 
@@ -106,33 +138,6 @@ describe('CheckoutPage', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('ORD-1001')).toBeInTheDocument();
 
-    expect(createPayment).toHaveBeenCalledWith('test-token', 'order-1', {
-      method: PaymentMethod.Card,
-      amount: 5000,
-    });
-
-    expect(JSON.parse(window.localStorage.getItem('clothic.cart'))).toEqual([]);
-  });
-
-  it('keeps the order when the payment cannot be recorded', async () => {
-    createOrder.mockResolvedValue(PLACED_ORDER);
-    createPayment.mockRejectedValueOnce(
-      Object.assign(new Error('Payment rejected'), { status: 409 }),
-    );
-
-    const user = userEvent.setup();
-    renderCheckout();
-
-    await screen.findByRole('heading', { name: 'Checkout' });
-    await fillAddress(user);
-    await user.click(screen.getByRole('button', { name: 'Place order' }));
-
-    expect(
-      await screen.findByRole('heading', { name: 'Order placed' }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'Your order is placed, but the payment could not be recorded.',
-    );
     expect(JSON.parse(window.localStorage.getItem('clothic.cart'))).toEqual([]);
   });
 

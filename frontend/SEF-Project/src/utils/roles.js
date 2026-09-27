@@ -18,6 +18,10 @@ export function isStaff(user) {
   return hasAnyRole(user, STAFF_ROLES);
 }
 
+export function isCustomer(user) {
+  return user?.role === ROLES.customer;
+}
+
 export function isAdministrator(user) {
   return user?.role === ROLES.administrator;
 }

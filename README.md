@@ -63,7 +63,7 @@ Each group member owns one business component, but every member contributes acro
 
 ### Customer
 
-Uses Flutter for the shopping experience (products, cart, wishlist, profile and recommendations). The orders screens exist in the codebase but are not yet wired into the app shell.
+Uses Flutter for the complete customer shopping experience: products, cart, checkout, orders, tracking, cancellation, returns, wishlist, profile and recommendations.
 
 ### Staff / Inventory Manager
 
@@ -388,6 +388,9 @@ Agent responsibility
 Member 2 technical documentation and contribution evidence:
 
 - [Shopping and Customer Experience](docs/MEMBER2_TECHNICAL_DOCUMENTATION.md)
+- [Orders and Fulfilment](docs/MEMBER3_ORDERS_FULFILMENT.md)
+- [Marketing and Business Intelligence](docs/MEMBER4_MARKETING_BUSINESS_INTELLIGENCE.md)
+- [Demo data setup, reset and removal](docs/DEMO_DATA_GUIDE.md)
 
 1. Make sure PostgreSQL is installed and running.
 2. Create a database named `sef_project_db`.
@@ -432,4 +435,3 @@ The final system must demonstrate one complete workflow connecting:
 **Flutter → ASP.NET Core → PostgreSQL → Agentic AI → React approval → shared updated state → Flutter**
 
 AI tools may be used during development under the SE3090 rules, but every team member must understand, test and be able to modify their submitted work. External AI tools cannot be used during the final demonstration/viva.
-

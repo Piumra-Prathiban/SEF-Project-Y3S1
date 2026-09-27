@@ -35,6 +35,24 @@ export const ShipmentStatus = Object.freeze({
   Cancelled: 3,
 });
 
+export const ReturnStatus = Object.freeze({
+  Requested: 0,
+  Approved: 1,
+  Rejected: 2,
+  Received: 3,
+  Refunded: 4,
+  Cancelled: 5,
+});
+
+export const ReturnReason = Object.freeze({
+  WrongSize: 0,
+  Damaged: 1,
+  NotAsDescribed: 2,
+  ChangedMind: 3,
+  WrongItem: 4,
+  Other: 5,
+});
+
 export const OrderStatusName = Object.freeze({
   0: 'Pending',
   1: 'Confirmed',
@@ -63,6 +81,24 @@ export const ShipmentStatusName = Object.freeze({
   1: 'Shipped',
   2: 'Delivered',
   3: 'Cancelled',
+});
+
+export const ReturnStatusName = Object.freeze({
+  0: 'Requested',
+  1: 'Approved',
+  2: 'Rejected',
+  3: 'Received',
+  4: 'Refunded',
+  5: 'Cancelled',
+});
+
+export const ReturnReasonName = Object.freeze({
+  0: 'Wrong size',
+  1: 'Damaged',
+  2: 'Not as described',
+  3: 'Changed my mind',
+  4: 'Wrong item',
+  5: 'Other',
 });
 
 /**
@@ -445,6 +481,45 @@ export async function updateShipmentStatus(token, id, shipmentId, payload) {
  */
 export async function cancelOrder(token, id, payload = {}) {
   return apiRequest(`/Orders/${id}/cancel`, {
+    method: 'POST',
+    token,
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getReturns(token, query = {}) {
+  const params = new URLSearchParams();
+  Object.entries(query).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      params.set(key, value);
+    }
+  });
+  const suffix = params.size ? `?${params.toString()}` : '';
+  return apiRequest(`/returns${suffix}`, { method: 'GET', token });
+}
+
+export async function getOrderReturns(token, orderId) {
+  return apiRequest(`/Orders/${orderId}/returns`, { method: 'GET', token });
+}
+
+export async function createReturn(token, orderId, payload) {
+  return apiRequest(`/Orders/${orderId}/returns`, {
+    method: 'POST',
+    token,
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateReturnStatus(token, returnId, payload) {
+  return apiRequest(`/returns/${returnId}/status`, {
+    method: 'PATCH',
+    token,
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function cancelReturn(token, returnId, payload = {}) {
+  return apiRequest(`/returns/${returnId}/cancel`, {
     method: 'POST',
     token,
     body: JSON.stringify(payload),

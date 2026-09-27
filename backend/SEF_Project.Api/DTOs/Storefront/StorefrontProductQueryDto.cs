@@ -5,6 +5,8 @@ namespace SEF_Project.Api.DTOs.Storefront;
 /// </summary>
 public class StorefrontProductQueryDto
 {
+    public int Page { get; set; } = 1;
+
     public string? Search { get; set; }
 
     public Guid? CategoryId { get; set; }

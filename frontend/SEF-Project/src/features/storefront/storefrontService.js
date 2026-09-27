@@ -2,7 +2,7 @@ import { apiRequest } from '../../services/api.js';
 
 // Public storefront endpoints: no token is sent, so the homepage works for
 // visitors who are not signed in yet.
-export async function getStorefrontProducts({ search, categoryId, size, colour, minPrice, maxPrice, sortBy, sortDirection, limit } = {}) {
+export async function getStorefrontProducts({ search, categoryId, size, colour, minPrice, maxPrice, sortBy, sortDirection, limit, page } = {}) {
   const params = new URLSearchParams();
 
   if (search) {
@@ -21,6 +21,10 @@ export async function getStorefrontProducts({ search, categoryId, size, colour, 
     params.set('limit', limit);
   }
 
+  if (page) {
+    params.set('page', page);
+  }
+
   const queryString = params.toString();
 
   return apiRequest(
@@ -31,4 +35,8 @@ export async function getStorefrontProducts({ search, categoryId, size, colour, 
 
 export async function getStorefrontProduct(productId) {
   return apiRequest(`/storefront/products/${productId}`, { method: 'GET' });
+}
+
+export async function getProductPromotions(productId) {
+  return apiRequest(`/promotions/products/${productId}`, { method: 'GET' });
 }

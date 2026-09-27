@@ -113,6 +113,7 @@ builder.Services.AddScoped<IInventoryAgentWorkflowService, InventoryAgentWorkflo
 builder.Services.AddScoped<ISupplierService, SupplierService>();
 builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IReturnService, ReturnService>();
 builder.Services.AddScoped<IStorefrontService, StorefrontService>();
 builder.Services.AddScoped<IProductSearchService, ProductSearchService>();
 builder.Services.AddScoped<IProductAvailabilityService, ProductAvailabilityService>();
@@ -124,7 +125,18 @@ builder.Services.AddScoped<ICustomerPreferenceTool, CustomerPreferenceTool>();
 builder.Services.AddScoped<IProductSearchTool, ProductSearchTool>();
 builder.Services.AddScoped<IWishlistTool, WishlistTool>();
 builder.Services.AddScoped<IProductAvailabilityTool, ProductAvailabilityTool>();
-builder.Services.AddScoped<IPersonalStylistRecommendationModel, GroundedPersonalStylistModel>();
+builder.Services.AddScoped<GroundedPersonalStylistModel>();
+builder.Services.AddHttpClient<OpenAiPersonalStylistModel>();
+builder.Services.AddScoped<IPersonalStylistRecommendationModel>(services =>
+{
+    var options = services
+        .GetRequiredService<Microsoft.Extensions.Options.IOptions<PersonalStylistAgentOptions>>()
+        .Value;
+
+    return string.Equals(options.Provider, "OpenAI", StringComparison.OrdinalIgnoreCase)
+        ? services.GetRequiredService<OpenAiPersonalStylistModel>()
+        : services.GetRequiredService<GroundedPersonalStylistModel>();
+});
 builder.Services.AddScoped<IPersonalStylistOutputValidator, PersonalStylistOutputValidator>();
 builder.Services.AddScoped<IAgentWorkflowRecorder, AgentWorkflowRecorder>();
 builder.Services.AddScoped<IPersonalStylistAgent, PersonalStylistAgent>();
@@ -145,7 +157,18 @@ builder.Services.AddScoped<IPromotionAgentTool, GetProductDetailsTool>();
 builder.Services.AddScoped<IPromotionAgentTool, GetProductPricingTool>();
 builder.Services.AddScoped<IPromotionAgentTool, CalculatePromotionTool>();
 builder.Services.AddScoped<PromotionAgentToolRegistry>();
-builder.Services.AddScoped<IPromotionProposalModel, LocalPromotionProposalModel>();
+builder.Services.AddScoped<LocalPromotionProposalModel>();
+builder.Services.AddHttpClient<OpenAiPromotionProposalModel>();
+builder.Services.AddScoped<IPromotionProposalModel>(services =>
+{
+    var options = services
+        .GetRequiredService<Microsoft.Extensions.Options.IOptions<InventoryPromotionAgentOptions>>()
+        .Value;
+
+    return string.Equals(options.Provider, "OpenAI", StringComparison.OrdinalIgnoreCase)
+        ? services.GetRequiredService<OpenAiPromotionProposalModel>()
+        : services.GetRequiredService<LocalPromotionProposalModel>();
+});
 builder.Services.AddScoped<IInventoryPromotionAgent, InventoryPromotionAgentService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddSingleton(TimeProvider.System);
@@ -227,6 +250,67 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 app.UseExceptionHandler();
+
+var demoCommand = args
+    .Select(argument => argument.Trim().ToLowerInvariant())
+    .FirstOrDefault(argument => argument is "seed-demo" or "reset-demo" or "reseed-demo");
+
+if (demoCommand is not null)
+{
+    if (!app.Environment.IsDevelopment())
+    {
+        Console.Error.WriteLine(
+            "Demo data commands are available only in the Development environment.");
+        Environment.ExitCode = 1;
+        return;
+    }
+
+    await using var scope = app.Services.CreateAsyncScope();
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<AppDbContext>();
+
+    try
+    {
+        await context.Database.MigrateAsync();
+        var seeder = new DemoDataSeeder(
+            context,
+            services.GetRequiredService<IPasswordService>(),
+            services.GetRequiredService<TimeProvider>());
+        var options = builder.Configuration
+            .GetSection(DemoDataOptions.SectionName)
+            .Get<DemoDataOptions>() ?? new DemoDataOptions();
+
+        DemoDataResult result;
+        if (demoCommand == "reset-demo")
+        {
+            result = await seeder.ResetAsync();
+        }
+        else if (demoCommand == "reseed-demo")
+        {
+            await seeder.ResetAsync();
+            result = await seeder.SeedAsync(options);
+        }
+        else
+        {
+            result = await seeder.SeedAsync(options);
+        }
+
+        Console.WriteLine(result.Message);
+        if (demoCommand is "seed-demo" or "reseed-demo")
+        {
+            Console.WriteLine(
+                $"Accounts: {DemoDataSeeder.CustomerEmail}, "
+                + $"{DemoDataSeeder.StaffEmail}, {DemoDataSeeder.AdministratorEmail}");
+        }
+    }
+    catch (Exception exception)
+    {
+        Console.Error.WriteLine($"Demo data command failed: {exception.Message}");
+        Environment.ExitCode = 1;
+    }
+
+    return;
+}
 
 // Bootstrap the Administrator account from configuration when it is missing:
 // registration only ever creates Customers, so this is the only built-in way

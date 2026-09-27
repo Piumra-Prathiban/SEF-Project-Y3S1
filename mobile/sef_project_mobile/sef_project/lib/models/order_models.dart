@@ -265,3 +265,75 @@ class Order {
             .toList(),
       );
 }
+
+class ProductReturnItem {
+  const ProductReturnItem({
+    required this.id,
+    required this.orderItemId,
+    required this.name,
+    required this.sku,
+    required this.quantity,
+    required this.lineRefundAmount,
+  });
+
+  final String id;
+  final String orderItemId;
+  final String name;
+  final String sku;
+  final int quantity;
+  final double lineRefundAmount;
+
+  factory ProductReturnItem.fromJson(Map<String, dynamic> json) =>
+      ProductReturnItem(
+        id: json['id'] as String,
+        orderItemId: json['orderItemId'] as String,
+        name: json['name'] as String? ?? '',
+        sku: json['sku'] as String? ?? '',
+        quantity: (json['quantity'] as num).toInt(),
+        lineRefundAmount: (json['lineRefundAmount'] as num).toDouble(),
+      );
+}
+
+class ProductReturn {
+  const ProductReturn({
+    required this.id,
+    required this.returnNumber,
+    required this.orderId,
+    required this.status,
+    required this.reason,
+    required this.refundAmount,
+    required this.currency,
+    required this.requestedAt,
+    required this.items,
+    this.customerNote,
+    this.staffNote,
+  });
+
+  final String id;
+  final String returnNumber;
+  final String orderId;
+  final int status;
+  final int reason;
+  final double refundAmount;
+  final String currency;
+  final DateTime requestedAt;
+  final List<ProductReturnItem> items;
+  final String? customerNote;
+  final String? staffNote;
+
+  factory ProductReturn.fromJson(Map<String, dynamic> json) => ProductReturn(
+    id: json['id'] as String,
+    returnNumber: json['returnNumber'] as String,
+    orderId: json['orderId'] as String,
+    status: (json['status'] as num).toInt(),
+    reason: (json['reason'] as num).toInt(),
+    refundAmount: (json['refundAmount'] as num).toDouble(),
+    currency: json['currency'] as String? ?? 'LKR',
+    requestedAt: DateTime.parse(json['requestedAt'] as String),
+    items: (json['items'] as List? ?? [])
+        .map((item) => ProductReturnItem.fromJson(item as Map<String, dynamic>))
+        .toList(),
+    customerNote: json['customerNote'] as String?,
+    staffNote: json['staffNote'] as String?,
+  );
+}

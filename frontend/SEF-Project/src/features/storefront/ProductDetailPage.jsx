@@ -6,10 +6,11 @@ import { LoadingState } from '../../components/ui/LoadingState';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency } from '../../utils/format';
 import { resolveImageUrl } from '../../utils/images';
+import { isStaff } from '../../utils/roles';
 import { useCart } from '../cart/CartContext';
 import { addWishlistItem } from '../wishlist/wishlistService';
 import { ProductReviewsSection } from '../reviews';
-import { getStorefrontProduct } from './storefrontService';
+import { getProductPromotions, getStorefrontProduct } from './storefrontService';
 import './storefront.css';
 import './productDetail.css';
 
@@ -36,7 +37,7 @@ function getHue(value) {
 export function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated, token, user } = useAuth();
   const { addItem } = useCart();
 
   const [product, setProduct] = useState(null);
@@ -55,11 +56,46 @@ export function ProductDetailPage() {
     setNotFound(false);
 
     try {
-      const response = await getStorefrontProduct(id);
-      const variants = response?.variants ?? [];
+      const [productResult, promotionResult] = await Promise.allSettled([
+        getStorefrontProduct(id),
+        getProductPromotions(id),
+      ]);
+
+      if (productResult.status === 'rejected') {
+        throw productResult.reason;
+      }
+
+      const response = productResult.value;
+      const offers = promotionResult.status === 'fulfilled'
+        ? new Map(
+          (promotionResult.value?.variants ?? []).map((offer) => [
+            offer.productVariantId,
+            offer,
+          ]),
+        )
+        : new Map();
+      const variants = (response?.variants ?? []).map((variant) => {
+        const offer = offers.get(variant.id);
+
+        return offer
+          ? {
+            ...variant,
+            originalPrice: offer.originalPrice,
+            price: offer.finalPrice,
+            discountAmount: offer.discountAmount,
+            promotionName: offer.promotionName,
+          }
+          : variant;
+      });
       const preferred = variants.find((variant) => variant.inStock) ?? variants[0];
 
-      setProduct(response);
+      setProduct({
+        ...response,
+        variants,
+        promotions: promotionResult.status === 'fulfilled'
+          ? promotionResult.value?.promotions ?? []
+          : [],
+      });
       setSelectedSize(preferred?.sizeName ?? '');
       setSelectedColour(preferred?.colourName ?? '');
       setQuantity(1);
@@ -202,6 +238,7 @@ export function ProductDetailPage() {
   const hue = getHue(product.name);
   const price = selectedVariant?.price ?? product.priceFrom;
   const imageUrl = resolveImageUrl(product.imageUrl);
+  const staffViewer = isAuthenticated && isStaff(user);
 
   return (
     <div className="storefront">
@@ -237,7 +274,19 @@ export function ProductDetailPage() {
             <h1>{product.name}</h1>
             <p className="product-detail__price">
               {formatCurrency(price, 'LKR')}
+              {selectedVariant?.discountAmount > 0 && (
+                <>
+                  {' '}
+                  <del>{formatCurrency(selectedVariant.originalPrice, 'LKR')}</del>
+                </>
+              )}
             </p>
+
+            {selectedVariant?.promotionName && (
+              <p className="product-detail__promotion">
+                {selectedVariant.promotionName} is applied automatically at checkout.
+              </p>
+            )}
 
             {product.description && (
               <p className="product-detail__description">{product.description}</p>
@@ -304,7 +353,14 @@ export function ProductDetailPage() {
 
             {notice && <Alert>{notice}</Alert>}
 
-            <div className="product-detail__actions">
+            {staffViewer && (
+              <Alert>
+                Staff accounts can preview the storefront. Purchasing and saved
+                lists belong to customer accounts.
+              </Alert>
+            )}
+
+            {!staffViewer && <div className="product-detail__actions">
               <button
                 disabled={!selectedVariant || !selectedVariant.inStock}
                 onClick={() => handleAddToCart({ buyNow: false })}
@@ -328,7 +384,7 @@ export function ProductDetailPage() {
               >
                 {isSavingToWishlist ? 'Saving...' : 'Save to wishlist'}
               </button>
-            </div>
+            </div>}
           </div>
         </article>
 

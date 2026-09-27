@@ -20,6 +20,7 @@ import StatusBadge from '../../components/StatusBadge';
 import PaymentStatusForm from './PaymentStatusForm';
 import ShipmentsSection from './ShipmentsSection';
 import CancelOrderSection from './CancelOrderSection';
+import ReturnsSection from './ReturnsSection';
 import './orders.css';
 
 // Advisory only: mirrors the backend's order status state machine so the UI can
@@ -32,7 +33,7 @@ const ALLOWED_STATUS_TRANSITIONS = {
   [OrderStatus.Confirmed]: [OrderStatus.Preparing],
   [OrderStatus.Preparing]: [OrderStatus.Ready],
   [OrderStatus.Ready]: [OrderStatus.Completed],
-  [OrderStatus.Completed]: [OrderStatus.Refunded],
+  [OrderStatus.Completed]: [],
   [OrderStatus.Cancelled]: [],
   [OrderStatus.Refunded]: [],
 };
@@ -112,6 +113,17 @@ function OrderDetailPage() {
   const allowedStatusOptions = order
     ? (ALLOWED_STATUS_TRANSITIONS[order.status] ?? [])
     : [];
+  const committedPaymentTotal = order
+    ? order.payments
+        .filter(
+          (payment) =>
+            payment.status === 0 || payment.status === 1,
+        )
+        .reduce((total, payment) => total + payment.amount, 0)
+    : 0;
+  const outstandingBalance = order
+    ? Math.max(0, order.total - committedPaymentTotal)
+    : 0;
 
   async function refreshOrder() {
     const response = await getOrderById(token, id);
@@ -456,6 +468,7 @@ function OrderDetailPage() {
           </p>
         )}
 
+        {outstandingBalance > 0 ? (
         <form className="payment-form" onSubmit={handlePaymentSubmit}>
           <h3>Record a payment</h3>
 
@@ -503,6 +516,11 @@ function OrderDetailPage() {
             outstanding balance before accepting them.
           </p>
         </form>
+        ) : (
+          <p className="payment-form__note">
+            The full order amount is already paid or awaiting confirmation.
+          </p>
+        )}
       </section>
 
       <ShipmentsSection
@@ -510,6 +528,13 @@ function OrderDetailPage() {
         token={token}
         canManage={canManage}
         onRefresh={refreshOrder}
+      />
+
+      <ReturnsSection
+        order={order}
+        token={token}
+        canManage={canManage}
+        onOrderRefresh={refreshOrder}
       />
 
       <section className="order-detail__history" aria-label="Status history">

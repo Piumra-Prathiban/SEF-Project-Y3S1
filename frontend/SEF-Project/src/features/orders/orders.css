@@ -124,6 +124,130 @@
   margin-bottom: 24px;
 }
 
+.order-detail__returns {
+  margin-bottom: 24px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+}
+
+.returns-heading,
+.return-card__header,
+.page-title-row,
+.returns-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.section-eyebrow {
+  margin: 0 0 4px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.returns-count {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.returns-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.return-card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.return-card p,
+.return-card__items {
+  margin: 6px 0 0;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.return-card__items {
+  padding-left: 18px;
+}
+
+.return-card__refund {
+  padding-top: 8px;
+}
+
+.return-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.return-request-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.return-request-form h3,
+.return-request-form p {
+  margin: 0;
+}
+
+.return-request-form > label,
+.return-item-picker label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-h);
+  font-size: 14px;
+}
+
+.return-request-form select,
+.return-request-form textarea,
+.return-request-form input {
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+}
+
+.return-request-form textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.return-item-picker {
+  display: grid;
+  gap: 10px;
+}
+
+.return-item-picker label {
+  grid-template-columns: minmax(0, 1fr) 90px;
+  align-items: center;
+}
+
+.return-item-picker small {
+  display: block;
+  color: var(--text);
+}
+
+.returns-pagination {
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
 .order-detail__totals dl {
   display: grid;
   gap: 6px;

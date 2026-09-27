@@ -11,6 +11,8 @@ import {
   createShipment,
   updateShipmentStatus,
   cancelOrder,
+  getOrderReturns,
+  createReturn,
   OrderStatus,
   PaymentMethod,
   PaymentStatus,
@@ -29,6 +31,10 @@ vi.mock('../../services/orderService', async (importOriginal) => {
     createShipment: vi.fn(),
     updateShipmentStatus: vi.fn(),
     cancelOrder: vi.fn(),
+    getOrderReturns: vi.fn(),
+    createReturn: vi.fn(),
+    updateReturnStatus: vi.fn(),
+    cancelReturn: vi.fn(),
   };
 });
 
@@ -226,6 +232,7 @@ beforeEach(() => {
   vi.spyOn(window, 'confirm').mockReturnValue(true);
 
   getOrderById.mockResolvedValue(ORDER);
+  getOrderReturns.mockResolvedValue([]);
 });
 
 afterEach(() => {
@@ -500,7 +507,7 @@ describe('OrderDetailPage', () => {
     expect(updateOrderStatus).not.toHaveBeenCalled();
   });
 
-  it('shows payment records and a payment action to customers without staff controls', async () => {
+  it('shows payment records without another action when the full amount is paid', async () => {
     mockAuth.user = { ...mockAuth.user, role: 'Customer' };
 
     renderPage();
@@ -511,9 +518,8 @@ describe('OrderDetailPage', () => {
 
     expect(within(table).getByText('Card')).toBeInTheDocument();
     expect(within(table).getByText('MOCK-1234')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Submit payment' }),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/full order amount is already paid/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Submit payment' })).not.toBeInTheDocument();
     expect(
       screen.queryByLabelText(/Update .* payment/),
     ).not.toBeInTheDocument();
@@ -969,6 +975,38 @@ describe('OrderDetailPage', () => {
     expect(
       screen.getByRole('link', { name: 'Back to orders' }),
     ).toHaveAttribute('href', '/orders');
+  });
+
+  it('lets a customer request a grounded item return', async () => {
+    mockAuth.user = { ...mockAuth.user, role: 'Customer' };
+    createReturn.mockResolvedValue({ id: 'return-1' });
+    const user = userEvent.setup();
+    renderPage();
+
+    const section = await screen.findByRole('region', { name: 'Returns' });
+    await user.type(within(section).getByRole('spinbutton'), '1');
+    await user.selectOptions(
+      within(section).getByRole('combobox', { name: 'Reason' }),
+      '1',
+    );
+    await user.type(
+      within(section).getByRole('textbox', { name: /Details/ }),
+      'The jacket arrived damaged.',
+    );
+    await user.click(
+      within(section).getByRole('button', { name: 'Submit return request' }),
+    );
+
+    await waitFor(() => {
+      expect(createReturn).toHaveBeenCalledWith('test-token', ORDER_ID, {
+        reason: 1,
+        note: 'The jacket arrived damaged.',
+        items: [{
+          orderItemId: '99999999-9999-9999-9999-999999999999',
+          quantity: 1,
+        }],
+      });
+    });
   });
 
   it('returns to the previous view when history is available', async () => {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/shopping_models.dart';
 import '../state/customer_store.dart';
 import '../widgets/common.dart';
+import 'checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -219,19 +220,9 @@ class _CartSummary extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: cart.items.every((item) =>
                             item.hasSufficientStock && item.quantity > 0)
-                        ? () => showDialog<void>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Ready for checkout'),
-                                content: const Text(
-                                  'Checkout and order creation continue in the Orders experience.',
-                                ),
-                                actions: [
-                                  FilledButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text('OK'),
-                                  ),
-                                ],
+                        ? () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const CheckoutScreen(),
                               ),
                             )
                         : null,

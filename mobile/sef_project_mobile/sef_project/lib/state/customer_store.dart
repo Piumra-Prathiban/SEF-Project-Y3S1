@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 
 import '../models/shopping_models.dart';
+import '../models/order_models.dart';
 import '../services/customer_api.dart';
 
 enum RecommendationUiStatus {
@@ -161,6 +162,49 @@ class CustomerStore extends ChangeNotifier {
     await api.clearCart();
     cart = Cart.empty();
   });
+
+  Future<Order> checkout({
+    required Map<String, dynamic> deliveryAddress,
+    required int paymentMethod,
+    String? couponCode,
+  }) async {
+    if (cart.items.isEmpty) {
+      throw const ApiException('Your cart is empty.');
+    }
+
+    loading = true;
+    error = null;
+    notifyListeners();
+    try {
+      final order = await api.createOrder(
+        items: cart.items
+            .map(
+              (item) => {
+                'productVariantId': item.productVariantId,
+                'quantity': item.quantity,
+              },
+            )
+            .toList(),
+        deliveryAddress: deliveryAddress,
+        paymentMethod: paymentMethod,
+        couponCode: couponCode,
+      );
+      await api.clearCart();
+      cart = Cart.empty();
+      return order;
+    } catch (exception) {
+      error = exception.toString();
+      if (exception is ApiException && exception.statusCode == 401) {
+        await api.logout();
+        authenticated = false;
+      }
+      rethrow;
+    } finally {
+      loading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> requestRecommendations(
     RecommendationPreferences preferences,
   ) async {

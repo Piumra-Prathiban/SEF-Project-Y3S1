@@ -17,4 +17,7 @@ public class OrderItem : GuidEntity
     public decimal UnitPrice { get; set; }
 
     public decimal LineTotal { get; set; }
+
+    public ICollection<ReturnItem> ReturnItems { get; set; } =
+        new List<ReturnItem>();
 }

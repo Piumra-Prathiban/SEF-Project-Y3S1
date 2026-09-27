@@ -175,6 +175,20 @@ describe('application routing', () => {
     expect(
       within(nav).getByRole('link', { name: 'Personal Stylist' }),
     ).toBeInTheDocument();
+    expect(within(nav).getByRole('link', { name: 'Wishlist' })).toBeInTheDocument();
+    expect(within(nav).getByRole('link', { name: 'Profile' })).toBeInTheDocument();
+  });
+
+  it('does not expose customer-owned pages to staff accounts', async () => {
+    renderApp('/wishlist');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'You do not have permission to access this page.',
+    );
+
+    const staffNavigation = screen.getByRole('navigation', { name: 'Main navigation' });
+    expect(within(staffNavigation).queryByRole('link', { name: 'Wishlist' })).not.toBeInTheDocument();
+    expect(within(staffNavigation).queryByRole('link', { name: 'Profile' })).not.toBeInTheDocument();
   });
 
   it('navigates between pages from the sidebar', async () => {

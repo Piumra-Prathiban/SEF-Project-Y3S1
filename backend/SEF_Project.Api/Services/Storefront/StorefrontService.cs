@@ -25,6 +25,8 @@ public class StorefrontService : IStorefrontService
         StorefrontProductQueryDto query,
         CancellationToken cancellationToken = default)
     {
+        ValidateQuery(query);
+
         var take = Math.Clamp(
             query.Limit <= 0 ? DefaultLimit : query.Limit,
             1,
@@ -35,7 +37,12 @@ public class StorefrontService : IStorefrontService
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             var term = query.Search.Trim().ToLower();
-            productsQuery = productsQuery.Where(p => p.Name.ToLower().Contains(term));
+            productsQuery = productsQuery.Where(p =>
+                p.Name.ToLower().Contains(term) ||
+                (p.Description != null && p.Description.ToLower().Contains(term)) ||
+                p.Variants.Any(v => v.IsActive &&
+                    (v.Name.ToLower().Contains(term) ||
+                        v.Sku.ToLower().Contains(term))));
         }
 
         if (query.CategoryId is not null)
@@ -44,36 +51,20 @@ public class StorefrontService : IStorefrontService
                 p => p.CategoryId == query.CategoryId.Value);
         }
 
-        if (!string.IsNullOrWhiteSpace(query.Size))
-        {
-            var size = query.Size.Trim();
+        var size = NullIfWhitespace(query.Size);
+        var colour = NullIfWhitespace(query.Colour);
+        var hasVariantFilters = size is not null || colour is not null ||
+            query.MinPrice is not null || query.MaxPrice is not null;
 
-            productsQuery = productsQuery.Where(
-                p => p.Variants.Any(
-                    v => v.IsActive && v.Size != null && v.Size.Name == size));
-        }
-
-        if (!string.IsNullOrWhiteSpace(query.Colour))
-        {
-            var colour = query.Colour.Trim();
-
-            productsQuery = productsQuery.Where(
-                p => p.Variants.Any(
-                    v => v.IsActive && v.Colour != null && v.Colour.Name == colour));
-        }
-
-        if (query.MinPrice is not null)
+        if (hasVariantFilters)
         {
             productsQuery = productsQuery.Where(
                 p => p.Variants.Any(
-                    v => v.IsActive && v.Price >= query.MinPrice.Value));
-        }
-
-        if (query.MaxPrice is not null)
-        {
-            productsQuery = productsQuery.Where(
-                p => p.Variants.Any(
-                    v => v.IsActive && v.Price <= query.MaxPrice.Value));
+                    v => v.IsActive &&
+                        (size == null || (v.Size != null && v.Size.Name == size)) &&
+                        (colour == null || (v.Colour != null && v.Colour.Name == colour)) &&
+                        (query.MinPrice == null || v.Price >= query.MinPrice.Value) &&
+                        (query.MaxPrice == null || v.Price <= query.MaxPrice.Value)));
         }
 
         var descending = string.Equals(
@@ -94,6 +85,7 @@ public class StorefrontService : IStorefrontService
         };
 
         var products = await sorted
+            .Skip((query.Page - 1) * take)
             .Take(take)
             .ToListAsync(cancellationToken);
 
@@ -172,6 +164,43 @@ public class StorefrontService : IStorefrontService
                 .ThenInclude(v => v.Colour)
             .Include(p => p.Variants)
                 .ThenInclude(v => v.InventoryStock);
+
+    private static void ValidateQuery(StorefrontProductQueryDto query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+
+        if (query.MinPrice < 0 || query.MaxPrice < 0)
+        {
+            throw new ArgumentException("Prices cannot be negative.");
+        }
+
+        if (query.Page is < 1 or > 10000)
+        {
+            throw new ArgumentException("Page must be between 1 and 10000.");
+        }
+
+        if (query.MinPrice.HasValue && query.MaxPrice.HasValue &&
+            query.MinPrice.Value > query.MaxPrice.Value)
+        {
+            throw new ArgumentException(
+                "Minimum price cannot be greater than maximum price.");
+        }
+
+        var sortBy = NullIfWhitespace(query.SortBy)?.ToLowerInvariant();
+        if (sortBy is not null && sortBy is not "name" and not "price")
+        {
+            throw new ArgumentException("SortBy must be name or price.");
+        }
+
+        var sortDirection = NullIfWhitespace(query.SortDirection)?.ToLowerInvariant();
+        if (sortDirection is not null && sortDirection is not "asc" and not "desc")
+        {
+            throw new ArgumentException("SortDirection must be asc or desc.");
+        }
+    }
+
+    private static string? NullIfWhitespace(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private static StorefrontProductResponseDto Map(
         Product product,

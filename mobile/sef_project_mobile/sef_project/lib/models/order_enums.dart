@@ -31,8 +31,28 @@ const Map<int, String> shipmentStatusNames = {
   3: 'Cancelled',
 };
 
+const Map<int, String> returnStatusNames = {
+  0: 'Requested',
+  1: 'Approved',
+  2: 'Rejected',
+  3: 'Received',
+  4: 'Refunded',
+  5: 'Cancelled',
+};
+
+const Map<int, String> returnReasonNames = {
+  0: 'Wrong size',
+  1: 'Damaged',
+  2: 'Not as described',
+  3: 'Changed my mind',
+  4: 'Wrong item',
+  5: 'Other',
+};
+
 const int orderStatusCancelled = 5;
 const int orderStatusRefunded = 6;
+const int orderStatusCompleted = 4;
+const int returnStatusRequested = 0;
 
 const int shipmentStatusPending = 0;
 const int shipmentStatusShipped = 1;

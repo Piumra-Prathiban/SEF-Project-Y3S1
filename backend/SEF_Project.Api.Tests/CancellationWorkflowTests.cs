@@ -186,20 +186,15 @@ public class CancellationWorkflowTests
             variant.Id,
             2);
 
-        var completedPayment = await service.CreatePaymentAsync(
-            customerUserId,
-            false,
-            order.Id,
-            new CreatePaymentRequest
-            {
-                Method = PaymentMethod.Card,
-                Amount = 2000m
-            });
+        var completedPayment = await context.Payments
+            .SingleAsync(payment => payment.OrderId == order.Id);
+        completedPayment.Amount = 2000m;
+        await context.SaveChangesAsync();
         await service.UpdatePaymentStatusAsync(
             staffUserId,
             true,
             order.Id,
-            completedPayment!.Id,
+            completedPayment.Id,
             new UpdatePaymentStatusRequest
             {
                 Status = PaymentStatus.Completed

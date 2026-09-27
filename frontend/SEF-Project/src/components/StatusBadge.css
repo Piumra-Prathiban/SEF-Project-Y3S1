@@ -8,12 +8,14 @@
   color: var(--text);
 }
 
-.status-badge--pending {
+.status-badge--pending,
+.status-badge--requested {
   background: var(--social-bg);
   color: var(--text-h);
 }
 
 .status-badge--confirmed,
+.status-badge--approved,
 .status-badge--shipped {
   background: rgba(59, 130, 246, 0.12);
   border-color: rgba(59, 130, 246, 0.4);
@@ -33,6 +35,7 @@
 }
 
 .status-badge--completed,
+.status-badge--received,
 .status-badge--delivered {
   background: rgba(34, 197, 94, 0.12);
   border-color: rgba(34, 197, 94, 0.4);
@@ -40,6 +43,7 @@
 }
 
 .status-badge--cancelled,
+.status-badge--rejected,
 .status-badge--failed {
   background: rgba(239, 68, 68, 0.12);
   border-color: rgba(239, 68, 68, 0.4);

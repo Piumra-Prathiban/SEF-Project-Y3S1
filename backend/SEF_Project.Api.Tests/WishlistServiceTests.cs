@@ -24,6 +24,7 @@ public class WishlistServiceTests
             .GetCustomAttribute<AuthorizeAttribute>();
 
         Assert.NotNull(attribute);
+        Assert.Equal("Customer", attribute.Roles);
     }
 
     [Fact]

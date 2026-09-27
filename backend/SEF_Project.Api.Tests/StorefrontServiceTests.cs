@@ -38,7 +38,8 @@ public class StorefrontServiceTests
         decimal? maxPrice = null,
         string? sortBy = null,
         string? sortDirection = null,
-        int limit = 24) =>
+        int limit = 24,
+        int page = 1) =>
         new()
         {
             Search = search,
@@ -49,7 +50,8 @@ public class StorefrontServiceTests
             MaxPrice = maxPrice,
             SortBy = sortBy,
             SortDirection = sortDirection,
-            Limit = limit
+            Limit = limit,
+            Page = page
         };
 
     [Fact]
@@ -212,6 +214,13 @@ public class StorefrontServiceTests
         var match = Assert.Single(bySearch);
         Assert.Equal("Fleece Pullover Hoodie", match.Name);
 
+        var byDescription = await service.GetProductsAsync(
+            Query(search: "full-grain leather"));
+        Assert.Equal("Leather Ankle Boots", Assert.Single(byDescription).Name);
+
+        var bySku = await service.GetProductsAsync(Query(search: "JKT-QFD-L"));
+        Assert.Equal("Quilted Field Jacket", Assert.Single(bySku).Name);
+
         var topsId = await context.Categories
             .Where(c => c.Name == "Tops")
             .Select(c => c.Id)
@@ -244,6 +253,43 @@ public class StorefrontServiceTests
         var priceBand = await service.GetProductsAsync(
             Query(minPrice: 8000m, maxPrice: 9000m));
         Assert.Equal("Leather Ankle Boots", Assert.Single(priceBand).Name);
+    }
+
+    [Fact]
+    public async Task GetProductsAsync_ShouldApplyVariantFiltersToTheSameVariant()
+    {
+        var (connection, context) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        var service = new StorefrontService(context);
+
+        var noMatchingCombination = await service.GetProductsAsync(
+            Query(size: "XS", colour: "White"));
+        Assert.DoesNotContain(
+            noMatchingCombination,
+            product => product.Name == "Classic Cotton T-Shirt");
+
+        var noPriceInBand = await service.GetProductsAsync(
+            Query(minPrice: 2501m, maxPrice: 2599m));
+        Assert.DoesNotContain(
+            noPriceInBand,
+            product => product.Name == "Classic Cotton T-Shirt");
+    }
+
+    [Fact]
+    public async Task GetProductsAsync_ShouldRejectInvalidFilterRangesAndSorts()
+    {
+        var (connection, context) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        var service = new StorefrontService(context);
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.GetProductsAsync(Query(minPrice: 5000m, maxPrice: 1000m)));
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.GetProductsAsync(Query(sortBy: "popularity")));
     }
 
     [Fact]
@@ -287,6 +333,11 @@ public class StorefrontServiceTests
         var products = await service.GetProductsAsync(Query(limit: 2));
 
         Assert.Equal(2, products.Count);
+
+        var secondPage = await service.GetProductsAsync(Query(limit: 2, page: 2));
+        Assert.Equal(2, secondPage.Count);
+        Assert.DoesNotContain(secondPage[0].Id, products.Select(product => product.Id));
+        Assert.DoesNotContain(secondPage[1].Id, products.Select(product => product.Id));
     }
 
     [Fact]

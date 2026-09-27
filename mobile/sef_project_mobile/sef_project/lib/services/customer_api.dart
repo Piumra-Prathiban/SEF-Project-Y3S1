@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/shopping_models.dart';
+import '../models/order_models.dart';
 import 'token_storage.dart';
 
 class ApiException implements Exception {
@@ -45,6 +46,23 @@ abstract interface class CustomerRepository {
   Future<CustomerAddress> createAddress(CustomerAddress address);
   Future<CustomerAddress> updateAddress(CustomerAddress address);
   Future<void> deleteAddress(int id);
+  Future<OrderList> orders({int page = 1, int pageSize = 20});
+  Future<Order> order(String orderId);
+  Future<Order> createOrder({
+    required List<Map<String, dynamic>> items,
+    required Map<String, dynamic> deliveryAddress,
+    required int paymentMethod,
+    String? couponCode,
+  });
+  Future<Order> cancelOrder(String orderId);
+  Future<List<ProductReturn>> orderReturns(String orderId);
+  Future<ProductReturn> createReturn(
+    String orderId, {
+    required int reason,
+    required List<Map<String, dynamic>> items,
+    String? note,
+  });
+  Future<ProductReturn> cancelReturn(String returnId);
 }
 
 class CustomerApi implements CustomerRepository {
@@ -209,6 +227,70 @@ class CustomerApi implements CustomerRepository {
   Future<void> deleteAddress(int id) async {
     await _request('DELETE', '/profile/addresses/$id');
   }
+
+  @override
+  Future<OrderList> orders({int page = 1, int pageSize = 20}) async =>
+      OrderList.fromJson(
+        await _request('GET', '/Orders?page=$page&pageSize=$pageSize')
+            as Map<String, dynamic>,
+      );
+
+  @override
+  Future<Order> order(String orderId) async => Order.fromJson(
+    await _request('GET', '/Orders/$orderId') as Map<String, dynamic>,
+  );
+
+  @override
+  Future<Order> createOrder({
+    required List<Map<String, dynamic>> items,
+    required Map<String, dynamic> deliveryAddress,
+    required int paymentMethod,
+    String? couponCode,
+  }) async => Order.fromJson(
+    await _request(
+      'POST',
+      '/Orders',
+      body: {
+        'items': items,
+        'deliveryAddress': deliveryAddress,
+        'paymentMethod': paymentMethod,
+        'couponCode': couponCode,
+      },
+    ) as Map<String, dynamic>,
+  );
+
+  @override
+  Future<Order> cancelOrder(String orderId) async => Order.fromJson(
+    await _request('POST', '/Orders/$orderId/cancel', body: const {})
+        as Map<String, dynamic>,
+  );
+
+  @override
+  Future<List<ProductReturn>> orderReturns(String orderId) async =>
+      (await _request('GET', '/Orders/$orderId/returns') as List)
+          .map((item) => ProductReturn.fromJson(item as Map<String, dynamic>))
+          .toList();
+
+  @override
+  Future<ProductReturn> createReturn(
+    String orderId, {
+    required int reason,
+    required List<Map<String, dynamic>> items,
+    String? note,
+  }) async => ProductReturn.fromJson(
+    await _request(
+      'POST',
+      '/Orders/$orderId/returns',
+      body: {'reason': reason, 'items': items, 'note': note},
+    ) as Map<String, dynamic>,
+  );
+
+  @override
+  Future<ProductReturn> cancelReturn(String returnId) async =>
+      ProductReturn.fromJson(
+        await _request('POST', '/returns/$returnId/cancel', body: const {})
+            as Map<String, dynamic>,
+      );
 
   Future<dynamic> _request(
     String method,

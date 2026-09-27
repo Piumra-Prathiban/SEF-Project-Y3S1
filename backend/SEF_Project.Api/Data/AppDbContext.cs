@@ -44,6 +44,8 @@ public class AppDbContext : DbContext
     public DbSet<OrderStatusHistory> OrderStatusHistory => Set<OrderStatusHistory>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<Shipment> Shipments => Set<Shipment>();
+    public DbSet<ProductReturn> Returns => Set<ProductReturn>();
+    public DbSet<ReturnItem> ReturnItems => Set<ReturnItem>();
 
     public DbSet<Campaign> Campaigns => Set<Campaign>();
     public DbSet<Promotion> Promotions => Set<Promotion>();

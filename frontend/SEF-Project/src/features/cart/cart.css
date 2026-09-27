@@ -137,6 +137,12 @@
   gap: 6px;
 }
 
+.checkout__optional {
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
 .checkout__form input,
 .checkout__form select {
   background: var(--bg);

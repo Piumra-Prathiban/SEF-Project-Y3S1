@@ -46,6 +46,8 @@ This document describes the shared relational model for the whole application. A
 | `OrderStatusHistory` | Guid | append-only status audit |
 | `Payment` | Guid | supports partial/refund payments |
 | `Shipment` | Guid | delivery/fulfilment |
+| `Return` (`ProductReturn`) | Guid | return request, staff review, receipt and refund audit |
+| `ReturnItem` | Guid | returned quantity and unit-price refund snapshot for an `OrderItem` |
 
 ### Marketing & BI
 | Entity | Key | Notes |
@@ -167,8 +169,9 @@ These must run atomically (single `SaveChanges` / explicit transaction):
 2. **Inventory stock updates** — update `Inventory` and append an `InventoryTransaction` in one operation.
 3. **Fulfilment** — status change + `Shipment` update + stock deduction from reserved quantity.
 4. **Cancellation/refund** — release reservations, create a refund `Payment`, and record `OrderStatusHistory`.
-5. **Coupon redemption** — create `CouponRedemption` and atomically enforce `UsageLimit`/`PerCustomerLimit`.
-6. **High-impact Agentic AI actions** — any tool execution that writes business data must be wrapped in a transaction and leave an audit trail.
+5. **Returns** — reserve returnable quantities when requested; restore on-hand stock with a `Return` inventory ledger row when received; record a refund payment and close a fully returned order atomically.
+6. **Coupon redemption** — create `CouponRedemption` and atomically enforce `UsageLimit`/`PerCustomerLimit`.
+7. **High-impact Agentic AI actions** — any tool execution that writes business data must be wrapped in a transaction and leave an audit trail.
 
 ## Assumptions
 
@@ -183,4 +186,3 @@ These must run atomically (single `SaveChanges` / explicit transaction):
 2. Do we need a category hierarchy (parent categories) for menu navigation?
 3. Do we need a many-to-many supplier↔variant relationship (currently a single `SupplierId` on `Product`)?
 4. Do order totals need a finer tax/fee breakdown (per-item tax, service charge) beyond the current `TaxAmount`/`ShippingFee`/`DiscountTotal`?
-

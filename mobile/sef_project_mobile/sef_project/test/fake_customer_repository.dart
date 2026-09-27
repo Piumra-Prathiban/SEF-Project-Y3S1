@@ -1,4 +1,5 @@
 import 'package:sef_project/models/shopping_models.dart';
+import 'package:sef_project/models/order_models.dart';
 import 'package:sef_project/services/customer_api.dart';
 
 class FakeCustomerRepository implements CustomerRepository {
@@ -101,6 +102,34 @@ class FakeCustomerRepository implements CustomerRepository {
       isDefault: true,
     ),
   ];
+  List<ProductReturn> currentReturns = [];
+
+  Order get currentOrder => Order(
+    id: 'order-1',
+    orderNumber: 'ORD-TEST-1',
+    status: 4,
+    placedAt: DateTime.utc(2026, 9, 26),
+    subtotal: 4500,
+    discountTotal: 0,
+    taxAmount: 0,
+    shippingFee: 0,
+    total: 4500,
+    currency: 'LKR',
+    items: const [
+      OrderItem(
+        id: 'order-item-1',
+        productVariantId: 'variant-1',
+        sku: 'SHIRT-BLUE-M',
+        name: 'Linen Shirt',
+        quantity: 1,
+        unitPrice: 4500,
+        lineTotal: 4500,
+      ),
+    ],
+    payments: const [],
+    shipments: const [],
+    statusHistory: const [],
+  );
 
   @override
   Future<bool> hasToken() async => token;
@@ -293,5 +322,91 @@ class FakeCustomerRepository implements CustomerRepository {
   @override
   Future<void> deleteAddress(int id) async {
     currentAddresses.removeWhere((item) => item.id == id);
+  }
+
+  @override
+  Future<OrderList> orders({int page = 1, int pageSize = 20}) async =>
+      OrderList(
+        items: [
+          OrderSummary(
+            id: currentOrder.id,
+            orderNumber: currentOrder.orderNumber,
+            status: currentOrder.status,
+            placedAt: currentOrder.placedAt,
+            total: currentOrder.total,
+            currency: currentOrder.currency,
+          ),
+        ],
+        totalCount: 1,
+        page: page,
+        pageSize: pageSize,
+      );
+
+  @override
+  Future<Order> order(String orderId) async => currentOrder;
+
+  @override
+  Future<Order> createOrder({
+    required List<Map<String, dynamic>> items,
+    required Map<String, dynamic> deliveryAddress,
+    required int paymentMethod,
+    String? couponCode,
+  }) async => currentOrder;
+
+  @override
+  Future<Order> cancelOrder(String orderId) async => currentOrder;
+
+  @override
+  Future<List<ProductReturn>> orderReturns(String orderId) async =>
+      List.of(currentReturns);
+
+  @override
+  Future<ProductReturn> createReturn(
+    String orderId, {
+    required int reason,
+    required List<Map<String, dynamic>> items,
+    String? note,
+  }) async {
+    final created = ProductReturn(
+      id: 'return-1',
+      returnNumber: 'RET-TEST-1',
+      orderId: orderId,
+      status: 0,
+      reason: reason,
+      refundAmount: 4500,
+      currency: 'LKR',
+      requestedAt: DateTime.utc(2026, 9, 26),
+      items: const [
+        ProductReturnItem(
+          id: 'return-item-1',
+          orderItemId: 'order-item-1',
+          name: 'Linen Shirt',
+          sku: 'SHIRT-BLUE-M',
+          quantity: 1,
+          lineRefundAmount: 4500,
+        ),
+      ],
+      customerNote: note,
+    );
+    currentReturns = [created];
+    return created;
+  }
+
+  @override
+  Future<ProductReturn> cancelReturn(String returnId) async {
+    final current = currentReturns.first;
+    final cancelled = ProductReturn(
+      id: current.id,
+      returnNumber: current.returnNumber,
+      orderId: current.orderId,
+      status: 5,
+      reason: current.reason,
+      refundAmount: current.refundAmount,
+      currency: current.currency,
+      requestedAt: current.requestedAt,
+      items: current.items,
+    );
+    currentReturns = [cancelled];
+    return cancelled;
   }
 }

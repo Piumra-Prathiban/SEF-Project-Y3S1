@@ -23,7 +23,7 @@ import OrderDetailPage from '../features/orders/OrderDetailPage';
 import { ProductDetailPage } from '../features/storefront/ProductDetailPage';
 import { StorefrontPage } from '../features/storefront/StorefrontPage';
 import { StorefrontChrome } from '../features/storefront/StorefrontChrome';
-import { STAFF_ROLES } from '../utils/roles';
+import { ROLES, STAFF_ROLES } from '../utils/roles';
 import { memberOneRoutes } from './routeConfig.jsx';
 import { ProtectedRoute } from './ProtectedRoute';
 
@@ -44,7 +44,7 @@ function AppRoutes() {
       <Route path="/" element={<StorefrontPage />} />
       <Route path="/shop/:id" element={<StorefrontChrome><ProductDetailPage /></StorefrontChrome>} />
       <Route path="/cart" element={<StorefrontChrome><CartPage /></StorefrontChrome>} />
-      <Route path="/checkout" element={<ProtectedRoute><StorefrontChrome><CheckoutPage /></StorefrontChrome></ProtectedRoute>} />
+      <Route path="/checkout" element={<ProtectedRoute roles={[ROLES.customer]}><StorefrontChrome><CheckoutPage /></StorefrontChrome></ProtectedRoute>} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
 
