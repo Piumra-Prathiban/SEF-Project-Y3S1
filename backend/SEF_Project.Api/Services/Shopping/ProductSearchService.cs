@@ -158,6 +158,9 @@ public class ProductSearchService : IProductSearchService
                     Price = variant.Price,
                     AvailableQuantity = availableQuantity,
                     IsAvailable = availableQuantity > 0,
+                    SizeName = variant.Size?.Name ?? string.Empty,
+                    ColourName = variant.Colour?.Name ?? string.Empty,
+                    ColourHex = variant.Colour?.HexCode,
                     Size = variant.Size?.Name,
                     Colour = variant.Colour?.Name
                 };
@@ -169,6 +172,7 @@ public class ProductSearchService : IProductSearchService
             Id = product.Id,
             Name = product.Name,
             Description = product.Description,
+            ImageUrl = product.ImageUrl,
             MinimumPrice = variants.Min(variant => variant.Price),
             IsAvailable = variants.Any(variant => variant.IsAvailable),
             Categories = product.Category is { IsActive: true }

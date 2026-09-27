@@ -45,6 +45,32 @@ public class ProductSearchServiceTests
     }
 
     [Fact]
+    public async Task SearchAsync_ProjectsProductImageAndVariantAppearance()
+    {
+        await using var connection = new SqliteConnection("DataSource=:memory:");
+        await connection.OpenAsync();
+        await using var context = await CreateContextAsync(connection);
+        var service = new ProductSearchService(context);
+
+        var result = await service.SearchAsync(new ProductSearchQuery
+        {
+            Search = "boots"
+        });
+
+        var product = Assert.Single(result.Items);
+        Assert.Equal("/images/products/leather-ankle-boots.svg", product.ImageUrl);
+
+        var variant = Assert.Single(product.Variants);
+        Assert.Equal("One Size", variant.SizeName);
+        Assert.Equal("Black", variant.ColourName);
+        Assert.Equal("#000000", variant.ColourHex);
+
+        // Existing clients can continue reading the original field names.
+        Assert.Equal(variant.SizeName, variant.Size);
+        Assert.Equal(variant.ColourName, variant.Colour);
+    }
+
+    [Fact]
     public async Task SearchAsync_FiltersByCategory()
     {
         await using var connection = new SqliteConnection("DataSource=:memory:");

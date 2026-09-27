@@ -65,6 +65,8 @@ public class ShoppingProductResponse
 
     public string? Description { get; set; }
 
+    public string? ImageUrl { get; set; }
+
     public decimal MinimumPrice { get; set; }
 
     public bool IsAvailable { get; set; }
@@ -90,8 +92,16 @@ public class ShoppingProductVariantResponse
 
     public bool IsAvailable { get; set; }
 
+    public string SizeName { get; set; } = string.Empty;
+
+    public string ColourName { get; set; } = string.Empty;
+
+    public string? ColourHex { get; set; }
+
+    /// <summary>Legacy alias retained for existing shopping clients.</summary>
     public string? Size { get; set; }
 
+    /// <summary>Legacy alias retained for existing shopping clients.</summary>
     public string? Colour { get; set; }
 }
 
