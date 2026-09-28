@@ -181,6 +181,18 @@ builder.Services.AddCors(options =>
             .WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
+
+        // Flutter web picks a new random port on every `flutter run`, so in
+        // local development allow any localhost origin rather than only the
+        // pinned origins configured above.
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.SetIsOriginAllowed(origin =>
+                Uri.TryCreate(origin, UriKind.Absolute, out var uri) &&
+                (uri.Scheme == Uri.UriSchemeHttp ||
+                    uri.Scheme == Uri.UriSchemeHttps) &&
+                (uri.Host == "localhost" || uri.Host == "127.0.0.1"));
+        }
     });
 });
 

@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../config/api_config.dart';
 import '../models/shopping_models.dart';
 import '../models/order_models.dart';
 import 'token_storage.dart';
@@ -69,12 +70,7 @@ class CustomerApi implements CustomerRepository {
   CustomerApi({http.Client? client, TokenStorage? tokens, String? baseUrl})
     : _client = client ?? http.Client(),
       _tokens = tokens ?? const SecureTokenStorage(),
-      baseUrl =
-          baseUrl ??
-          const String.fromEnvironment(
-            'API_BASE_URL',
-            defaultValue: 'http://10.0.2.2:5193/api',
-          );
+      baseUrl = baseUrl ?? apiBaseUrl;
 
   final http.Client _client;
   final TokenStorage _tokens;

@@ -81,6 +81,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                   () => store.login(
                                       _email.text.trim(), _password.text),
                                 );
+                                if (context.mounted &&
+                                    store.authenticated &&
+                                    Navigator.of(context).canPop()) {
+                                  Navigator.of(context).pop();
+                                }
                               },
                         child: Text(store.loading ? 'Logging in...' : 'Log in'),
                       ),

@@ -28,12 +28,14 @@ class Product {
     required this.isAvailable,
     required this.variants,
     this.description,
+    this.imageUrl,
     this.categories = const [],
     this.images = const [],
   });
   final String id;
   final String name;
   final String? description;
+  final String? imageUrl;
   final double minimumPrice;
   final bool isAvailable;
   final List<ProductVariant> variants;
@@ -44,6 +46,7 @@ class Product {
     id: json['id'] as String,
     name: json['name'] as String? ?? '',
     description: json['description'] as String?,
+    imageUrl: json['imageUrl'] as String?,
     minimumPrice: (json['minimumPrice'] as num?)?.toDouble() ?? 0,
     isAvailable: json['isAvailable'] as bool? ?? false,
     variants: (json['variants'] as List? ?? [])
