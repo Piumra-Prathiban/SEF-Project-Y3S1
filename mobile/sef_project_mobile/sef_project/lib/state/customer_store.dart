@@ -32,6 +32,8 @@ class CustomerStore extends ChangeNotifier {
   );
   List<WishlistItem> wishlist = [];
   Cart cart = Cart.empty();
+  ProductReviews? productReviews;
+  ProductReview? ownReview;
   CustomerProfile? profile;
   List<CustomerAddress> addresses = [];
   RecommendationUiStatus recommendationStatus = RecommendationUiStatus.idle;
@@ -64,6 +66,8 @@ class CustomerStore extends ChangeNotifier {
     authenticated = false;
     wishlist = [];
     cart = Cart.empty();
+    productReviews = null;
+    ownReview = null;
     profile = null;
     addresses = [];
     recommendation = null;
@@ -138,6 +142,40 @@ class CustomerStore extends ChangeNotifier {
     } while (true);
     return null;
   }
+
+  Future<void> loadReviews(String productId) {
+    productReviews = null;
+    ownReview = null;
+    return _run(() async {
+      productReviews = await api.productReviews(productId);
+      if (!authenticated) return;
+
+      try {
+        ownReview = await api.myReview(productId);
+      } on ApiException catch (exception) {
+        if (exception.statusCode != 404) rethrow;
+      }
+    });
+  }
+
+  Future<void> saveReview(
+    String productId, {
+    required int rating,
+    String? comment,
+  }) => _run(() async {
+    ownReview = await api.saveReview(
+      productId,
+      rating: rating,
+      comment: comment,
+    );
+    productReviews = await api.productReviews(productId);
+  });
+
+  Future<void> deleteReview(String productId) => _run(() async {
+    await api.deleteReview(productId);
+    ownReview = null;
+    productReviews = await api.productReviews(productId);
+  });
 
   Future<void> loadCart() => _run(() async {
     cart = await api.cart();
