@@ -46,7 +46,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Available variants'), findsOneWidget);
-    expect(find.textContaining('Blue / Medium'), findsOneWidget);
+    expect(find.text('M / Blue'), findsOneWidget);
     expect(find.text('Add to cart'), findsOneWidget);
   });
 

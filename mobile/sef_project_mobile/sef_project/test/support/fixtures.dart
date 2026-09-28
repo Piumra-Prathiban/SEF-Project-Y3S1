@@ -1,7 +1,51 @@
 import 'package:sef_project/features/promotions/data/promotion_repository.dart';
 import 'package:sef_project/features/promotions/models/promotion_models.dart';
+import 'package:sef_project/models/shopping_models.dart';
 
-// JSON shaped exactly like the ASP.NET Core Marketing API responses.
+// JSON shaped exactly like the ASP.NET Core API responses.
+
+const Map<String, dynamic> shoppingProductWithImageJson = {
+  'id': 'product-1',
+  'name': 'Linen Shirt',
+  'description': 'A lightweight shirt.',
+  'imageUrl': 'https://example.com/images/linen-shirt.jpg',
+  'minimumPrice': 4500,
+  'isAvailable': true,
+  'categories': [
+    {'id': 'category-1', 'name': 'Shirts'},
+  ],
+  'variants': [
+    {
+      'id': 'variant-1',
+      'sku': 'SHIRT-BLUE-M',
+      'name': 'Blue / Medium',
+      'price': 4500,
+      'availableQuantity': 5,
+      'isAvailable': true,
+      'size': 'M',
+      'colour': 'Blue',
+    },
+    {
+      'id': 'variant-2',
+      'sku': 'SHIRT-GREEN-L',
+      'name': 'Green / Large',
+      'price': 4750,
+      'availableQuantity': 3,
+      'isAvailable': true,
+      'size': 'L',
+      'colour': 'Green',
+    },
+  ],
+};
+
+Product get shoppingProductWithImage =>
+    Product.fromJson(shoppingProductWithImageJson);
+
+Product get shoppingProductWithoutImage {
+  final json = Map<String, dynamic>.from(shoppingProductWithImageJson);
+  json['imageUrl'] = null;
+  return Product.fromJson(json);
+}
 
 const Map<String, dynamic> topsPromotionJson = {
   'id': 'promo-1',
