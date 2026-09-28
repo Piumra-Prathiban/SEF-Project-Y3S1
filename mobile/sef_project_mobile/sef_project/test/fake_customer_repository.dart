@@ -193,6 +193,24 @@ class FakeCustomerRepository implements CustomerRepository {
   }
 
   @override
+  Future<ProductReviews> productReviews(String productId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<ProductReview> saveReview(
+    String productId, {
+    required int rating,
+    String? comment,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<ProductReview> myReview(String productId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> deleteReview(String productId) => throw UnimplementedError();
+
+  @override
   Future<Cart> cart() async => currentCart;
 
   @override

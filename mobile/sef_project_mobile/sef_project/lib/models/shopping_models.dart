@@ -123,6 +123,112 @@ class WishlistItem {
   );
 }
 
+class ProductReviews {
+  const ProductReviews({
+    required this.productId,
+    required this.aggregate,
+    required this.reviews,
+  });
+
+  final String productId;
+  final ReviewAggregate aggregate;
+  final List<ProductReview> reviews;
+
+  factory ProductReviews.fromJson(Map<String, dynamic> json) => ProductReviews(
+    productId: json['productId'] as String,
+    aggregate: ReviewAggregate.fromJson(
+      json['aggregate'] as Map<String, dynamic>,
+    ),
+    reviews: (json['reviews'] as List? ?? [])
+        .map((item) => ProductReview.fromJson(item as Map<String, dynamic>))
+        .toList(),
+  );
+}
+
+class ReviewAggregate {
+  const ReviewAggregate({
+    required this.averageRating,
+    required this.totalCount,
+    required this.breakdown,
+  });
+
+  final double averageRating;
+  final int totalCount;
+  final ReviewBreakdown breakdown;
+
+  factory ReviewAggregate.fromJson(Map<String, dynamic> json) =>
+      ReviewAggregate(
+        averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0,
+        totalCount: json['totalCount'] as int? ?? 0,
+        breakdown: ReviewBreakdown.fromJson(
+          json['breakdown'] as Map<String, dynamic>? ?? const {},
+        ),
+      );
+}
+
+class ReviewBreakdown {
+  const ReviewBreakdown({required this.items});
+
+  final List<ReviewBreakdownItem> items;
+
+  factory ReviewBreakdown.fromJson(Map<String, dynamic> json) =>
+      ReviewBreakdown(
+        items: (json['items'] as List? ?? [])
+            .map(
+              (item) => ReviewBreakdownItem.fromJson(
+                item as Map<String, dynamic>,
+              ),
+            )
+            .toList(),
+      );
+}
+
+class ReviewBreakdownItem {
+  const ReviewBreakdownItem({required this.rating, required this.count});
+
+  final int rating;
+  final int count;
+
+  factory ReviewBreakdownItem.fromJson(Map<String, dynamic> json) =>
+      ReviewBreakdownItem(
+        rating: json['rating'] as int? ?? 0,
+        count: json['count'] as int? ?? 0,
+      );
+}
+
+class ProductReview {
+  const ProductReview({
+    required this.id,
+    required this.productId,
+    required this.displayName,
+    required this.rating,
+    required this.isPublished,
+    required this.createdAt,
+    required this.updatedAt,
+    this.comment,
+  });
+
+  final String id;
+  final String productId;
+  final String displayName;
+  final int rating;
+  final String? comment;
+  final bool isPublished;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  factory ProductReview.fromJson(Map<String, dynamic> json) => ProductReview(
+    id: json['id'] as String,
+    productId: json['productId'] as String,
+    displayName: json['displayName'] as String? ?? '',
+    rating: json['rating'] as int? ?? 0,
+    comment: json['comment'] as String?,
+    isPublished: json['isPublished'] as bool? ?? false,
+    createdAt: DateTime.parse(json['createdAt'] as String),
+    updatedAt: DateTime.parse(json['updatedAt'] as String),
+  );
+}
+
 class Cart {
   const Cart({
     required this.items,
