@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'screens/home_shell.dart';
-import 'screens/login_screen.dart';
 import 'state/customer_store.dart';
 
 class CustomerShoppingApp extends StatelessWidget {
@@ -19,12 +18,7 @@ class CustomerShoppingApp extends StatelessWidget {
         cardTheme: const CardThemeData(margin: EdgeInsets.zero, elevation: 0, color: Color(0xfffffdfa)),
         inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder(), filled: true, fillColor: Colors.white),
       ),
-      home: const _AuthGate(),
+      home: const HomeShell(),
     ),
   );
-}
-
-class _AuthGate extends StatelessWidget {
-  const _AuthGate();
-  @override Widget build(BuildContext context) => StoreScope.of(context).authenticated ? const HomeShell() : const LoginScreen();
 }

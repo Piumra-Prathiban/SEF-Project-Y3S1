@@ -18,7 +18,7 @@ Widget _screen(CustomerStore store, Widget child) => StoreScope(
 );
 
 void main() {
-  testWidgets('unauthenticated customers see the login screen', (tester) async {
+  testWidgets('unauthenticated customers browse the storefront', (tester) async {
     final repository = FakeCustomerRepository()..token = false;
     final store = CustomerStore(repository);
     await store.initialize();
@@ -26,8 +26,52 @@ void main() {
     await tester.pumpWidget(CustomerShoppingApp(store: store));
     await tester.pumpAndSettle();
 
+    expect(find.text('Discover'), findsOneWidget);
+    expect(find.text('Linen Shirt'), findsOneWidget);
+  });
+
+  testWidgets('unauthenticated customers are prompted to sign in on protected tabs', (
+    tester,
+  ) async {
+    final repository = FakeCustomerRepository()..token = false;
+    final store = CustomerStore(repository);
+    await store.initialize();
+
+    await tester.pumpWidget(CustomerShoppingApp(store: store));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Cart'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign in to continue'), findsOneWidget);
+    expect(find.text('Sign in'), findsOneWidget);
+  });
+
+  testWidgets('signing in reveals the protected tab content', (tester) async {
+    final repository = FakeCustomerRepository()..token = false;
+    final store = CustomerStore(repository);
+    await store.initialize();
+
+    await tester.pumpWidget(CustomerShoppingApp(store: store));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Profile'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sign in to continue'), findsOneWidget);
+
+    await tester.tap(find.text('Sign in'));
+    await tester.pumpAndSettle();
     expect(find.text('Welcome to Clothic'), findsOneWidget);
-    expect(find.text('Log in'), findsOneWidget);
+
+    await tester.enterText(
+      find.byType(TextFormField).first,
+      'customer@example.com',
+    );
+    await tester.enterText(find.byType(TextFormField).last, 'password123');
+    await tester.tap(find.widgetWithText(FilledButton, 'Log in'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sam Perera'), findsOneWidget);
   });
 
   testWidgets('product browsing loads API results and opens details', (
