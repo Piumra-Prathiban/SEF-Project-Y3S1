@@ -4,6 +4,7 @@ import '../models/shopping_models.dart';
 import '../state/customer_store.dart';
 import '../widgets/common.dart';
 import '../widgets/product_image.dart';
+import '../widgets/reviews_section.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({super.key, required this.product});
@@ -177,6 +178,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 32),
+                const Divider(),
+                const SizedBox(height: 16),
+                ReviewsSection(productId: product.id),
               ],
             ),
           );

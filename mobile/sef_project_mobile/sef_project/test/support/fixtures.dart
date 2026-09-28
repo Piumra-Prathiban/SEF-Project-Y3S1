@@ -47,6 +47,45 @@ Product get shoppingProductWithoutImage {
   return Product.fromJson(json);
 }
 
+const Map<String, dynamic> productReviewsJson = {
+  'productId': 'product-1',
+  'aggregate': {
+    'averageRating': 4.5,
+    'totalCount': 2,
+    'breakdown': {
+      'items': [
+        {'rating': 5, 'count': 1},
+        {'rating': 4, 'count': 1},
+        {'rating': 3, 'count': 0},
+        {'rating': 2, 'count': 0},
+        {'rating': 1, 'count': 0},
+      ],
+    },
+  },
+  'reviews': [
+    {
+      'id': 'review-1',
+      'productId': 'product-1',
+      'displayName': 'Asha P.',
+      'rating': 5,
+      'comment': 'Lovely fit.',
+      'isPublished': true,
+      'createdAt': '2026-09-27T10:30:00Z',
+      'updatedAt': '2026-09-27T10:30:00Z',
+    },
+    {
+      'id': 'review-2',
+      'productId': 'product-1',
+      'displayName': 'Solo',
+      'rating': 4,
+      'comment': null,
+      'isPublished': true,
+      'createdAt': '2026-09-26T08:15:00Z',
+      'updatedAt': '2026-09-26T09:00:00Z',
+    },
+  ],
+};
+
 const Map<String, dynamic> topsPromotionJson = {
   'id': 'promo-1',
   'campaignId': 'camp-1',

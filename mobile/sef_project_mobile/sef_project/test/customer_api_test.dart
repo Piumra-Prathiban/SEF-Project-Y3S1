@@ -7,6 +7,8 @@ import 'package:sef_project/models/shopping_models.dart';
 import 'package:sef_project/services/customer_api.dart';
 import 'package:sef_project/services/token_storage.dart';
 
+import 'support/fixtures.dart';
+
 class _MemoryTokenStorage implements TokenStorage {
   String? token;
   @override
@@ -174,5 +176,84 @@ void main() {
     expect(body.containsKey('price'), isFalse);
     expect(result.workflowId, 'workflow-1');
     expect(result.recommendations.single.price, 4500);
+  });
+
+  test('product reviews are fetched anonymously', () async {
+    late http.Request captured;
+    final client = MockClient((request) async {
+      captured = request;
+      return http.Response(jsonEncode(productReviewsJson), 200);
+    });
+    final api = CustomerApi(
+      client: client,
+      tokens: _MemoryTokenStorage(),
+      baseUrl: 'https://example.test/api',
+    );
+
+    final result = await api.productReviews('product-1');
+
+    expect(captured.method, 'GET');
+    expect(captured.url.path, '/api/reviews/products/product-1');
+    expect(captured.headers.containsKey('authorization'), isFalse);
+    expect(result.aggregate.averageRating, 4.5);
+    expect(result.reviews, hasLength(2));
+  });
+
+  test('save review sends an authenticated PUT request', () async {
+    final tokens = _MemoryTokenStorage()..token = 'test-token';
+    late http.Request captured;
+    final reviewJson = productReviewsJson['reviews'] as List<dynamic>;
+    final client = MockClient((request) async {
+      captured = request;
+      return http.Response(jsonEncode(reviewJson.first), 200);
+    });
+    final api = CustomerApi(
+      client: client,
+      tokens: tokens,
+      baseUrl: 'https://example.test/api',
+    );
+
+    final result = await api.saveReview(
+      'product-1',
+      rating: 5,
+      comment: 'Lovely fit.',
+    );
+
+    expect(captured.method, 'PUT');
+    expect(captured.url.path, '/api/reviews/products/product-1');
+    expect(captured.headers['authorization'], 'Bearer test-token');
+    expect(jsonDecode(captured.body), {'rating': 5, 'comment': 'Lovely fit.'});
+    expect(result.rating, 5);
+  });
+
+  test('own review read and delete use authenticated review routes', () async {
+    final tokens = _MemoryTokenStorage()..token = 'test-token';
+    final requests = <http.Request>[];
+    final reviewJson = productReviewsJson['reviews'] as List<dynamic>;
+    final client = MockClient((request) async {
+      requests.add(request);
+      if (request.method == 'DELETE') return http.Response('', 204);
+      return http.Response(jsonEncode(reviewJson.first), 200);
+    });
+    final api = CustomerApi(
+      client: client,
+      tokens: tokens,
+      baseUrl: 'https://example.test/api',
+    );
+
+    final mine = await api.myReview('product-1');
+    await api.deleteReview('product-1');
+
+    expect(mine.id, 'review-1');
+    expect(requests[0].method, 'GET');
+    expect(requests[0].url.path, '/api/reviews/products/product-1/mine');
+    expect(requests[1].method, 'DELETE');
+    expect(requests[1].url.path, '/api/reviews/products/product-1');
+    expect(
+      requests.every(
+        (request) => request.headers['authorization'] == 'Bearer test-token',
+      ),
+      isTrue,
+    );
   });
 }

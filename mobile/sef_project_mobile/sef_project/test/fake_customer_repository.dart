@@ -15,7 +15,11 @@ class FakeCustomerRepository implements CustomerRepository {
   RecommendationPreferences? lastRecommendationPreferences;
   Object? productError;
   Object? recommendationError;
+  Object? reviewError;
   Duration recommendationDelay = Duration.zero;
+  int reviewCalls = 0;
+  int? lastReviewRating;
+  String? lastReviewComment;
 
   ProductPage productPage = const ProductPage(
     items: [
@@ -53,6 +57,45 @@ class FakeCustomerRepository implements CustomerRepository {
       isAvailable: true,
     ),
   ];
+
+  ProductReviews currentProductReviews = ProductReviews(
+    productId: 'product-1',
+    aggregate: const ReviewAggregate(
+      averageRating: 4.5,
+      totalCount: 2,
+      breakdown: ReviewBreakdown(
+        items: [
+          ReviewBreakdownItem(rating: 5, count: 1),
+          ReviewBreakdownItem(rating: 4, count: 1),
+          ReviewBreakdownItem(rating: 3, count: 0),
+          ReviewBreakdownItem(rating: 2, count: 0),
+          ReviewBreakdownItem(rating: 1, count: 0),
+        ],
+      ),
+    ),
+    reviews: [
+      ProductReview(
+        id: 'review-1',
+        productId: 'product-1',
+        displayName: 'Asha P.',
+        rating: 5,
+        comment: 'Lovely fit.',
+        isPublished: true,
+        createdAt: DateTime.utc(2026, 9, 27, 10, 30),
+        updatedAt: DateTime.utc(2026, 9, 27, 10, 30),
+      ),
+      ProductReview(
+        id: 'review-2',
+        productId: 'product-1',
+        displayName: 'Solo',
+        rating: 4,
+        isPublished: true,
+        createdAt: DateTime.utc(2026, 9, 26, 8, 15),
+        updatedAt: DateTime.utc(2026, 9, 26, 9),
+      ),
+    ],
+  );
+  ProductReview? currentOwnReview;
 
   Cart currentCart = Cart.empty();
   RecommendationResult recommendationResult = const RecommendationResult(
@@ -190,6 +233,47 @@ class FakeCustomerRepository implements CustomerRepository {
   @override
   Future<void> removeWishlist(String productId) async {
     wishlistItems.removeWhere((item) => item.productId == productId);
+  }
+
+  @override
+  Future<ProductReviews> productReviews(String productId) async {
+    reviewCalls++;
+    if (reviewError != null) throw reviewError!;
+    return currentProductReviews;
+  }
+
+  @override
+  Future<ProductReview> saveReview(
+    String productId, {
+    required int rating,
+    String? comment,
+  }) async {
+    lastReviewRating = rating;
+    lastReviewComment = comment;
+    currentOwnReview = ProductReview(
+      id: currentOwnReview?.id ?? 'my-review',
+      productId: productId,
+      displayName: 'Sam P.',
+      rating: rating,
+      comment: comment,
+      isPublished: true,
+      createdAt: currentOwnReview?.createdAt ?? DateTime.utc(2026, 9, 28),
+      updatedAt: DateTime.utc(2026, 9, 28),
+    );
+    return currentOwnReview!;
+  }
+
+  @override
+  Future<ProductReview> myReview(String productId) async {
+    if (currentOwnReview == null) {
+      throw const ApiException('Review not found.', statusCode: 404);
+    }
+    return currentOwnReview!;
+  }
+
+  @override
+  Future<void> deleteReview(String productId) async {
+    currentOwnReview = null;
   }
 
   @override

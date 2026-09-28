@@ -33,6 +33,14 @@ abstract interface class CustomerRepository {
   Future<List<WishlistItem>> wishlist();
   Future<void> addWishlist(String productId);
   Future<void> removeWishlist(String productId);
+  Future<ProductReviews> productReviews(String productId);
+  Future<ProductReview> saveReview(
+    String productId, {
+    required int rating,
+    String? comment,
+  });
+  Future<ProductReview> myReview(String productId);
+  Future<void> deleteReview(String productId);
   Future<Cart> cart();
   Future<Cart> addCart(String variantId, int quantity);
   Future<Cart> updateCart(String itemId, int quantity);
@@ -142,6 +150,43 @@ class CustomerApi implements CustomerRepository {
   @override
   Future<void> removeWishlist(String productId) async {
     await _request('DELETE', '/wishlist/items/$productId');
+  }
+
+  @override
+  Future<ProductReviews> productReviews(String productId) async =>
+      ProductReviews.fromJson(
+        await _request(
+              'GET',
+              '/reviews/products/$productId',
+              authenticated: false,
+            )
+            as Map<String, dynamic>,
+      );
+
+  @override
+  Future<ProductReview> saveReview(
+    String productId, {
+    required int rating,
+    String? comment,
+  }) async => ProductReview.fromJson(
+    await _request(
+          'PUT',
+          '/reviews/products/$productId',
+          body: {'rating': rating, 'comment': comment},
+        )
+        as Map<String, dynamic>,
+  );
+
+  @override
+  Future<ProductReview> myReview(String productId) async =>
+      ProductReview.fromJson(
+        await _request('GET', '/reviews/products/$productId/mine')
+            as Map<String, dynamic>,
+      );
+
+  @override
+  Future<void> deleteReview(String productId) async {
+    await _request('DELETE', '/reviews/products/$productId');
   }
 
   @override
