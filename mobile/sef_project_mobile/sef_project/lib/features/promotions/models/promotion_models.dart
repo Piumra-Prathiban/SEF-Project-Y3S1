@@ -37,6 +37,8 @@ class Promotion {
     required this.endDate,
     this.description,
     this.campaignName,
+    this.productIds = const [],
+    this.categoryIds = const [],
   });
 
   factory Promotion.fromJson(Map<String, dynamic> json) => Promotion(
@@ -48,6 +50,8 @@ class Promotion {
         startDate: _date(json['startDate']),
         endDate: _date(json['endDate']),
         campaignName: json['campaignName'] as String?,
+        productIds: _strings(json['productIds']),
+        categoryIds: _strings(json['categoryIds']),
       );
 
   final String id;
@@ -58,7 +62,25 @@ class Promotion {
   final DateTime startDate;
   final DateTime endDate;
   final String? campaignName;
+
+  /// Products and categories this promotion targets. Empty on the nested
+  /// promotion summaries the offer endpoints return (they are scoped to a
+  /// single product/promotion already), populated on the plain promotions
+  /// GET /api/promotions returns.
+  final List<String> productIds;
+  final List<String> categoryIds;
+
+  /// Whether this live promotion applies to [productId] directly, or to it
+  /// through one of [productCategoryIds].
+  bool appliesTo(String productId, Iterable<String> productCategoryIds) =>
+      productIds.contains(productId) ||
+      productCategoryIds.any(categoryIds.contains);
 }
+
+List<String> _strings(Object? value) =>
+    (value as List<dynamic>? ?? const [])
+        .map((item) => item.toString())
+        .toList(growable: false);
 
 /// A variant with prices calculated by the server.
 class VariantOffer {

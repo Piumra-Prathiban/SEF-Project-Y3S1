@@ -24,6 +24,9 @@ public class OrderResponse
 
     public string Currency { get; set; } = string.Empty;
 
+    /// <summary>The coupon code redeemed for this order, if any.</summary>
+    public string? CouponCode { get; set; }
+
     public List<OrderItemResponse> Items { get; set; } = new();
 
     public OrderAddressResponse? DeliveryAddress { get; set; }

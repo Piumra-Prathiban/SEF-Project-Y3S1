@@ -14,6 +14,19 @@ void main() {
     expect(promotion.startDate, DateTime.utc(2026, 9, 1));
     expect(promotion.endDate.isUtc, isTrue);
     expect(promotion.campaignName, 'Summer Launch');
+    expect(promotion.productIds, ['prod-1']);
+    expect(promotion.categoryIds, isEmpty);
+  });
+
+  test('Promotion.appliesTo matches by product id or category id', () {
+    final promotion = Promotion.fromJson(topsPromotionJson);
+
+    expect(promotion.appliesTo('prod-1', const []), isTrue);
+    expect(promotion.appliesTo('other-product', const ['other-category']), isFalse);
+
+    final categoryPromotion = Promotion.fromJson(shirtsCategorySaleJson);
+    expect(categoryPromotion.appliesTo('other-product', const ['category-1']), isTrue);
+    expect(categoryPromotion.appliesTo('other-product', const ['other-category']), isFalse);
   });
 
   test('PromotionType maps API numbers and tolerates unknown values', () {

@@ -72,4 +72,35 @@ void main() {
     expect(find.text('Colour: Green'), findsOneWidget);
     expect(find.text('3 available'), findsOneWidget);
   });
+
+  testWidgets('product detail shows the offer badge when a promotion applies', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _screen(
+        ProductDetailScreen(
+          product: shoppingProductWithoutImage,
+          promotions: [shirtFlashSale],
+        ),
+      ),
+    );
+
+    expect(find.text('15% off'), findsOneWidget);
+    expect(find.text('Shirt Flash Sale'), findsOneWidget);
+  });
+
+  testWidgets('product detail shows no offer badge when nothing applies', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _screen(
+        ProductDetailScreen(
+          product: shoppingProductWithoutImage,
+          promotions: [freeDelivery],
+        ),
+      ),
+    );
+
+    expect(find.textContaining('% off'), findsNothing);
+  });
 }

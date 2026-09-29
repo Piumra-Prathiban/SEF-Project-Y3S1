@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../features/promotions/models/promotion_models.dart';
+import '../features/promotions/promotion_matching.dart';
+import '../features/promotions/widgets/promotion_widgets.dart';
 import '../models/shopping_models.dart';
 import '../state/customer_store.dart';
 import '../widgets/common.dart';
@@ -7,8 +10,17 @@ import '../widgets/product_image.dart';
 import '../widgets/reviews_section.dart';
 
 class ProductDetailScreen extends StatefulWidget {
-  const ProductDetailScreen({super.key, required this.product});
+  const ProductDetailScreen({
+    super.key,
+    required this.product,
+    this.promotions = const [],
+  });
+
   final Product product;
+
+  /// Active promotions fetched once by the Shop tab, reused here to find
+  /// this product's offer without an extra network call.
+  final List<Promotion> promotions;
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -34,6 +46,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     final product = widget.product;
     final store = StoreScope.of(context);
+    final promotion = promotionForProduct(widget.promotions, product);
     return Scaffold(
       appBar: AppBar(
         title: Text(product.name),
@@ -78,6 +91,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   style: Theme.of(context).textTheme.headlineSmall
                       ?.copyWith(fontWeight: FontWeight.bold),
                 ),
+                if (promotion != null) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      DiscountBadge(
+                        type: promotion.type,
+                        value: promotion.discountValue,
+                      ),
+                      Text(
+                        promotion.name,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 18),
                 Text(
                   'Available variants',
