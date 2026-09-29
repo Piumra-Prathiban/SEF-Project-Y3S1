@@ -222,6 +222,27 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
             Text('Items', style: Theme.of(context).textTheme.titleLarge),
             ...order.items.map((item) => ListTile(contentPadding: EdgeInsets.zero, title: Text(item.name), subtitle: Text('${item.sku} · ${item.quantity} × ${formatCurrency(item.unitPrice, order.currency)}'), trailing: Text(formatCurrency(item.lineTotal, order.currency)))),
             const Divider(),
+            ListTile(contentPadding: EdgeInsets.zero, title: const Text('Subtotal'), trailing: Text(formatCurrency(order.subtotal, order.currency))),
+            if (order.hasDiscount)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Discount'),
+                trailing: Text(
+                  '- ${formatCurrency(order.discountTotal, order.currency)}',
+                  style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.w600),
+                ),
+              ),
+            if (order.couponCode != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.local_offer_outlined, size: 16, color: Colors.green.shade700),
+                    const SizedBox(width: 6),
+                    Text('Coupon ${order.couponCode} applied', style: TextStyle(color: Colors.green.shade700)),
+                  ],
+                ),
+              ),
             ListTile(contentPadding: EdgeInsets.zero, title: const Text('Order total'), trailing: Text(formatCurrency(order.total, order.currency), style: const TextStyle(fontWeight: FontWeight.bold))),
             if (canCancel) FilledButton.tonalIcon(onPressed: _busy ? null : _cancelOrder, icon: const Icon(Icons.cancel_outlined), label: const Text('Cancel order')),
             const SizedBox(height: 24),
