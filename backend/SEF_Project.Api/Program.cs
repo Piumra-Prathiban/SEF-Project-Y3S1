@@ -34,6 +34,8 @@ builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("Jwt"));
 builder.Services.Configure<PersonalStylistAgentOptions>(
     builder.Configuration.GetSection("PersonalStylistAgent"));
+builder.Services.Configure<InventoryAnalysisAgentOptions>(
+    builder.Configuration.GetSection(InventoryAnalysisAgentOptions.SectionName));
 
 var jwtSettings = builder.Configuration
     .GetSection("Jwt")
