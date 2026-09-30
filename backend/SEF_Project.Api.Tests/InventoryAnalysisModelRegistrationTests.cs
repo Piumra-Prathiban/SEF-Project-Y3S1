@@ -16,9 +16,13 @@ public class InventoryAnalysisModelRegistrationTests :
     }
 
     [Fact]
-    public void DefaultProvider_ResolvesLocalPolicy()
+    public void LocalProvider_ResolvesLocalPolicy()
     {
-        using var scope = _factory.Services.CreateScope();
+        using var localFactory = _factory.WithWebHostBuilder(builder =>
+            builder.UseSetting(
+                "InventoryAnalysisAgent:Provider",
+                "Local"));
+        using var scope = localFactory.Services.CreateScope();
 
         Assert.IsType<LocalInventoryAnalysisModelClient>(
             scope.ServiceProvider.GetRequiredService<

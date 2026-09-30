@@ -68,6 +68,7 @@ public class DeepSeekInventoryAnalysisModelClientTests
         Assert.Same(modelOutput, result);
         Assert.Contains("Inventory Analysis Agent", deepSeekClient.SystemInstruction);
         Assert.Contains("JSON", deepSeekClient.SystemInstruction);
+        Assert.Contains("recommendations", deepSeekClient.SystemInstruction);
         Assert.Contains("RESTOCK", deepSeekClient.SystemInstruction);
         Assert.Contains("MONITOR", deepSeekClient.SystemInstruction);
         Assert.Contains("NO_ACTION", deepSeekClient.SystemInstruction);
