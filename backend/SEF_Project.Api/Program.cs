@@ -112,9 +112,19 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IInventoryAgentToolRegistry, InventoryAgentToolRegistry>();
-builder.Services.AddScoped<IInventoryAnalysisModelClient, LocalInventoryAnalysisModelClient>();
+builder.Services.AddScoped<LocalInventoryAnalysisModelClient>();
 builder.Services.AddHttpClient<IDeepSeekChatCompletionsClient, DeepSeekChatCompletionsClient>();
 builder.Services.AddScoped<DeepSeekInventoryAnalysisModelClient>();
+builder.Services.AddScoped<IInventoryAnalysisModelClient>(services =>
+{
+    var options = services
+        .GetRequiredService<Microsoft.Extensions.Options.IOptions<InventoryAnalysisAgentOptions>>()
+        .Value;
+
+    return string.Equals(options.Provider, "DeepSeek", StringComparison.OrdinalIgnoreCase)
+        ? services.GetRequiredService<DeepSeekInventoryAnalysisModelClient>()
+        : services.GetRequiredService<LocalInventoryAnalysisModelClient>();
+});
 builder.Services.AddScoped<IInventoryAnalysisAgentService, InventoryAnalysisAgentService>();
 builder.Services.AddScoped<IInventoryAgentWorkflowService, InventoryAgentWorkflowService>();
 builder.Services.AddScoped<ISupplierService, SupplierService>();
