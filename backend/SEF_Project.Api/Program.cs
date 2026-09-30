@@ -17,6 +17,7 @@ using SEF_Project.Api.Services.Recommendations;
 using SEF_Project.Api.Services.Marketing;
 using SEF_Project.Api.Services.Analytics;
 using SEF_Project.Api.AI.InventoryPromotion;
+using SEF_Project.Api.AI.DeepSeek;
 using SEF_Project.Api.Middleware;
 using System.Reflection;
 
@@ -36,6 +37,8 @@ builder.Services.Configure<PersonalStylistAgentOptions>(
     builder.Configuration.GetSection("PersonalStylistAgent"));
 builder.Services.Configure<InventoryAnalysisAgentOptions>(
     builder.Configuration.GetSection(InventoryAnalysisAgentOptions.SectionName));
+builder.Services.Configure<DeepSeekOptions>(
+    builder.Configuration.GetSection(DeepSeekOptions.SectionName));
 
 var jwtSettings = builder.Configuration
     .GetSection("Jwt")
@@ -110,6 +113,8 @@ builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IInventoryAgentToolRegistry, InventoryAgentToolRegistry>();
 builder.Services.AddScoped<IInventoryAnalysisModelClient, LocalInventoryAnalysisModelClient>();
+builder.Services.AddHttpClient<IDeepSeekChatCompletionsClient, DeepSeekChatCompletionsClient>();
+builder.Services.AddScoped<DeepSeekInventoryAnalysisModelClient>();
 builder.Services.AddScoped<IInventoryAnalysisAgentService, InventoryAnalysisAgentService>();
 builder.Services.AddScoped<IInventoryAgentWorkflowService, InventoryAgentWorkflowService>();
 builder.Services.AddScoped<ISupplierService, SupplierService>();
