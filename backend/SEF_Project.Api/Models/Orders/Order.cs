@@ -1,4 +1,5 @@
 using SEF_Project.Api.Models.Enums;
+using SEF_Project.Api.Models.Marketing;
 
 namespace SEF_Project.Api.Models.Orders;
 
@@ -37,6 +38,12 @@ public class Order : GuidEntity
 
     public ICollection<ProductReturn> Returns { get; set; } =
         new List<ProductReturn>();
+
+    // In practice at most one: CreateOrderRequest accepts a single
+    // CouponCode. A collection mirrors the CouponRedemption side's
+    // unrestricted WithMany() and costs nothing extra to keep accurate.
+    public ICollection<CouponRedemption> CouponRedemptions { get; set; } =
+        new List<CouponRedemption>();
 
     public OrderAddress? DeliveryAddress { get; set; }
 }

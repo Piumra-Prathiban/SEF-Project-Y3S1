@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../state/customer_store.dart';
+import '../utils/formatters.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -115,8 +116,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         builder: (dialogContext) => AlertDialog(
           icon: const Icon(Icons.check_circle_outline, size: 44),
           title: const Text('Order placed'),
-          content: Text(
-            '${order.orderNumber} has been created. Your payment is pending staff confirmation.',
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${order.orderNumber} has been created. Your payment is pending staff confirmation.',
+              ),
+              if (order.hasDiscount) ...[
+                const SizedBox(height: 12),
+                Text(
+                  order.couponCode == null
+                      ? 'You saved ${formatCurrency(order.discountTotal, order.currency)}.'
+                      : 'Coupon ${order.couponCode} saved you '
+                            '${formatCurrency(order.discountTotal, order.currency)}.',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ] else if (order.couponCode != null) ...[
+                const SizedBox(height: 12),
+                Text('Coupon ${order.couponCode} applied.'),
+              ],
+            ],
           ),
           actions: [
             FilledButton(
@@ -198,6 +218,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           Text('Offers', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           TextFormField(
+            key: const Key('checkout-coupon-code'),
             controller: _couponCode,
             textCapitalization: TextCapitalization.characters,
             decoration: const InputDecoration(

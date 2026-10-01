@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../features/promotions/data/promotion_repository.dart';
+import '../features/promotions/models/promotion_models.dart';
+import '../features/promotions/promotion_matching.dart';
 import '../features/promotions/screens/promotions_screen.dart';
+import '../features/promotions/widgets/promotion_widgets.dart';
 import '../models/shopping_models.dart';
 import '../state/customer_store.dart';
 import '../widgets/common.dart';
@@ -19,6 +22,7 @@ class ProductsScreen extends StatefulWidget {
 class _ProductsScreenState extends State<ProductsScreen> {
   final _search = TextEditingController();
   bool _loaded = false;
+  List<Promotion> _promotions = const [];
 
   @override
   void dispose() {
@@ -33,7 +37,26 @@ class _ProductsScreenState extends State<ProductsScreen> {
       _loaded = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         StoreScope.of(context).loadProducts().catchError((_) {});
+        _loadPromotions();
       });
+    }
+  }
+
+  // Fetched once for the whole grid so product cards and the detail screen
+  // can look up each product's offer locally instead of calling the
+  // per-product promotions endpoint for every tile.
+  Future<void> _loadPromotions() async {
+    final repository = widget.promotionRepository;
+    if (repository == null) {
+      return;
+    }
+    try {
+      final promotions = await repository.fetchActivePromotions();
+      if (mounted) {
+        setState(() => _promotions = promotions);
+      }
+    } catch (_) {
+      // Offer badges are a nice-to-have; the product grid still works.
     }
   }
 
@@ -107,8 +130,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         mainAxisSpacing: 12,
                       ),
                       itemCount: store.products.items.length,
-                      itemBuilder: (context, index) =>
-                          ProductTile(product: store.products.items[index]),
+                      itemBuilder: (context, index) => ProductTile(
+                        product: store.products.items[index],
+                        promotions: _promotions,
+                      ),
                     ),
                   );
                 },
@@ -338,62 +363,82 @@ class _ProductsScreenState extends State<ProductsScreen> {
 }
 
 class ProductTile extends StatelessWidget {
-  const ProductTile({super.key, required this.product});
+  const ProductTile({
+    super.key,
+    required this.product,
+    this.promotions = const [],
+  });
+
   final Product product;
+  final List<Promotion> promotions;
 
   @override
-  Widget build(BuildContext context) => Card(
-    clipBehavior: Clip.antiAlias,
-    child: InkWell(
-      onTap: () => Navigator.push<void>(
-        context,
-        MaterialPageRoute(
-          builder: (_) => StoreScope(
-            store: StoreScope.of(context),
-            child: ProductDetailScreen(product: product),
-          ),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(child: ProductImage(product: product)),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.categories.map((item) => item.name).join(' / '),
-                  maxLines: 1,
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  product.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'From ${money(product.minimumPrice)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  product.isAvailable ? 'In stock' : 'Unavailable',
-                  style: TextStyle(
-                    color: product.isAvailable
-                        ? Colors.green.shade700
-                        : Colors.red.shade700,
-                  ),
-                ),
-              ],
+  Widget build(BuildContext context) {
+    final promotion = promotionForProduct(promotions, product);
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.push<void>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => StoreScope(
+              store: StoreScope.of(context),
+              child: ProductDetailScreen(
+                product: product,
+                promotions: promotions,
+              ),
             ),
           ),
-        ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: ProductImage(product: product)),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.categories.map((item) => item.name).join(' / '),
+                    maxLines: 1,
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    product.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'From ${money(product.minimumPrice)}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    product.isAvailable ? 'In stock' : 'Unavailable',
+                    style: TextStyle(
+                      color: product.isAvailable
+                          ? Colors.green.shade700
+                          : Colors.red.shade700,
+                    ),
+                  ),
+                  if (promotion != null) ...[
+                    const SizedBox(height: 5),
+                    DiscountBadge(
+                      type: promotion.type,
+                      value: promotion.discountValue,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

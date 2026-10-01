@@ -292,7 +292,7 @@ public class CouponRedemptionConfiguration : IEntityTypeConfiguration<CouponRede
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(e => e.Order)
-            .WithMany()
+            .WithMany(o => o.CouponRedemptions)
             .HasForeignKey(e => e.OrderId)
             .OnDelete(DeleteBehavior.Restrict);
     }

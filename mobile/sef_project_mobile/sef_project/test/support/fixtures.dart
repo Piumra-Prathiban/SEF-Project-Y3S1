@@ -211,8 +211,48 @@ const Map<String, dynamic> jacketPromotionsJson = {
   ],
 };
 
+// Targets shoppingProductWithImage (id 'product-1') directly, for testing
+// how a product card/detail screen matches a promotion by product id.
+const Map<String, dynamic> shirtFlashSaleJson = {
+  'id': 'promo-3',
+  'campaignId': null,
+  'campaignName': null,
+  'name': 'Shirt Flash Sale',
+  'description': '15% off this shirt.',
+  'type': 0,
+  'discountValue': 15.0,
+  'startDate': '2026-09-01T00:00:00Z',
+  'endDate': '2026-10-01T00:00:00Z',
+  'isActive': true,
+  'productIds': ['product-1'],
+  'categoryIds': <String>[],
+  'createdAt': '2026-09-01T00:00:00Z',
+  'updatedAt': '2026-09-01T00:00:00Z',
+};
+
+// Targets shoppingProductWithImage's category ('category-1') rather than the
+// product itself.
+const Map<String, dynamic> shirtsCategorySaleJson = {
+  'id': 'promo-4',
+  'campaignId': null,
+  'campaignName': null,
+  'name': 'Shirts Category Sale',
+  'description': '10% off all shirts.',
+  'type': 0,
+  'discountValue': 10.0,
+  'startDate': '2026-09-01T00:00:00Z',
+  'endDate': '2026-11-01T00:00:00Z',
+  'isActive': true,
+  'productIds': <String>[],
+  'categoryIds': ['category-1'],
+  'createdAt': '2026-09-01T00:00:00Z',
+  'updatedAt': '2026-09-01T00:00:00Z',
+};
+
 Promotion get topsPromotion => Promotion.fromJson(topsPromotionJson);
 Promotion get freeDelivery => Promotion.fromJson(freeDeliveryJson);
+Promotion get shirtFlashSale => Promotion.fromJson(shirtFlashSaleJson);
+Promotion get shirtsCategorySale => Promotion.fromJson(shirtsCategorySaleJson);
 
 /// In-memory [PromotionRepository] for widget tests. Each handler can be
 /// replaced per test (e.g. to throw or to wait on a Completer).

@@ -167,13 +167,19 @@ public class OrderService : IOrderService
 
             if (coupon is not null)
             {
-                _context.CouponRedemptions.Add(new CouponRedemption
+                var redemption = new CouponRedemption
                 {
                     Coupon = coupon,
                     CustomerId = customer.Id,
                     Order = order,
                     RedeemedAt = now
-                });
+                };
+
+                // Added to both sides explicitly (rather than relying on EF's
+                // relationship fixup timing) so BuildResponse below can read
+                // order.CouponRedemptions immediately.
+                order.CouponRedemptions.Add(redemption);
+                _context.CouponRedemptions.Add(redemption);
             }
 
             foreach (var item in items)
@@ -862,6 +868,8 @@ public class OrderService : IOrderService
                 .Include(o => o.Payments)
                 .Include(o => o.Shipments)
                 .Include(o => o.StatusHistory)
+                .Include(o => o.CouponRedemptions)
+                    .ThenInclude(r => r.Coupon)
                 .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
 
             if (order is null || !CanView(order, userId, canAccessAllOrders))
@@ -1073,7 +1081,9 @@ public class OrderService : IOrderService
             .Include(o => o.DeliveryAddress)
             .Include(o => o.Payments)
             .Include(o => o.Shipments)
-            .Include(o => o.StatusHistory);
+            .Include(o => o.StatusHistory)
+            .Include(o => o.CouponRedemptions)
+                .ThenInclude(r => r.Coupon);
 
         if (asNoTracking)
         {
@@ -1281,6 +1291,7 @@ public class OrderService : IOrderService
             ShippingFee = order.ShippingFee,
             Total = order.Total,
             Currency = order.Currency,
+            CouponCode = order.CouponRedemptions.FirstOrDefault()?.Coupon?.Code,
             Items = order.Items.Select(item => new OrderItemResponse
             {
                 Id = item.Id,

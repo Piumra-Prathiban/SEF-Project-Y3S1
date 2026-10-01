@@ -212,6 +212,7 @@ class Order {
     required this.payments,
     required this.shipments,
     required this.statusHistory,
+    this.couponCode,
   });
 
   final String id;
@@ -229,6 +230,11 @@ class Order {
   final List<Payment> payments;
   final List<Shipment> shipments;
   final List<StatusHistoryEntry> statusHistory;
+
+  /// The coupon code redeemed for this order, if one was applied.
+  final String? couponCode;
+
+  bool get hasDiscount => discountTotal > 0;
 
   factory Order.fromJson(Map<String, dynamic> json) => Order(
         id: json['id'] as String,
@@ -263,6 +269,7 @@ class Order {
                   StatusHistoryEntry.fromJson(entry as Map<String, dynamic>),
             )
             .toList(),
+        couponCode: json['couponCode'] as String?,
       );
 }
 

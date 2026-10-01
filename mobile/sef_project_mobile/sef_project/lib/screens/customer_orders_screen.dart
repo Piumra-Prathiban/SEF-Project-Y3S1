@@ -5,6 +5,7 @@ import '../models/order_models.dart';
 import '../services/customer_api.dart';
 import '../state/customer_store.dart';
 import '../utils/formatters.dart';
+import '../widgets/shipment_progress.dart';
 import '../widgets/status_badge.dart';
 
 class CustomerOrdersScreen extends StatefulWidget {
@@ -221,6 +222,27 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
             Text('Items', style: Theme.of(context).textTheme.titleLarge),
             ...order.items.map((item) => ListTile(contentPadding: EdgeInsets.zero, title: Text(item.name), subtitle: Text('${item.sku} · ${item.quantity} × ${formatCurrency(item.unitPrice, order.currency)}'), trailing: Text(formatCurrency(item.lineTotal, order.currency)))),
             const Divider(),
+            ListTile(contentPadding: EdgeInsets.zero, title: const Text('Subtotal'), trailing: Text(formatCurrency(order.subtotal, order.currency))),
+            if (order.hasDiscount)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Discount'),
+                trailing: Text(
+                  '- ${formatCurrency(order.discountTotal, order.currency)}',
+                  style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.w600),
+                ),
+              ),
+            if (order.couponCode != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.local_offer_outlined, size: 16, color: Colors.green.shade700),
+                    const SizedBox(width: 6),
+                    Text('Coupon ${order.couponCode} applied', style: TextStyle(color: Colors.green.shade700)),
+                  ],
+                ),
+              ),
             ListTile(contentPadding: EdgeInsets.zero, title: const Text('Order total'), trailing: Text(formatCurrency(order.total, order.currency), style: const TextStyle(fontWeight: FontWeight.bold))),
             if (canCancel) FilledButton.tonalIcon(onPressed: _busy ? null : _cancelOrder, icon: const Icon(Icons.cancel_outlined), label: const Text('Cancel order')),
             const SizedBox(height: 24),
@@ -228,10 +250,68 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
             if (order.payments.isEmpty) const Text('No payments recorded.') else ...order.payments.map((payment) => ListTile(contentPadding: EdgeInsets.zero, title: Text(paymentMethodNames[payment.method] ?? 'Payment'), subtitle: Text(paymentStatusNames[payment.status] ?? ''), trailing: Text(formatCurrency(payment.amount, order.currency)))),
             const SizedBox(height: 16),
             Text('Fulfilment', style: Theme.of(context).textTheme.titleLarge),
-            if (order.shipments.isEmpty) const Text('Shipment has not been created yet.') else ...order.shipments.map((shipment) => ListTile(contentPadding: EdgeInsets.zero, leading: const Icon(Icons.local_shipping_outlined), title: Text(shipmentStatusNames[shipment.status] ?? 'Shipment'), subtitle: Text([shipment.carrier, shipment.trackingNumber].whereType<String>().join(' · ')))),
+            if (order.shipments.isEmpty) const Text('Shipment has not been created yet.') else ...order.shipments.map((shipment) => _ShipmentCard(shipment: shipment)),
             const SizedBox(height: 24),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Returns', style: Theme.of(context).textTheme.titleLarge), if (order.status == orderStatusCompleted) TextButton.icon(onPressed: _busy ? null : _requestReturn, icon: const Icon(Icons.keyboard_return), label: const Text('Request'))]),
             if (_returns.isEmpty) const Text('No returns requested.') else ..._returns.map((itemReturn) => Card(child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Expanded(child: Text(itemReturn.returnNumber, style: const TextStyle(fontWeight: FontWeight.bold))), StatusBadge(status: itemReturn.status, kind: StatusKind.productReturn)]), const SizedBox(height: 6), Text('${returnReasonNames[itemReturn.reason]} · ${formatCurrency(itemReturn.refundAmount, itemReturn.currency)}'), ...itemReturn.items.map((item) => Text('${item.name} × ${item.quantity}')), if (itemReturn.status == returnStatusRequested) TextButton(onPressed: _busy ? null : () => _cancelReturn(itemReturn), child: const Text('Cancel request'))])))),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ShipmentCard extends StatelessWidget {
+  const _ShipmentCard({required this.shipment});
+
+  final Shipment shipment;
+
+  @override
+  Widget build(BuildContext context) {
+    final details = <String>[
+      if (shipment.carrier?.isNotEmpty == true) 'Carrier: ${shipment.carrier}',
+      if (shipment.trackingNumber?.isNotEmpty == true)
+        'Tracking: ${shipment.trackingNumber}',
+      if (shipment.shippedAt != null)
+        'Shipped: ${formatDate(shipment.shippedAt!)}',
+      if (shipment.deliveredAt != null)
+        'Delivered: ${formatDate(shipment.deliveredAt!)}',
+    ];
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.local_shipping_outlined, size: 18),
+                const SizedBox(width: 8),
+                Text('Shipment', style: Theme.of(context).textTheme.titleSmall),
+                const Spacer(),
+                StatusBadge(
+                  status: shipment.status,
+                  kind: StatusKind.shipment,
+                ),
+              ],
+            ),
+            if (shipment.status != shipmentStatusCancelled) ...[
+              const SizedBox(height: 12),
+              ShipmentProgress(status: shipment.status),
+            ],
+            if (details.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              ...details.map(
+                (detail) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    detail,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

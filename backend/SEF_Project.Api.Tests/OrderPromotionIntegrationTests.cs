@@ -58,6 +58,8 @@ public class OrderPromotionIntegrationTests
             userId,
             Request("  summer20  "));
 
+        Assert.Equal("SUMMER20", order.CouponCode);
+
         var redemption = await context.CouponRedemptions
             .AsNoTracking()
             .SingleAsync();
@@ -79,6 +81,50 @@ public class OrderPromotionIntegrationTests
         Assert.Contains("invalid", exception.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(await context.Orders.ToListAsync());
         Assert.Empty(await context.CouponRedemptions.ToListAsync());
+    }
+
+    [Fact]
+    public async Task CreateOrderAsync_RejectsASecondRedemptionOnceThePerCustomerLimitIsReached()
+    {
+        var (connection, context, userId) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        // SUMMER20 has PerCustomerLimit = 1, so the same customer's second
+        // attempt must be rejected even though the code itself is valid.
+        await Service(context).CreateOrderAsync(userId, Request("SUMMER20"));
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            Service(context).CreateOrderAsync(userId, Request("SUMMER20")));
+
+        Assert.Contains("maximum number of times", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Single(await context.Orders.ToListAsync());
+        Assert.Single(await context.CouponRedemptions.ToListAsync());
+    }
+
+    [Fact]
+    public async Task CreateOrderAsync_PersistsGrossDiscountNetTotalsAndTheRedeemedCouponToTheDatabase()
+    {
+        var (connection, context, userId) = await CreateContextAsync();
+        await using var _ = connection;
+        await using var __ = context;
+
+        var response = await Service(context).CreateOrderAsync(
+            userId,
+            Request("SUMMER20"));
+
+        // Read back through a fresh, untracked query so this checks what was
+        // actually written to the database, not just the in-memory response.
+        var persisted = await context.Orders
+            .AsNoTracking()
+            .Include(o => o.CouponRedemptions)
+                .ThenInclude(r => r.Coupon)
+            .SingleAsync(o => o.Id == response.Id);
+
+        Assert.Equal(5000m, persisted.Subtotal);
+        Assert.Equal(1000m, persisted.DiscountTotal);
+        Assert.Equal(4000m, persisted.Total);
+        Assert.Equal("SUMMER20", persisted.CouponRedemptions.Single().Coupon.Code);
     }
 
     private static OrderService Service(AppDbContext context) =>
