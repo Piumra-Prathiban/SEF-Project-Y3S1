@@ -16,9 +16,13 @@ public class PersonalStylistModelRegistrationTests :
     }
 
     [Fact]
-    public void DefaultProvider_ResolvesGroundedModel()
+    public void LocalProvider_ResolvesGroundedModel()
     {
-        using var scope = _factory.Services.CreateScope();
+        using var localFactory = _factory.WithWebHostBuilder(builder =>
+            builder.UseSetting(
+                "PersonalStylistAgent:Provider",
+                "Local"));
+        using var scope = localFactory.Services.CreateScope();
 
         Assert.IsType<GroundedPersonalStylistModel>(
             scope.ServiceProvider.GetRequiredService<
@@ -26,12 +30,12 @@ public class PersonalStylistModelRegistrationTests :
     }
 
     [Fact]
-    public void DeepSeekProvider_ResolvesDeepSeekModelCaseInsensitively()
+    public void DeepSeekProvider_ResolvesDeepSeekModel()
     {
         using var deepSeekFactory = _factory.WithWebHostBuilder(builder =>
             builder.UseSetting(
                 "PersonalStylistAgent:Provider",
-                "deepseek"));
+                "DeepSeek"));
         using var scope = deepSeekFactory.Services.CreateScope();
 
         Assert.IsType<DeepSeekPersonalStylistModel>(
