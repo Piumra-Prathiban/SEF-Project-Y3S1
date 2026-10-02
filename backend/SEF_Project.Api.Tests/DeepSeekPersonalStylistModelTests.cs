@@ -38,8 +38,13 @@ public class DeepSeekPersonalStylistModelTests
         Assert.Equal(productId, recommendation.ProductId);
         Assert.Equal(variantId, recommendation.VariantId);
         Assert.Equal(3500m, recommendation.Price);
+        Assert.Equal(1, recommendation.Quantity);
+        Assert.Equal(
+            "Matches the requested smart-casual style.",
+            recommendation.Reason);
         Assert.Contains("Clothic Personal Stylist", client.SystemInstruction);
         Assert.Contains("JSON", client.SystemInstruction);
+        Assert.Contains("recommendations", client.SystemInstruction);
         Assert.Contains("at most five", client.SystemInstruction);
         Assert.Contains("available quantity", client.SystemInstruction);
         Assert.Equal(cancellation.Token, client.CancellationToken);
@@ -48,8 +53,10 @@ public class DeepSeekPersonalStylistModelTests
         var root = inputJson.RootElement;
         Assert.Equal(7, root.GetProperty("customer").GetProperty("customerId").GetInt32());
         Assert.Equal("Work dinner", root.GetProperty("preferences").GetProperty("occasion").GetString());
+        Assert.Equal("Smart casual", root.GetProperty("preferences").GetProperty("stylePreferences").GetString());
         Assert.Equal(productId, root.GetProperty("wishlistItems")[0].GetProperty("productId").GetGuid());
         Assert.Equal(productId, root.GetProperty("catalogueProducts")[0].GetProperty("productId").GetGuid());
+        Assert.Equal("Cotton Shirt", root.GetProperty("catalogueProducts")[0].GetProperty("name").GetString());
         Assert.Equal(variantId, root.GetProperty("availableVariants")[0].GetProperty("variantId").GetGuid());
         Assert.Equal("occasion", root.GetProperty("relaxedCriteria")[0].GetString());
     }
