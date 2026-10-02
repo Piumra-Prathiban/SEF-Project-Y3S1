@@ -143,6 +143,7 @@ builder.Services.AddScoped<IProductSearchTool, ProductSearchTool>();
 builder.Services.AddScoped<IWishlistTool, WishlistTool>();
 builder.Services.AddScoped<IProductAvailabilityTool, ProductAvailabilityTool>();
 builder.Services.AddScoped<GroundedPersonalStylistModel>();
+builder.Services.AddScoped<DeepSeekPersonalStylistModel>();
 builder.Services.AddHttpClient<OpenAiPersonalStylistModel>();
 builder.Services.AddScoped<IPersonalStylistRecommendationModel>(services =>
 {
