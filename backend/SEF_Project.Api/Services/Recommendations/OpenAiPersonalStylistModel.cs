@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
+using SEF_Project.Api.AI.DeepSeek;
 
 namespace SEF_Project.Api.Services.Recommendations;
 
@@ -15,14 +16,16 @@ public sealed class OpenAiPersonalStylistModel : IPersonalStylistRecommendationM
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly HttpClient _httpClient;
-    private readonly PersonalStylistAgentOptions _options;
+    private readonly DeepSeekOptions _options;
 
     public OpenAiPersonalStylistModel(
         HttpClient httpClient,
-        IOptions<PersonalStylistAgentOptions> options)
+        IOptions<PersonalStylistAgentOptions> agentOptions,
+        IOptions<DeepSeekOptions> options)
     {
         _httpClient = httpClient;
         _options = options.Value;
+        agentOptions.Value.Validate();
         _options.Validate();
     }
 

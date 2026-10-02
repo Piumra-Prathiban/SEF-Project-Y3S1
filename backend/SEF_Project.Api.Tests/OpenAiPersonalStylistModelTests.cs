@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
+using SEF_Project.Api.AI.DeepSeek;
 using SEF_Project.Api.Services.Recommendations;
 
 namespace SEF_Project.Api.Tests;
@@ -45,7 +46,8 @@ public class OpenAiPersonalStylistModelTests
         var handler = new RecordingHandler(responseBody);
         var model = new OpenAiPersonalStylistModel(
             new HttpClient(handler),
-            Options.Create(OpenAiOptions()));
+            Options.Create(AgentOptions()),
+            Options.Create(DeepSeekOptions()));
 
         var result = await model.GenerateAsync(BuildInput(productId, variantId));
 
@@ -65,24 +67,29 @@ public class OpenAiPersonalStylistModelTests
     {
         var model = new OpenAiPersonalStylistModel(
             new HttpClient(new RecordingHandler("{\"output\":[]}")),
-            Options.Create(OpenAiOptions()));
+            Options.Create(AgentOptions()),
+            Options.Create(DeepSeekOptions()));
 
         await Assert.ThrowsAsync<InvalidDataException>(() =>
             model.GenerateAsync(BuildInput(Guid.NewGuid(), Guid.NewGuid())));
     }
 
     [Fact]
-    public void Options_RequireAKeyForOpenAiProvider()
+    public void SharedDeepSeekOptions_RequireAKey()
     {
-        var options = OpenAiOptions();
+        var options = DeepSeekOptions();
         options.ApiKey = null;
 
         Assert.Throws<InvalidOperationException>(options.Validate);
     }
 
-    private static PersonalStylistAgentOptions OpenAiOptions() => new()
+    private static PersonalStylistAgentOptions AgentOptions() => new()
     {
-        Provider = "OpenAI",
+        Provider = "DeepSeek"
+    };
+
+    private static DeepSeekOptions DeepSeekOptions() => new()
+    {
         Model = "gpt-5-mini",
         Endpoint = "https://api.openai.com/v1/responses",
         ApiKey = "test-api-key"
