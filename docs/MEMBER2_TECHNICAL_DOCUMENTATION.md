@@ -419,9 +419,9 @@ migrations are integrated.
 2. Product details in Flutter are populated from the discovery response because
    there is no dedicated Member 2 product-details endpoint.
 3. The safe default recommendation provider is deterministic and
-   catalogue-grounded. A real OpenAI Responses API provider is implemented and
-   can be enabled through backend-only environment configuration. A deployment
-   must provide its own API key; both providers retain the same controlled tools,
+   catalogue-grounded. A DeepSeek-backed provider is implemented and can be
+   enabled through backend-only environment configuration. A deployment must
+   provide its own API key; both providers retain the same controlled tools,
    strict output contract, and deterministic grounding validator.
 4. React session storage uses `localStorage` and therefore depends on strong XSS
    prevention until a shared cookie-based web-auth design is adopted.

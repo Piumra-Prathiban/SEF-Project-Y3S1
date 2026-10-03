@@ -4,12 +4,6 @@ public class PersonalStylistAgentOptions
 {
     public string Provider { get; set; } = "Local";
 
-    public string Model { get; set; } = "gpt-5-mini";
-
-    public string Endpoint { get; set; } = "https://api.openai.com/v1/responses";
-
-    public string? ApiKey { get; set; }
-
     public int OverallTimeoutSeconds { get; set; } = 20;
 
     public int ToolTimeoutSeconds { get; set; } = 5;
@@ -19,32 +13,10 @@ public class PersonalStylistAgentOptions
     public void Validate()
     {
         if (!string.Equals(Provider, "Local", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(Provider, "OpenAI", StringComparison.OrdinalIgnoreCase))
+            !string.Equals(Provider, "DeepSeek", StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException(
-                "Personal Stylist provider must be Local or OpenAI.");
-        }
-
-        if (string.Equals(Provider, "OpenAI", StringComparison.OrdinalIgnoreCase))
-        {
-            if (string.IsNullOrWhiteSpace(ApiKey))
-            {
-                throw new InvalidOperationException(
-                    "Personal Stylist OpenAI provider requires an API key.");
-            }
-
-            if (string.IsNullOrWhiteSpace(Model))
-            {
-                throw new InvalidOperationException(
-                    "Personal Stylist OpenAI provider requires a model.");
-            }
-
-            if (!Uri.TryCreate(Endpoint, UriKind.Absolute, out var endpoint) ||
-                endpoint.Scheme != Uri.UriSchemeHttps)
-            {
-                throw new InvalidOperationException(
-                    "Personal Stylist OpenAI endpoint must be an absolute HTTPS URL.");
-            }
+                "Personal Stylist provider must be Local or DeepSeek.");
         }
 
         if (OverallTimeoutSeconds is < 1 or > 120)

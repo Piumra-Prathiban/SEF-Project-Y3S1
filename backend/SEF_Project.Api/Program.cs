@@ -143,15 +143,15 @@ builder.Services.AddScoped<IProductSearchTool, ProductSearchTool>();
 builder.Services.AddScoped<IWishlistTool, WishlistTool>();
 builder.Services.AddScoped<IProductAvailabilityTool, ProductAvailabilityTool>();
 builder.Services.AddScoped<GroundedPersonalStylistModel>();
-builder.Services.AddHttpClient<OpenAiPersonalStylistModel>();
+builder.Services.AddScoped<DeepSeekPersonalStylistModel>();
 builder.Services.AddScoped<IPersonalStylistRecommendationModel>(services =>
 {
     var options = services
         .GetRequiredService<Microsoft.Extensions.Options.IOptions<PersonalStylistAgentOptions>>()
         .Value;
 
-    return string.Equals(options.Provider, "OpenAI", StringComparison.OrdinalIgnoreCase)
-        ? services.GetRequiredService<OpenAiPersonalStylistModel>()
+    return string.Equals(options.Provider, "DeepSeek", StringComparison.OrdinalIgnoreCase)
+        ? services.GetRequiredService<DeepSeekPersonalStylistModel>()
         : services.GetRequiredService<GroundedPersonalStylistModel>();
 });
 builder.Services.AddScoped<IPersonalStylistOutputValidator, PersonalStylistOutputValidator>();
