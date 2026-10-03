@@ -17,6 +17,7 @@ using SEF_Project.Api.Services.Recommendations;
 using SEF_Project.Api.Services.Marketing;
 using SEF_Project.Api.Services.Analytics;
 using SEF_Project.Api.AI.InventoryPromotion;
+using SEF_Project.Api.AI.DeepSeek;
 using SEF_Project.Api.Middleware;
 using System.Reflection;
 
@@ -34,6 +35,8 @@ builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("Jwt"));
 builder.Services.Configure<PersonalStylistAgentOptions>(
     builder.Configuration.GetSection("PersonalStylistAgent"));
+builder.Services.Configure<DeepSeekOptions>(
+    builder.Configuration.GetSection(DeepSeekOptions.SectionName));
 
 var jwtSettings = builder.Configuration
     .GetSection("Jwt")
@@ -158,6 +161,7 @@ builder.Services.AddScoped<IPromotionAgentTool, GetProductPricingTool>();
 builder.Services.AddScoped<IPromotionAgentTool, CalculatePromotionTool>();
 builder.Services.AddScoped<PromotionAgentToolRegistry>();
 builder.Services.AddScoped<LocalPromotionProposalModel>();
+builder.Services.AddHttpClient<IDeepSeekChatCompletionsClient, DeepSeekChatCompletionsClient>();
 builder.Services.AddScoped<DeepSeekPromotionProposalModel>();
 builder.Services.AddScoped<IPromotionProposalModel>(services =>
 {
