@@ -12,7 +12,7 @@ namespace SEF_Project.Api.Services.Orders;
 
 public class OrderService : IOrderService
 {
-    private static readonly Dictionary<OrderStatus, OrderStatus[]>
+    internal static readonly Dictionary<OrderStatus, OrderStatus[]>
         AllowedTransitions = new()
         {
             [OrderStatus.Pending] = new[]
@@ -30,7 +30,7 @@ public class OrderService : IOrderService
             [OrderStatus.Refunded] = Array.Empty<OrderStatus>()
         };
 
-    private static readonly Dictionary<PaymentStatus, PaymentStatus[]>
+    internal static readonly Dictionary<PaymentStatus, PaymentStatus[]>
         AllowedPaymentTransitions = new()
         {
             [PaymentStatus.Pending] = new[]
@@ -40,7 +40,7 @@ public class OrderService : IOrderService
             [PaymentStatus.Refunded] = Array.Empty<PaymentStatus>()
         };
 
-    private static readonly Dictionary<ShipmentStatus, ShipmentStatus[]>
+    internal static readonly Dictionary<ShipmentStatus, ShipmentStatus[]>
         AllowedShipmentTransitions = new()
         {
             [ShipmentStatus.Pending] = new[]
