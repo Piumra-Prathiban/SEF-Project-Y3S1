@@ -39,7 +39,14 @@ public class GroundedPersonalStylistModel : IPersonalStylistRecommendationModel
 
         foreach (var product in rankedProducts)
         {
-            var variant = availability[product.ProductId][0];
+            var variant = SelectMatchingVariant(
+                availability[product.ProductId],
+                input.Preferences);
+
+            if (variant is null)
+            {
+                continue;
+            }
 
             if (input.Preferences.Budget.HasValue &&
                 total + variant.Price > input.Preferences.Budget.Value)
@@ -68,6 +75,36 @@ public class GroundedPersonalStylistModel : IPersonalStylistRecommendationModel
         }
 
         return Task.FromResult(new PersonalStylistModelOutput(recommendations));
+    }
+
+    private static VerifiedProductAvailability? SelectMatchingVariant(
+        IReadOnlyList<VerifiedProductAvailability> variants,
+        RecommendationContext preferences)
+    {
+        var candidates = variants;
+
+        if (!string.IsNullOrWhiteSpace(preferences.PreferredSize))
+        {
+            candidates = candidates
+                .Where(variant => string.Equals(
+                    variant.Size,
+                    preferences.PreferredSize,
+                    StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        if (preferences.PreferredColours.Count > 0)
+        {
+            candidates = candidates
+                .Where(variant => preferences.PreferredColours.Contains(
+                    variant.Colour ?? string.Empty,
+                    StringComparer.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        // The list is already ordered by price, so this is the cheapest
+        // variant that satisfies the requested size and colour.
+        return candidates.FirstOrDefault();
     }
 
     private static string BuildReason(

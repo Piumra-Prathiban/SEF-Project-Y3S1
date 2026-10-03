@@ -45,6 +45,62 @@ public class PersonalStylistAgentTests
     }
 
     [Fact]
+    public async Task GroundedModel_SelectsVariantMatchingRequestedSizeAndColour()
+    {
+        var productId = Guid.NewGuid();
+        var cheapWrongVariant = new RecommendationCatalogVariant(
+            Guid.NewGuid(), "SHIRT-L", "Large", 1000m, 5, Size: "L", Colour: "Black");
+        var matchingVariant = new RecommendationCatalogVariant(
+            Guid.NewGuid(), "SHIRT-M", "Medium", 2000m, 5, Size: "M", Colour: "Navy");
+        var product = new RecommendationCatalogProduct(
+            productId,
+            "Shirt",
+            "A shirt",
+            1000m,
+            Array.Empty<RecommendationCatalogCategory>(),
+            new[] { cheapWrongVariant, matchingVariant });
+
+        var available = new[]
+        {
+            new VerifiedProductAvailability(
+                productId,
+                cheapWrongVariant.Id,
+                product.Name,
+                cheapWrongVariant.Name,
+                cheapWrongVariant.Sku,
+                cheapWrongVariant.Price,
+                cheapWrongVariant.AvailableQuantity,
+                cheapWrongVariant.Size,
+                cheapWrongVariant.Colour),
+            new VerifiedProductAvailability(
+                productId,
+                matchingVariant.Id,
+                product.Name,
+                matchingVariant.Name,
+                matchingVariant.Sku,
+                matchingVariant.Price,
+                matchingVariant.AvailableQuantity,
+                matchingVariant.Size,
+                matchingVariant.Colour)
+        };
+
+        var input = new PersonalStylistModelInput(
+            new RecommendationCustomerContext(7, "Demo", "Customer"),
+            new RecommendationContext("Casual", null, new[] { "Navy" }, "M", null),
+            Array.Empty<WishlistToolItem>(),
+            new[] { product },
+            available,
+            Array.Empty<string>());
+
+        var output = await new GroundedPersonalStylistModel().GenerateAsync(input);
+
+        var recommendation = Assert.Single(output.Recommendations);
+        Assert.Equal(matchingVariant.Id, recommendation.VariantId);
+        Assert.Equal("M", recommendation.Size);
+        Assert.Equal("Navy", recommendation.Colour);
+    }
+
+    [Fact]
     [Trait("TestSuite", "PersonalStylistGolden")]
     public async Task Agent_RejectsMalformedModelOutputAndFailsSafely()
     {
