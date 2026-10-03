@@ -158,9 +158,17 @@ builder.Services.AddScoped<IPromotionAgentTool, GetProductPricingTool>();
 builder.Services.AddScoped<IPromotionAgentTool, CalculatePromotionTool>();
 builder.Services.AddScoped<PromotionAgentToolRegistry>();
 builder.Services.AddScoped<LocalPromotionProposalModel>();
-// TODO: select DeepSeekPromotionProposalModel here once it exists.
+builder.Services.AddScoped<DeepSeekPromotionProposalModel>();
 builder.Services.AddScoped<IPromotionProposalModel>(services =>
-    services.GetRequiredService<LocalPromotionProposalModel>());
+{
+    var options = services
+        .GetRequiredService<Microsoft.Extensions.Options.IOptions<InventoryPromotionAgentOptions>>()
+        .Value;
+
+    return string.Equals(options.Provider, "DeepSeek", StringComparison.OrdinalIgnoreCase)
+        ? services.GetRequiredService<DeepSeekPromotionProposalModel>()
+        : services.GetRequiredService<LocalPromotionProposalModel>();
+});
 builder.Services.AddScoped<IInventoryPromotionAgent, InventoryPromotionAgentService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddSingleton(TimeProvider.System);
