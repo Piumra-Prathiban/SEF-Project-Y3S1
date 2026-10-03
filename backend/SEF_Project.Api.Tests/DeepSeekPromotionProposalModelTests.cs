@@ -1,12 +1,21 @@
 using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using SEF_Project.Api.AI.DeepSeek;
 using SEF_Project.Api.AI.InventoryPromotion;
 using SEF_Project.Api.DTOs.Agents;
 
 namespace SEF_Project.Api.Tests;
 
-public class DeepSeekPromotionProposalModelTests
+public class DeepSeekPromotionProposalModelTests : IClassFixture<MarketingApiFactory>
 {
+    private readonly MarketingApiFactory _factory;
+
+    public DeepSeekPromotionProposalModelTests(MarketingApiFactory factory)
+    {
+        _factory = factory;
+    }
+
     private const string FixedOutput =
         "{\"schemaVersion\":\"1.0\",\"summary\":\"One promotion.\",\"proposals\":[{" +
         "\"productId\":\"11111111-1111-1111-1111-111111111111\",\"productName\":\"Linen Shirt\"," +
@@ -31,6 +40,27 @@ public class DeepSeekPromotionProposalModelTests
         Assert.Contains("ActivePromotionsMarker", client.UserJsonInput);
         Assert.Contains("ProductDetailsMarker", client.UserJsonInput);
         Assert.Contains("ProductPricingMarker", client.UserJsonInput);
+    }
+
+    [Theory]
+    [InlineData("Local", typeof(LocalPromotionProposalModel))]
+    [InlineData("local", typeof(LocalPromotionProposalModel))]
+    [InlineData("DeepSeek", typeof(DeepSeekPromotionProposalModel))]
+    [InlineData("deepseek", typeof(DeepSeekPromotionProposalModel))]
+    public void ProviderSetting_SelectsTheRegisteredPromotionModel(string provider, Type expected)
+    {
+        // Real Program.cs factory; only the (not yet registered) shared client is faked.
+        using var factory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("InventoryPromotionAgent:Provider", provider);
+            builder.ConfigureServices(services =>
+                services.AddScoped<IDeepSeekChatCompletionsClient>(_ => new CapturingClient(FixedOutput)));
+        });
+
+        using var scope = factory.Services.CreateScope();
+        var model = scope.ServiceProvider.GetRequiredService<IPromotionProposalModel>();
+
+        Assert.IsType(expected, model);
     }
 
     private static PromotionAgentContext Context() => new(
