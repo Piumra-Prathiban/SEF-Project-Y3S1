@@ -158,17 +158,9 @@ builder.Services.AddScoped<IPromotionAgentTool, GetProductPricingTool>();
 builder.Services.AddScoped<IPromotionAgentTool, CalculatePromotionTool>();
 builder.Services.AddScoped<PromotionAgentToolRegistry>();
 builder.Services.AddScoped<LocalPromotionProposalModel>();
-builder.Services.AddHttpClient<OpenAiPromotionProposalModel>();
+// TODO: select DeepSeekPromotionProposalModel here once it exists.
 builder.Services.AddScoped<IPromotionProposalModel>(services =>
-{
-    var options = services
-        .GetRequiredService<Microsoft.Extensions.Options.IOptions<InventoryPromotionAgentOptions>>()
-        .Value;
-
-    return string.Equals(options.Provider, "OpenAI", StringComparison.OrdinalIgnoreCase)
-        ? services.GetRequiredService<OpenAiPromotionProposalModel>()
-        : services.GetRequiredService<LocalPromotionProposalModel>();
-});
+    services.GetRequiredService<LocalPromotionProposalModel>());
 builder.Services.AddScoped<IInventoryPromotionAgent, InventoryPromotionAgentService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddSingleton(TimeProvider.System);

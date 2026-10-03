@@ -50,12 +50,6 @@ public class InventoryPromotionAgentOptions
 
     public string Provider { get; set; } = "Local";
 
-    public string Model { get; set; } = "gpt-5-mini";
-
-    public string Endpoint { get; set; } = "https://api.openai.com/v1/responses";
-
-    public string? ApiKey { get; set; }
-
     public TimeSpan ToolTimeout { get; set; } = TimeSpan.FromSeconds(5);
 
     public TimeSpan ModelTimeout { get; set; } = TimeSpan.FromSeconds(20);
@@ -77,37 +71,17 @@ public class InventoryPromotionAgentOptions
 
     public int MaxToolOutputCharacters { get; set; } = 256_000;
 
+    /// <summary>
+    /// Only the provider choice is validated here; the DeepSeek key, model and
+    /// endpoint are validated by the shared DeepSeek section.
+    /// </summary>
     public void ValidateModelProvider()
     {
         if (!string.Equals(Provider, "Local", StringComparison.OrdinalIgnoreCase)
-            && !string.Equals(Provider, "OpenAI", StringComparison.OrdinalIgnoreCase))
+            && !string.Equals(Provider, "DeepSeek", StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException(
-                "Inventory & Promotion Agent provider must be Local or OpenAI.");
-        }
-
-        if (!string.Equals(Provider, "OpenAI", StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(ApiKey))
-        {
-            throw new InvalidOperationException(
-                "Inventory & Promotion Agent OpenAI provider requires an API key.");
-        }
-
-        if (string.IsNullOrWhiteSpace(Model))
-        {
-            throw new InvalidOperationException(
-                "Inventory & Promotion Agent OpenAI provider requires a model.");
-        }
-
-        if (!Uri.TryCreate(Endpoint, UriKind.Absolute, out var endpoint)
-            || endpoint.Scheme != Uri.UriSchemeHttps)
-        {
-            throw new InvalidOperationException(
-                "Inventory & Promotion Agent OpenAI endpoint must be an absolute HTTPS URL.");
+                "Inventory & Promotion Agent provider must be Local or DeepSeek.");
         }
     }
 }
