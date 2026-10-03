@@ -103,13 +103,13 @@ authoritatively verified.
 
 `IPersonalStylistRecommendationModel` is the replaceable model boundary. The
 safe default is the deterministic `GroundedPersonalStylistModel`. Setting
-`PersonalStylistAgent__Provider=OpenAI` and supplying
-`PersonalStylistAgent__ApiKey` selects `OpenAiPersonalStylistModel`, which calls
-the Responses API with a strict JSON schema. The model sees only structured
-results already collected through the allow-listed tools; it never receives a
-database connection, authentication token, or customer identity. Both providers
-use the same final grounding validator, so model output cannot override current
-catalogue, price, stock, option, or budget facts.
+`PersonalStylistAgent__Provider=DeepSeek` and supplying `DeepSeek__ApiKey`
+selects `DeepSeekPersonalStylistModel`, which calls the shared DeepSeek chat
+completions client. The model sees only structured results already collected
+through the allow-listed tools; it never receives a database connection,
+authentication token, or customer identity. Both providers use the same final
+grounding validator, so model output cannot override current catalogue, price,
+stock, option, or budget facts.
 
 ## Shared workflow integration
 
