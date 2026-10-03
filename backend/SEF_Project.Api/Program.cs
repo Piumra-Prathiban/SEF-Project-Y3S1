@@ -17,6 +17,7 @@ using SEF_Project.Api.Services.Recommendations;
 using SEF_Project.Api.Services.Marketing;
 using SEF_Project.Api.Services.Analytics;
 using SEF_Project.Api.AI.InventoryPromotion;
+using SEF_Project.Api.AI.DeepSeek;
 using SEF_Project.Api.Middleware;
 using System.Reflection;
 
@@ -34,6 +35,10 @@ builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("Jwt"));
 builder.Services.Configure<PersonalStylistAgentOptions>(
     builder.Configuration.GetSection("PersonalStylistAgent"));
+builder.Services.Configure<InventoryAnalysisAgentOptions>(
+    builder.Configuration.GetSection(InventoryAnalysisAgentOptions.SectionName));
+builder.Services.Configure<DeepSeekOptions>(
+    builder.Configuration.GetSection(DeepSeekOptions.SectionName));
 
 var jwtSettings = builder.Configuration
     .GetSection("Jwt")
@@ -107,7 +112,19 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IInventoryAgentToolRegistry, InventoryAgentToolRegistry>();
-builder.Services.AddScoped<IInventoryAnalysisModelClient, LocalInventoryAnalysisModelClient>();
+builder.Services.AddScoped<LocalInventoryAnalysisModelClient>();
+builder.Services.AddHttpClient<IDeepSeekChatCompletionsClient, DeepSeekChatCompletionsClient>();
+builder.Services.AddScoped<DeepSeekInventoryAnalysisModelClient>();
+builder.Services.AddScoped<IInventoryAnalysisModelClient>(services =>
+{
+    var options = services
+        .GetRequiredService<Microsoft.Extensions.Options.IOptions<InventoryAnalysisAgentOptions>>()
+        .Value;
+
+    return string.Equals(options.Provider, "DeepSeek", StringComparison.OrdinalIgnoreCase)
+        ? services.GetRequiredService<DeepSeekInventoryAnalysisModelClient>()
+        : services.GetRequiredService<LocalInventoryAnalysisModelClient>();
+});
 builder.Services.AddScoped<IInventoryAnalysisAgentService, InventoryAnalysisAgentService>();
 builder.Services.AddScoped<IInventoryAgentWorkflowService, InventoryAgentWorkflowService>();
 builder.Services.AddScoped<ISupplierService, SupplierService>();
@@ -126,15 +143,15 @@ builder.Services.AddScoped<IProductSearchTool, ProductSearchTool>();
 builder.Services.AddScoped<IWishlistTool, WishlistTool>();
 builder.Services.AddScoped<IProductAvailabilityTool, ProductAvailabilityTool>();
 builder.Services.AddScoped<GroundedPersonalStylistModel>();
-builder.Services.AddHttpClient<OpenAiPersonalStylistModel>();
+builder.Services.AddScoped<DeepSeekPersonalStylistModel>();
 builder.Services.AddScoped<IPersonalStylistRecommendationModel>(services =>
 {
     var options = services
         .GetRequiredService<Microsoft.Extensions.Options.IOptions<PersonalStylistAgentOptions>>()
         .Value;
 
-    return string.Equals(options.Provider, "OpenAI", StringComparison.OrdinalIgnoreCase)
-        ? services.GetRequiredService<OpenAiPersonalStylistModel>()
+    return string.Equals(options.Provider, "DeepSeek", StringComparison.OrdinalIgnoreCase)
+        ? services.GetRequiredService<DeepSeekPersonalStylistModel>()
         : services.GetRequiredService<GroundedPersonalStylistModel>();
 });
 builder.Services.AddScoped<IPersonalStylistOutputValidator, PersonalStylistOutputValidator>();
