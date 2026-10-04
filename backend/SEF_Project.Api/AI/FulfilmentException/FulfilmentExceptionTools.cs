@@ -41,15 +41,24 @@ internal static class ToolArgs
 
     public static Guid Guid(JsonObject args, string name)
     {
-        if (args[name] is not JsonValue value
-            || !value.TryGetValue<string>(out var text)
-            || !System.Guid.TryParse(text, out var guid)
-            || guid == System.Guid.Empty)
+        if (args[name] is not JsonNode node)
         {
             throw new ToolInputException($"'{name}' must be a non-empty GUID.");
         }
 
-        return guid;
+        Guid guid;
+        try
+        {
+            guid = node.Deserialize<Guid>();
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or NotSupportedException)
+        {
+            throw new ToolInputException($"'{name}' must be a non-empty GUID.");
+        }
+
+        return guid == System.Guid.Empty
+            ? throw new ToolInputException($"'{name}' must be a non-empty GUID.")
+            : guid;
     }
 }
 

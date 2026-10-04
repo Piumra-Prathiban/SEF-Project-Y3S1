@@ -5,6 +5,9 @@ import DashboardPage from '../features/dashboard/DashboardPage';
 import { InventoryDashboardPage, LowStockPage } from '../features/inventory';
 import { StockHistoryPage } from '../features/inventory/StockHistoryPage';
 import { InventoryAgentPage } from '../features/inventory-agent';
+import FulfilmentAgentDetailPage from '../features/fulfilment-agent/FulfilmentAgentDetailPage';
+import FulfilmentAgentListPage from '../features/fulfilment-agent/FulfilmentAgentListPage';
+import FulfilmentAgentStartPage from '../features/fulfilment-agent/FulfilmentAgentStartPage';
 import OrdersListPage from '../features/orders/OrdersListPage';
 import ReturnsListPage from '../features/orders/ReturnsListPage';
 import { ProfilePage } from '../features/profile';
@@ -155,5 +158,24 @@ export const memberOneRoutes = [
     element: <InventoryAgentPage />,
     roles: STAFF_ROLES,
     showInNavigation: true,
+  },
+  {
+    path: '/fulfilment-agent',
+    label: 'Fulfilment Agent',
+    element: <FulfilmentAgentListPage />,
+    roles: STAFF_ROLES,
+    showInNavigation: true,
+  },
+  {
+    path: '/fulfilment-agent/new',
+    element: <FulfilmentAgentStartPage />,
+    roles: STAFF_ROLES,
+    showInNavigation: false,
+  },
+  {
+    path: '/fulfilment-agent/:id',
+    element: <FulfilmentAgentDetailPage />,
+    roles: STAFF_ROLES,
+    showInNavigation: false,
   },
 ];

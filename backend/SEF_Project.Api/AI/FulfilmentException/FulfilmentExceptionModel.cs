@@ -30,7 +30,7 @@ public interface IFulfilmentExceptionModel
 
     Task<string> GenerateResolutionAsync(
         FulfilmentExceptionContext context,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -47,7 +47,7 @@ public sealed class LocalFulfilmentExceptionModel : IFulfilmentExceptionModel
 
     public Task<string> GenerateResolutionAsync(
         FulfilmentExceptionContext context,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var document = BuildResolution(context);

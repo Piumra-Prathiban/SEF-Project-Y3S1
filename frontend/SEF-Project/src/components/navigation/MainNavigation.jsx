@@ -6,7 +6,7 @@ const GROUPS = [
   { label: 'Workspace', paths: ['/dashboard', '/orders', '/returns', '/wishlist', '/stylist', '/profile'] },
   { label: 'Commerce', paths: ['/products', '/variants', '/inventory', '/inventory/history', '/inventory/low-stock', '/purchase-orders'] },
   { label: 'Catalogue', paths: ['/categories', '/collections', '/sizes', '/colours', '/suppliers'] },
-  { label: 'Intelligence', paths: ['/marketing', '/reviews', '/inventory-agent'] },
+  { label: 'Intelligence', paths: ['/marketing', '/reviews', '/inventory-agent', '/fulfilment-agent'] },
 ];
 
 function NavigationItem({ route }) {

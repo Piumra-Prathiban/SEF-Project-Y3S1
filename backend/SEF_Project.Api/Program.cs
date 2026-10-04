@@ -18,6 +18,7 @@ using SEF_Project.Api.Services.Marketing;
 using SEF_Project.Api.Services.Analytics;
 using SEF_Project.Api.AI.InventoryPromotion;
 using SEF_Project.Api.AI.DeepSeek;
+using SEF_Project.Api.AI.FulfilmentException;
 using SEF_Project.Api.Middleware;
 using System.Reflection;
 
@@ -189,6 +190,30 @@ builder.Services.AddScoped<IPromotionProposalModel>(services =>
 });
 builder.Services.AddScoped<IInventoryPromotionAgent, InventoryPromotionAgentService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+
+// Fulfilment Exception Agent: allow-listed read-only tools, replaceable
+// resolution model (deterministic local policy by default), orchestrator.
+builder.Services.Configure<FulfilmentExceptionAgentOptions>(
+    builder.Configuration.GetSection(FulfilmentExceptionAgentOptions.SectionName));
+builder.Services.AddScoped<IFulfilmentExceptionTool, GetOrderDetailsTool>();
+builder.Services.AddScoped<IFulfilmentExceptionTool, GetPaymentsTool>();
+builder.Services.AddScoped<IFulfilmentExceptionTool, GetShipmentsTool>();
+builder.Services.AddScoped<IFulfilmentExceptionTool, GetStatusHistoryTool>();
+builder.Services.AddScoped<IFulfilmentExceptionTool, GetPermittedTransitionsTool>();
+builder.Services.AddScoped<FulfilmentExceptionToolRegistry>();
+builder.Services.AddScoped<LocalFulfilmentExceptionModel>();
+builder.Services.AddScoped<DeepSeekFulfilmentExceptionModel>();
+builder.Services.AddScoped<IFulfilmentExceptionModel>(services =>
+{
+    var options = services
+        .GetRequiredService<Microsoft.Extensions.Options.IOptions<FulfilmentExceptionAgentOptions>>()
+        .Value;
+
+    return string.Equals(options.Provider, "DeepSeek", StringComparison.OrdinalIgnoreCase)
+        ? services.GetRequiredService<DeepSeekFulfilmentExceptionModel>()
+        : services.GetRequiredService<LocalFulfilmentExceptionModel>();
+});
+builder.Services.AddScoped<IFulfilmentExceptionAgent, FulfilmentExceptionAgentService>();
 builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.AddCors(options =>
