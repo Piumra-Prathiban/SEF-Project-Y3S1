@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 
+import '../config/stripe_config.dart';
+import '../models/order_models.dart';
 import '../state/customer_store.dart';
 import '../utils/formatters.dart';
 
@@ -84,6 +87,70 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String? _required(String? value) =>
       value == null || value.trim().isEmpty ? 'This field is required.' : null;
 
+  String? _cardClientSecret(Order order) {
+    if (_paymentMethod != 0) return null;
+    for (final payment in order.payments) {
+      if (payment.clientSecret != null) return payment.clientSecret;
+    }
+    return null;
+  }
+
+  Future<bool> _confirmStripePayment(String clientSecret) async {
+    try {
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: clientSecret,
+          merchantDisplayName: 'Clothic',
+        ),
+      );
+      await Stripe.instance.presentPaymentSheet();
+      return true;
+    } on StripeException {
+      return false;
+    }
+  }
+
+  Future<void> _showOrderPlacedDialog(Order order, bool paid) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.check_circle_outline, size: 44),
+        title: const Text('Order placed'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              paid
+                  ? '${order.orderNumber} has been created and your card payment succeeded.'
+                  : '${order.orderNumber} has been created. Your payment is pending staff confirmation.',
+            ),
+            if (order.hasDiscount) ...[
+              const SizedBox(height: 12),
+              Text(
+                order.couponCode == null
+                    ? 'You saved ${formatCurrency(order.discountTotal, order.currency)}.'
+                    : 'Coupon ${order.couponCode} saved you '
+                          '${formatCurrency(order.discountTotal, order.currency)}.',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ] else if (order.couponCode != null) ...[
+              const SizedBox(height: 12),
+              Text('Coupon ${order.couponCode} applied.'),
+            ],
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('View my orders'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _submit() async {
     if (_formKey.currentState?.validate() != true) return;
     setState(() {
@@ -109,43 +176,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ? null
             : _couponCode.text.trim().toUpperCase(),
       );
+
+      var paid = false;
+      final clientSecret = _cardClientSecret(order);
+      if (clientSecret != null && stripePublishableKey.isNotEmpty) {
+        paid = await _confirmStripePayment(clientSecret);
+      }
+
       if (!mounted) return;
-      await showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) => AlertDialog(
-          icon: const Icon(Icons.check_circle_outline, size: 44),
-          title: const Text('Order placed'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${order.orderNumber} has been created. Your payment is pending staff confirmation.',
-              ),
-              if (order.hasDiscount) ...[
-                const SizedBox(height: 12),
-                Text(
-                  order.couponCode == null
-                      ? 'You saved ${formatCurrency(order.discountTotal, order.currency)}.'
-                      : 'Coupon ${order.couponCode} saved you '
-                            '${formatCurrency(order.discountTotal, order.currency)}.',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ] else if (order.couponCode != null) ...[
-                const SizedBox(height: 12),
-                Text('Coupon ${order.couponCode} applied.'),
-              ],
-            ],
-          ),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('View my orders'),
-            ),
-          ],
-        ),
-      );
+      await _showOrderPlacedDialog(order, paid);
       if (mounted) Navigator.pop(context, true);
     } catch (exception) {
       if (mounted) setState(() => _error = exception.toString());
@@ -240,8 +279,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             onChanged: (value) => setState(() => _paymentMethod = value ?? 0),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'No card number or security code is stored. The payment starts as Pending.',
+          Text(
+            stripePublishableKey.isNotEmpty
+                ? 'Card payments are collected securely by Stripe in test mode.'
+                : 'No card number or security code is stored. The payment starts as Pending.',
           ),
           if (_error != null) ...[
             const SizedBox(height: 12),

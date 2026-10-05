@@ -86,6 +86,13 @@ public class PaymentResponse
 
     public string? TransactionReference { get; set; }
 
+    /// <summary>
+    /// Ephemeral Stripe PaymentIntent client secret, populated only on the
+    /// checkout response for a card payment so the client can confirm it. It is
+    /// never persisted and is absent from subsequent payment reads.
+    /// </summary>
+    public string? ClientSecret { get; set; }
+
     public DateTime? PaidAt { get; set; }
 }
 

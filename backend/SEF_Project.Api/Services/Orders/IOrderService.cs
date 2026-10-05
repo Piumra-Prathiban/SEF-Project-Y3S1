@@ -55,6 +55,11 @@ public interface IOrderService
         UpdatePaymentStatusRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<bool> ApplyPaymentIntentResultAsync(
+        string paymentIntentId,
+        bool succeeded,
+        CancellationToken cancellationToken = default);
+
     Task<ShipmentResponse?> CreateShipmentAsync(
         int userId,
         bool canManageOrders,

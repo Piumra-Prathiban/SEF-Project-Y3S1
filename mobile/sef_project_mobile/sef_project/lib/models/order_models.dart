@@ -120,6 +120,7 @@ class Payment {
     required this.method,
     required this.status,
     this.transactionReference,
+    this.clientSecret,
     this.paidAt,
   });
 
@@ -128,6 +129,11 @@ class Payment {
   final int method;
   final int status;
   final String? transactionReference;
+
+  /// Stripe PaymentIntent client secret, present only on the checkout response
+  /// so the customer can confirm the card payment.
+  final String? clientSecret;
+
   final DateTime? paidAt;
 
   factory Payment.fromJson(Map<String, dynamic> json) => Payment(
@@ -136,6 +142,7 @@ class Payment {
         method: (json['method'] as num).toInt(),
         status: (json['status'] as num).toInt(),
         transactionReference: json['transactionReference'] as String?,
+        clientSecret: json['clientSecret'] as String?,
         paidAt: json['paidAt'] == null
             ? null
             : DateTime.parse(json['paidAt'] as String),

@@ -130,7 +130,9 @@ export const ReturnReasonName = Object.freeze({
  * @property {number} amount
  * @property {number} method PaymentMethod value
  * @property {number} status PaymentStatus value
- * @property {string|null} transactionReference
+ * @property {string|null} transactionReference Stripe PaymentIntent id (Card)
+ * @property {string|null} clientSecret Stripe client secret, present only on the
+ *   checkout response so the client can confirm the payment
  * @property {string|null} paidAt ISO 8601
  */
 

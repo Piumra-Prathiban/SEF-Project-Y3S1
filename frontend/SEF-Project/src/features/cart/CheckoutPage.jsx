@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Elements } from '@stripe/react-stripe-js';
 import { Alert } from '../../components/ui/Alert';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { useAuth } from '../../contexts/AuthContext';
@@ -8,6 +9,8 @@ import { getAddresses, getProfile } from '../profile/profileService';
 import { createOrder, PaymentMethod } from '../../services/orderService';
 import { formatCurrency } from '../../utils/format';
 import { useCart } from './CartContext';
+import { stripePromise } from './stripe';
+import { StripePaymentForm } from './StripePaymentForm';
 import '../storefront/storefront.css';
 import './cart.css';
 
@@ -37,6 +40,8 @@ export function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [placedOrder, setPlacedOrder] = useState(null);
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
+  const [pendingPayment, setPendingPayment] = useState(null);
   const [savedDetailsWarning, setSavedDetailsWarning] = useState(null);
 
   useEffect(() => {
@@ -100,12 +105,48 @@ export function CheckoutPage() {
       });
 
       clearCart();
-      setPlacedOrder(order);
+
+      const cardPayment = order.payments?.find((payment) => payment.clientSecret);
+
+      if (stripePromise && cardPayment?.clientSecret) {
+        setPendingPayment({ order, clientSecret: cardPayment.clientSecret });
+      } else {
+        setPlacedOrder(order);
+      }
     } catch (err) {
       setError(err?.message || 'The order could not be placed.');
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (pendingPayment) {
+    return (
+      <div className="storefront">
+        <div className="storefront__catalogue">
+          <h1>Complete your payment</h1>
+          <p className="storefront__lede">
+            Order <strong>{pendingPayment.order.orderNumber}</strong> is ready.
+            Pay now with your card to confirm it.
+          </p>
+          <div className="checkout">
+            <Elements
+              stripe={stripePromise}
+              options={{ clientSecret: pendingPayment.clientSecret }}
+            >
+              <StripePaymentForm
+                order={pendingPayment.order}
+                onSuccess={() => {
+                  setPlacedOrder(pendingPayment.order);
+                  setPaymentCompleted(true);
+                  setPendingPayment(null);
+                }}
+              />
+            </Elements>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (placedOrder) {
@@ -114,8 +155,20 @@ export function CheckoutPage() {
         <div className="storefront__catalogue">
           <h1>Order placed</h1>
           <p className="storefront__lede">
-            Your order <strong>{placedOrder.orderNumber}</strong> was created.
-            Your payment is recorded as pending until staff confirm it.
+            {paymentCompleted
+              ? (
+                <>
+                  Your order <strong>{placedOrder.orderNumber}</strong> was
+                  placed and your card payment succeeded.
+                </>
+              )
+              : (
+                <>
+                  Your order <strong>{placedOrder.orderNumber}</strong> was
+                  created. Your payment is recorded as pending until staff
+                  confirm it.
+                </>
+              )}
           </p>
 
           {placedOrder.discountTotal > 0 && (
@@ -247,8 +300,9 @@ export function CheckoutPage() {
               </select>
             </label>
             <p className="cart-summary__note">
-              No card details are collected here: your chosen method is recorded
-              as a pending payment, and staff confirm it through the dashboard.
+              {stripePromise
+                ? 'Card payments are collected securely by Stripe (test mode). Other methods are recorded as pending for staff confirmation.'
+                : 'No card details are collected here: your chosen method is recorded as a pending payment, and staff confirm it through the dashboard.'}
             </p>
 
             <ApiErrorAlert message={error} />

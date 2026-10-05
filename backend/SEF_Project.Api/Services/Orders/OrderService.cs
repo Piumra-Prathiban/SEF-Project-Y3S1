@@ -7,6 +7,7 @@ using SEF_Project.Api.Models.Enums;
 using SEF_Project.Api.Models.Marketing;
 using SEF_Project.Api.Models.Orders;
 using SEF_Project.Api.Services.Marketing;
+using SEF_Project.Api.Services.Payments;
 
 namespace SEF_Project.Api.Services.Orders;
 
@@ -53,15 +54,18 @@ public class OrderService : IOrderService
     private readonly AppDbContext _context;
     private readonly ILogger<OrderService> _logger;
     private readonly TimeProvider _timeProvider;
+    private readonly IStripePaymentService? _stripePaymentService;
 
     public OrderService(
         AppDbContext context,
         ILogger<OrderService> logger,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        IStripePaymentService? stripePaymentService = null)
     {
         _context = context;
         _logger = logger;
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _stripePaymentService = stripePaymentService;
     }
 
     public async Task<OrderResponse> CreateOrderAsync(
@@ -150,12 +154,38 @@ public class OrderService : IOrderService
             order.Total = discountedSubtotal;
 
             order.DeliveryAddress = BuildAddress(request.DeliveryAddress);
-            order.Payments.Add(new Payment
+
+            var payment = new Payment
             {
                 Method = request.PaymentMethod,
                 Amount = order.Total,
                 Status = PaymentStatus.Pending
-            });
+            };
+            order.Payments.Add(payment);
+
+            // Card payments are authorized through Stripe. When the payment
+            // provider is configured we create an unconfirmed PaymentIntent here
+            // and hand its client secret back to the caller, which then confirms
+            // it with the customer's card. The webhook marks the payment
+            // Completed/Failed — the manual staff-confirm path remains the
+            // fallback when Stripe is not configured.
+            string? stripeClientSecret = null;
+            if (request.PaymentMethod == PaymentMethod.Card
+                && _stripePaymentService is not null)
+            {
+                var intent = await _stripePaymentService.CreatePaymentIntentAsync(
+                    order.Total,
+                    order.Currency,
+                    order.OrderNumber,
+                    cancellationToken);
+
+                if (intent is not null)
+                {
+                    payment.TransactionReference = intent.Id;
+                    stripeClientSecret = intent.ClientSecret;
+                }
+            }
+
             order.StatusHistory.Add(new OrderStatusHistory
             {
                 Status = OrderStatus.Pending,
@@ -209,7 +239,13 @@ public class OrderService : IOrderService
                 order.OrderNumber,
                 customer.Id);
 
-            return BuildResponse(order);
+            var response = BuildResponse(order);
+            if (stripeClientSecret is not null && response.Payments.Count > 0)
+            {
+                response.Payments[0].ClientSecret = stripeClientSecret;
+            }
+
+            return response;
         }
         catch
         {
@@ -664,6 +700,41 @@ public class OrderService : IOrderService
             await transaction.RollbackAsync(cancellationToken);
             throw;
         }
+    }
+
+    public async Task<bool> ApplyPaymentIntentResultAsync(
+        string paymentIntentId,
+        bool succeeded,
+        CancellationToken cancellationToken = default)
+    {
+        var payment = await _context.Payments
+            .FirstOrDefaultAsync(
+                p => p.TransactionReference == paymentIntentId,
+                cancellationToken);
+
+        if (payment is null)
+        {
+            return false;
+        }
+
+        // Idempotent: a duplicate webhook for an already-settled payment is a
+        // no-op. We never move a payment backwards or around the state machine.
+        if (payment.Status != PaymentStatus.Pending)
+        {
+            return true;
+        }
+
+        payment.Status = succeeded
+            ? PaymentStatus.Completed
+            : PaymentStatus.Failed;
+
+        if (succeeded)
+        {
+            payment.PaidAt = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
     public async Task<ShipmentResponse?> CreateShipmentAsync(

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 using SEF_Project.Api.Configuration;
 using SEF_Project.Api.Data;
 using System.Text;
@@ -10,6 +11,7 @@ using SEF_Project.Api.Services.Auth;
 using SEF_Project.Api.Services.AgenticAI;
 using SEF_Project.Api.Services.Catalog;
 using SEF_Project.Api.Services.Orders;
+using SEF_Project.Api.Services.Payments;
 using SEF_Project.Api.Services.Storefront;
 using SEF_Project.Api.Services.Shopping;
 using SEF_Project.Api.Services.Profile;
@@ -40,6 +42,8 @@ builder.Services.Configure<InventoryAnalysisAgentOptions>(
     builder.Configuration.GetSection(InventoryAnalysisAgentOptions.SectionName));
 builder.Services.Configure<DeepSeekOptions>(
     builder.Configuration.GetSection(DeepSeekOptions.SectionName));
+builder.Services.Configure<StripeOptions>(
+    builder.Configuration.GetSection(StripeOptions.SectionName));
 
 var jwtSettings = builder.Configuration
     .GetSection("Jwt")
@@ -102,8 +106,25 @@ builder.Services
     });
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException(
+            "Connection string 'DefaultConnection' is missing.");
+
+    // The Supabase pooler closes idle backend connections out from under us,
+    // which surfaces as transient "read past the end of the stream" failures.
+    // Prune idle connections client-side first (shorter than the pooler's own
+    // idle timeout) and keep the socket alive so Npgsql never reuses a dead one.
+    var npgsqlBuilder = new NpgsqlConnectionStringBuilder(connectionString)
+    {
+        ConnectionIdleLifetime = 30,
+        KeepAlive = 30,
+        Timeout = 15,
+        CommandTimeout = 60
+    };
+
+    options.UseNpgsql(npgsqlBuilder.ConnectionString);
+});
 
 
 // Add services to the container.
@@ -132,6 +153,7 @@ builder.Services.AddScoped<ISupplierService, SupplierService>();
 builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IReturnService, ReturnService>();
+builder.Services.AddScoped<IStripePaymentService, StripePaymentService>();
 builder.Services.AddScoped<IStorefrontService, StorefrontService>();
 builder.Services.AddScoped<IProductSearchService, ProductSearchService>();
 builder.Services.AddScoped<IProductAvailabilityService, ProductAvailabilityService>();
