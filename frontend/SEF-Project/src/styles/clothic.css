@@ -212,7 +212,7 @@ input[type='checkbox'] { min-height: auto; width: auto; accent-color: var(--acce
 .storefront__lede { color: #6b7469; font-size: 15px; line-height: 1.7; margin: 0 0 30px; max-width: 445px; }
 .storefront__cta { border-radius: 7px; gap: 26px; min-height: 48px; padding: 13px 20px; }
 .storefront__hero-detail { color: #778477; display: flex; font-size: 10px; font-weight: 800; gap: 40px; letter-spacing: .15em; margin-top: 62px; }
-.storefront__hero-art { align-items: center; background: linear-gradient(0deg, rgba(23,43,27,.28), transparent 33%), url('/images/clothic-editorial-hero.jpg') center top / cover; display: flex; justify-content: center; min-height: 540px; overflow: hidden; position: relative; }
+.storefront__hero-art { align-items: center; background: linear-gradient(0deg, rgba(23,43,27,.28), transparent 33%), url('/images/premium_photo-1663126482717-e96f2bca59cc.jpeg') center top / cover; display: flex; justify-content: center; min-height: 540px; overflow: hidden; position: relative; }
 .storefront__hero-art::before, .storefront__hero-art::after, .storefront__hero-shape { display: none; }
 .storefront__hero-art p { bottom: 25px; color: #fff; font-size: 11px; font-weight: 800; left: 32px; letter-spacing: .21em; line-height: 1.7; margin: 0; position: absolute; text-shadow: 0 1px 8px rgba(0,0,0,.3); z-index: 2; }
 .storefront__trust-strip { align-items: center; border-bottom: 1px solid var(--border); color: #657367; display: flex; flex-wrap: wrap; font-size: 11px; font-weight: 700; gap: 22px; justify-content: space-around; min-height: 57px; padding: 12px 24px; }
@@ -292,7 +292,7 @@ input[type='checkbox'] { min-height: auto; width: auto; accent-color: var(--acce
 
 /* Entry screens */
 .auth-page { align-items: stretch; display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); min-height: 100svh; padding: 0; }
-.auth-story { background: linear-gradient(180deg, rgba(18,38,25,.43), rgba(18,38,25,.05) 35%, rgba(18,38,25,.71)), url('/images/clothic-auth-editorial.jpg') center 38% / cover; color: #fff; display: flex; flex-direction: column; justify-content: space-between; min-height: 100svh; overflow: hidden; padding: clamp(35px, 4vw, 68px); position: relative; }
+.auth-story { background: linear-gradient(180deg, rgba(18,38,25,.43), rgba(18,38,25,.05) 35%, rgba(18,38,25,.71)), url('/images/pexels-cottonbro-6616673.jpg') center 38% / cover; color: #fff; display: flex; flex-direction: column; justify-content: space-between; min-height: 100svh; overflow: hidden; padding: clamp(35px, 4vw, 68px); position: relative; }
 .auth-story::before, .auth-story::after { display: none; }
 .auth-story__brand { color: #fff; font-family: var(--heading); font-size: 28px; font-weight: 700; letter-spacing: -.055em; position: relative; text-decoration: none; z-index: 1; }
 .auth-story__content { max-width: 570px; position: relative; z-index: 1; }
