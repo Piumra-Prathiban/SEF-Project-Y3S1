@@ -364,13 +364,7 @@ export function ProductsPage() {
                   <td>{formatDate(product.createdAt)}</td>
                   <td>
                     <div className="table-actions">
-                      <button
-                        className="button-secondary"
-                        onClick={() => handleView(product.id)}
-                        type="button"
-                      >
-                        View
-                      </button>
+              
                       <button
                         className="button-secondary"
                         onClick={() => navigate(`/variants?productId=${encodeURIComponent(product.id)}`)}
