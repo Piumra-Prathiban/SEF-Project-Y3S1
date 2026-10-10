@@ -65,18 +65,19 @@ export default function ReportsPage() {
         title="Reports"
         subtitle="Business summaries for the selected period."
         actions={
-          <button type="button" className="button button-secondary" onClick={() => window.print()} disabled={!data}>
-            Print
-          </button>
+          <>
+            <DateRangeFilter
+              selection={selection}
+              apiRange={apiRange}
+              onChange={setSelection}
+              onRefresh={() => setRefreshKey((key) => key + 1)}
+              refreshing={loading}
+            />
+            <button type="button" className="button button-secondary" onClick={() => window.print()} disabled={!data}>
+              Print
+            </button>
+          </>
         }
-      />
-
-      <DateRangeFilter
-        selection={selection}
-        apiRange={apiRange}
-        onChange={setSelection}
-        onRefresh={() => setRefreshKey((key) => key + 1)}
-        refreshing={loading}
       />
 
       {error && <ErrorState error={error} onRetry={reload} />}

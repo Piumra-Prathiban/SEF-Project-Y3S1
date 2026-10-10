@@ -9,6 +9,7 @@ import { useAsync } from '../../../hooks/useAsync';
 import { useListQuery } from '../../../hooks/useListQuery';
 import { getCampaigns } from '../../../services/campaignService';
 import { getPromotions, updatePromotion } from '../../../services/promotionService';
+import { PromotionStats } from '../MarketingStats';
 import { toErrorMessage } from '../../../utils/apiErrors';
 import {
   PAGE_SIZE,
@@ -77,6 +78,8 @@ export default function PromotionListPage() {
         title="Promotions"
         actions={<Link className="button" to="/marketing/promotions/new">New promotion</Link>}
       />
+
+      <PromotionStats />
 
       <form
         className="filters"

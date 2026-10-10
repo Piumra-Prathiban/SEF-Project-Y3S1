@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import PageHeader from '../../../components/PageHeader';
 import { useAuth } from '../../../contexts/AuthContext';
 import DateRangeFilter from './DateRangeFilter';
@@ -19,18 +18,13 @@ export default function DashboardPage() {
         title="Dashboard"
         subtitle="Sales performance at a glance."
         actions={
-          <>
-            <Link className="button button-secondary" to="/marketing/analytics">Full analytics</Link>
-            <Link className="button button-secondary" to="/marketing/reports">Reports</Link>
-          </>
+          <DateRangeFilter
+            selection={selection}
+            apiRange={apiRange}
+            onChange={setSelection}
+            onRefresh={() => setRefreshKey((key) => key + 1)}
+          />
         }
-      />
-
-      <DateRangeFilter
-        selection={selection}
-        apiRange={apiRange}
-        onChange={setSelection}
-        onRefresh={() => setRefreshKey((key) => key + 1)}
       />
 
       <div className="dashboard-stack">
