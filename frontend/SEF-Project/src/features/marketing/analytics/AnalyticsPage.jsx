@@ -20,23 +20,20 @@ export default function AnalyticsPage() {
       <PageHeader
         title="Analytics"
         subtitle="Sales, products, inventory, promotions and demand. All figures are calculated by the server."
+        actions={
+          <>
+            <DateRangeFilter
+              selection={selection}
+              apiRange={apiRange}
+              onChange={setSelection}
+              onRefresh={() => setRefreshKey((key) => key + 1)}
+            />
+            <button type="button" className="button button-secondary" onClick={() => window.print()}>
+              Print
+            </button>
+          </>
+        }
       />
-
-      <DateRangeFilter
-        selection={selection}
-        apiRange={apiRange}
-        onChange={setSelection}
-        onRefresh={() => setRefreshKey((key) => key + 1)}
-      />
-
-      <nav className="section-jump" aria-label="Jump to section">
-        <a href="#revenue-trend">Revenue trend</a>
-        <a href="#top-products">Top sellers</a>
-        <a href="#low-products">Low performers</a>
-        <a href="#inventory-insights">Inventory</a>
-        <a href="#promotion-performance">Promotions</a>
-        <a href="#demand-insights">Demand</a>
-      </nav>
 
       <div className="dashboard-stack">
         <RevenueTrendSection {...sectionProps} />

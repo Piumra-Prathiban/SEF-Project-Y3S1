@@ -145,37 +145,47 @@ describe('AgentWorkflowDetailPage', () => {
     expect(screen.getByText('Awaiting approval')).toBeInTheDocument();
     expect(screen.getByText('Low impact')).toBeInTheDocument();
 
-    // Execution summary.
+    // Progress stepper and summary tiles.
     expect(screen.getByText('Gather data')).toBeInTheDocument();
-    expect(screen.getByText('Retrieved data.')).toBeInTheDocument();
+    expect(screen.getByText('Checks passed')).toBeInTheDocument();
+    expect(screen.getByText('2 / 2')).toBeInTheDocument();
+    expect(screen.getByText('15% · 14 days')).toBeInTheDocument();
 
-    // Proposed product with current vs proposed price.
+    // Proposed product card with current vs proposed price.
     const proposals = screen.getByRole('region', { name: 'Proposed promotions' });
     expect(within(proposals).getByText('15% off')).toBeInTheDocument();
-    expect(within(proposals).getByText('PST-CARB-R: LKR 1,800.00')).toBeInTheDocument();
-    expect(within(proposals).getByText('PST-CARB-R: LKR 1,530.00')).toBeInTheDocument();
+    expect(within(proposals).getByText('PST-CARB-R')).toBeInTheDocument();
+    expect(within(proposals).getByText('LKR 1,800.00')).toBeInTheDocument();
+    expect(within(proposals).getByText('LKR 1,530.00')).toBeInTheDocument();
 
-    // Sales velocity.
+    // Evidence tabs: sales velocity first.
+    const user = userEvent.setup();
     const velocity = screen.getByRole('region', { name: 'Sales velocity' });
     expect(within(velocity).getByText('3')).toBeInTheDocument();
     expect(within(velocity).getByText('Falling')).toBeInTheDocument();
 
-    // Inventory.
+    await user.click(screen.getByRole('tab', { name: 'Inventory' }));
     const inventory = screen.getByRole('region', { name: 'Inventory' });
     expect(within(inventory).getByText('35')).toBeInTheDocument();
     expect(within(inventory).getByText('In stock')).toBeInTheDocument();
 
     // Existing promotion information (no conflict here).
+    await user.click(screen.getByRole('tab', { name: 'Existing promotions' }));
     const live = screen.getByRole('region', { name: 'Existing promotion information' });
     expect(within(live).getByText('Pizza 20% Off')).toBeInTheDocument();
-    expect(within(live).getByText('—')).toBeInTheDocument();
 
-    // Validation results.
+    // Collapsed sections: validation.
+    await user.click(within(screen.getByRole('region', { name: 'Validation' })).getByRole('button'));
     expect(screen.getByText('SufficientInventory')).toBeInTheDocument();
     expect(screen.getAllByText('Pass')).toHaveLength(2);
 
-    // Tool execution summary.
-    const tools = screen.getByRole('region', { name: 'Tool execution summary' });
+    // Collapsed sections: agent execution.
+    await user.click(within(screen.getByRole('region', { name: 'Agent execution' })).getByRole('button'));
+    expect(screen.getByText('Retrieved data.')).toBeInTheDocument();
+
+    // Collapsed sections: tool calls.
+    await user.click(within(screen.getByRole('region', { name: 'Tool calls' })).getByRole('button'));
+    const tools = screen.getByRole('region', { name: 'Tool calls' });
     expect(within(tools).getByText('GetSalesVelocity')).toBeInTheDocument();
     expect(within(tools).getAllByText('Success')).toHaveLength(3);
 
@@ -189,6 +199,8 @@ describe('AgentWorkflowDetailPage', () => {
     vi.mocked(getAgentWorkflow).mockResolvedValue(workflow);
 
     renderPage();
+
+    await userEvent.setup().click(await screen.findByRole('tab', { name: 'Existing promotions' }));
 
     expect(await screen.findByText('Targets a proposed product')).toBeInTheDocument();
   });

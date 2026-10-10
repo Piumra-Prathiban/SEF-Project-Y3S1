@@ -53,11 +53,10 @@ export default function InventorySection({ token, refreshKey }) {
     >
       {data && (
         <>
-          <ul className="mini-stats">
-            <MiniStat label="Out of stock" value={data.summary.outOfStockCount} />
-            <MiniStat label="Low stock" value={data.summary.lowStockCount} />
-            <MiniStat label="In stock" value={data.summary.inStockCount} />
-            <MiniStat label="Units on hand" value={formatNumber(data.summary.totalQuantityOnHand)} />
+          <ul className="stock-cards">
+            <StockCard tone="danger" label="Out of stock" value={data.summary.outOfStockCount} unit="products" />
+            <StockCard tone="warning" label="Low stock" value={data.summary.lowStockCount} unit="products" />
+            <StockCard tone="success" label="In stock" value={data.summary.inStockCount} unit="products" />
           </ul>
 
           {data.stock.items.length === 0 ? (
@@ -109,11 +108,15 @@ export default function InventorySection({ token, refreshKey }) {
   );
 }
 
-function MiniStat({ label, value }) {
+function StockCard({ tone, label, value, unit }) {
   return (
-    <li>
-      <span className="mini-stat-value">{value}</span>
-      <span className="mini-stat-label">{label}</span>
+    <li className="stock-card">
+      <span className="stock-card-label">
+        {tone && <span className={`stock-dot stock-dot-${tone}`} aria-hidden="true" />}
+        {label}
+      </span>
+      <span className="stock-card-value">{value}</span>
+      <span className="stock-card-unit">{unit}</span>
     </li>
   );
 }
