@@ -25,6 +25,26 @@ public class PersonalStylistValidationTests
     }
 
     [Fact]
+    public void EmptyRecommendationList_PassesDeterministicValidation()
+    {
+        var fixture = ValidationFixture.Create();
+        var input = fixture.Input with
+        {
+            CatalogueProducts = Array.Empty<RecommendationCatalogProduct>(),
+            AvailableVariants = Array.Empty<VerifiedProductAvailability>()
+        };
+
+        var result = _validator.Validate(
+            new PersonalStylistModelOutput(
+                Array.Empty<PersonalStylistDraftRecommendation>()),
+            input);
+
+        Assert.True(result.IsValid);
+        Assert.Empty(result.Recommendations);
+        Assert.All(result.Checks, check => Assert.True(check.IsValid));
+    }
+
+    [Fact]
     [Trait("TestSuite", "PersonalStylistGolden")]
     public void BudgetCompliantRecommendation_PassesAuthoritativeBudgetCheck()
     {
