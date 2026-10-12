@@ -4,13 +4,14 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getCampaigns } from '../../../services/campaignService';
-import { getPromotions, updatePromotion } from '../../../services/promotionService';
+import { getPromotions, getPromotionPerformance, updatePromotion } from '../../../services/promotionService';
 import PromotionListPage from './PromotionListPage';
 
 vi.mock('../../../contexts/AuthContext', () => ({ useAuth: vi.fn() }));
 vi.mock('../../../services/campaignService', () => ({ getCampaigns: vi.fn() }));
 vi.mock('../../../services/promotionService', () => ({
   getPromotions: vi.fn(),
+  getPromotionPerformance: vi.fn(),
   updatePromotion: vi.fn(),
 }));
 
@@ -46,6 +47,7 @@ describe('PromotionListPage', () => {
     vi.mocked(useAuth).mockReturnValue({ token: 'token-1' });
     vi.mocked(getCampaigns).mockResolvedValue(page([{ id: 'camp-1', name: 'Summer Launch' }]));
     vi.mocked(getPromotions).mockReset();
+    vi.mocked(getPromotionPerformance).mockResolvedValue({ livePromotionCount: 1 });
     vi.mocked(updatePromotion).mockReset();
   });
 
@@ -54,7 +56,7 @@ describe('PromotionListPage', () => {
 
     renderPage();
 
-    expect(screen.getByRole('status')).toHaveTextContent('Loading promotions');
+    expect(screen.getByText('Loading promotions…')).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Pizza 20% Off' })).toHaveAttribute(
       'href',
       '/marketing/promotions/promo-1'
@@ -77,9 +79,17 @@ describe('PromotionListPage', () => {
 
   it('shows an error state with retry', async () => {
     const user = userEvent.setup();
-    vi.mocked(getPromotions)
-      .mockRejectedValueOnce({ status: 500, message: 'Server unavailable.' })
-      .mockResolvedValue(page([promotion]));
+    let listCalls = 0;
+    vi.mocked(getPromotions).mockImplementation((_token, { pageSize } = {}) => {
+      if (pageSize === 1) {
+        return Promise.resolve(page([]));
+      }
+
+      listCalls += 1;
+      return listCalls === 1
+        ? Promise.reject({ status: 500, message: 'Server unavailable.' })
+        : Promise.resolve(page([promotion]));
+    });
 
     renderPage();
 

@@ -219,7 +219,7 @@ describe('AgentWorkflowDetailPage', () => {
 
     expect(await screen.findByText('Discount too high.')).toBeInTheDocument();
     expect(screen.getByText('ValidationFailed')).toBeInTheDocument();
-    expect(screen.getByText('Created 1 promotion(s).')).toBeInTheDocument();
+    expect(screen.getByText('Outcome: Created 1 promotion(s).')).toBeInTheDocument();
 
     const link = screen.getByRole('link', { name: 'Spaghetti Carbonara' });
     expect(link).toHaveAttribute('href', '/marketing/promotions/new-promo-1');
