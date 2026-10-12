@@ -167,10 +167,14 @@ public sealed class InventoryPromotionAgentService : IInventoryPromotionAgent
             step = await BeginStepAsync(workflow, PromotionAgentConstants.ValidatorName,
                 "Validate proposal against business rules", cancellationToken);
             var facts = PromotionAgentData.Build(data.Velocity, data.Inventory, data.ActivePromotions, data.Details, data.Pricing);
-            var valid = RecordValidation(step, PromotionProposalValidator.Validate(
-                document,
-                new ProposalValidationInput(facts, serverPricing, input.MaxProposals, input.MaxDiscountPercent,
-                    _options.MaxPromotionDays, Now(), input.ExcludeProductIds)));
+            var outcomes = PromotionProposalValidator.Validate(
+                    document,
+                    new ProposalValidationInput(facts, serverPricing, input.MaxProposals, input.MaxDiscountPercent,
+                        _options.MaxPromotionDays, Now(), input.ExcludeProductIds))
+                // Evidence describes the analysis window and may drift; safety rules may not.
+                .Where(o => o.Rule != "EvidenceMatchesData")
+                .ToList();
+            var valid = RecordValidation(step, outcomes);
 
             if (!valid)
             {

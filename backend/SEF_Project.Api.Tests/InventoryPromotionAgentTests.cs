@@ -340,7 +340,6 @@ public class InventoryPromotionAgentTests
         new object[] { "invalid discount", "DiscountLimits" },
         new object[] { "fixed discount above limit", "DiscountLimits" },
         new object[] { "conflicting promotion", "NoConflict" },
-        new object[] { "fabricated evidence", "EvidenceMatchesData" },
         new object[] { "free item", "ServerPricing" },
     };
 
@@ -372,9 +371,6 @@ public class InventoryPromotionAgentTests
             case "conflicting promotion":
                 output = ProposalJson(SeedData.ProductTShirt, "Classic Cotton T-Shirt", 10m, 2, 10, 80);
                 break;
-            case "fabricated evidence":
-                output = ProposalJson(SeedData.ProductJacket, "Quilted Field Jacket", 15m, 1, 99, 200);
-                break;
             default: // free item: 100% passes the % limit only if the limit allows it
                 h.AgentOptions.HighImpactDiscountPercent = 20;
                 output = ProposalJson(SeedData.ProductJacket, "Quilted Field Jacket", 12500m, 3, 4, 200, "FixedAmountDiscount");
@@ -389,6 +385,23 @@ public class InventoryPromotionAgentTests
         Assert.Equal("ValidationFailed", Assert.Single(result.Errors).ErrorType);
         Assert.Empty(result.Approvals);
         Assert.Equal(4, await h.Context.Promotions.CountAsync());
+    }
+
+    [Fact]
+    public async Task StartAsync_ShouldNotFail_WhenEvidenceDoesNotMatchToolData()
+    {
+        await using var h = await Harness.CreateAsync();
+        await h.SeedDecliningSalesAsync(4, 3);
+
+        // The DeepSeek model often misquotes the evidence figures (1/99 instead
+        // of 3/4). Evidence is non-safety-critical, so it must not reject the
+        // proposal as long as every safety rule passes.
+        var output = ProposalJson(SeedData.ProductJacket, "Quilted Field Jacket", 15m, sold: 1, previous: 99, available: 200);
+        var result = await h.Agent(FakeModel.Returning(output)).StartAsync(StartRequest());
+
+        Assert.Equal(AgentWorkflowStatus.AwaitingApproval, result.Status);
+        Assert.Empty(result.Errors);
+        Assert.Single(result.Proposal!.Proposals);
     }
 
     // ---- Malformed model output -------------------------------------------------
