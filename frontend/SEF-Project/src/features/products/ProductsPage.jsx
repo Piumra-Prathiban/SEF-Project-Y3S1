@@ -114,19 +114,6 @@ export function ProductsPage() {
     setQuery((current) => updatePagedQuery(current, field, value));
   }
 
-  async function handleView(productId) {
-    setError(null);
-    setMessage(null);
-    setCreatedProductId(null);
-
-    try {
-      const product = await api.getProduct(productId);
-      setSelectedProduct(product);
-    } catch (err) {
-      setError(normalizeApiError(err));
-    }
-  }
-
   function startCreate() {
     setEditingProduct(null);
     setFormMode('create');
