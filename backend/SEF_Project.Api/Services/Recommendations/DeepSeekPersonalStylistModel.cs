@@ -27,10 +27,12 @@ public sealed class DeepSeekPersonalStylistModel :
           ]
         }
         productId and variantId must be GUID strings, price must be a number, quantity must be an integer, size and colour must each be a string or null, and reason must be a string.
-        Select at most five items. Use only productId and variantId values supplied in the JSON input.
+        Select at most five items. Select only an exact productId and variantId pair present in availableVariants; a variant appearing only in catalogueProducts is not eligible.
         Copy each selected variant's price, size, and colour exactly from the supplied data.
+        When preferredSize is present, every selected available variant must match it. When preferredColours is non-empty, every selected available variant must match one of those colours.
         Keep the total price, calculated as price multiplied by quantity for every item, within the supplied budget when a budget is present.
         Never request a quantity greater than the selected variant's available quantity.
+        If no available variant satisfies the requested size, colour, stock, price, and budget constraints, return {"recommendations":[]}.
         Prefer wishlist items marked as available when they suit the customer's preferences.
         Give each item a concise customer-facing reason.
         Return JSON only, with no markdown or explanatory text outside the JSON object.
