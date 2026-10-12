@@ -52,10 +52,12 @@ export default function CampaignForm({
   }
 
   return (
-    <form className="form" onSubmit={handleSubmit} noValidate>
+    <form className="form form-wide" onSubmit={handleSubmit} noValidate>
       <Alert tone="danger">{formError}</Alert>
 
-      <div className="form-grid">
+      <section className="form-section" aria-labelledby="campaign-details-heading">
+        <h2 id="campaign-details-heading">Campaign details</h2>
+      <div className="form-grid form-grid-4">
         <FormField id="name" label="Name" required error={errors.name}>
           {(props) => (
             <input
@@ -124,6 +126,7 @@ export default function CampaignForm({
           />
         )}
       </FormField>
+      </section>
 
       <div className="button-row form-actions">
         <button type="submit" className="button" disabled={submitting}>

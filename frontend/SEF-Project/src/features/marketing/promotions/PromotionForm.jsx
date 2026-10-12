@@ -69,10 +69,43 @@ export default function PromotionForm({
   }
 
   return (
-    <form className="form" onSubmit={handleSubmit} noValidate>
+    <form className="form form-wide" onSubmit={handleSubmit} noValidate>
       <Alert tone="danger">{formError}</Alert>
 
-      <div className="form-grid">
+      <section className="form-section" aria-labelledby="applies-to-heading">
+        <h2 id="applies-to-heading">1. Applies to</h2>
+        <div className="form-grid form-grid-2">
+          <TargetSelect
+            legend="Categories"
+            placeholder="Select categories"
+            field="categoryIds"
+            options={targets.categories}
+            selected={form.categoryIds}
+            onToggle={toggleId}
+            describedBy={errors.productIds ? 'targets-error' : undefined}
+          />
+          <TargetSelect
+            legend="Products"
+            placeholder="Select products"
+            field="productIds"
+            options={targets.products}
+            selected={form.productIds}
+            onToggle={toggleId}
+            describedBy={errors.productIds ? 'targets-error' : undefined}
+          />
+        </div>
+        {errors.productIds || errors.categoryIds ? (
+          <p id="targets-error" className="field-error">
+            {errors.productIds || errors.categoryIds}
+          </p>
+        ) : (
+          <p className="field-hint">Pick at least one category or product.</p>
+        )}
+      </section>
+
+      <section className="form-section" aria-labelledby="details-heading">
+        <h2 id="details-heading">2. Details</h2>
+      <div className="form-grid form-grid-3">
         <FormField id="name" label="Name" required error={errors.name}>
           {(props) => (
             <input
@@ -167,39 +200,17 @@ export default function PromotionForm({
         )}
       </FormField>
 
-      <div className="field field-inline">
+      <div className="switch-field">
         <input
           id="isActive"
           type="checkbox"
+          role="switch"
           checked={form.isActive}
           onChange={(e) => update('isActive', e.target.checked)}
         />
         <label htmlFor="isActive">Active</label>
       </div>
-
-      <div className="form-grid">
-        <TargetFieldset
-          legend="Products"
-          field="productIds"
-          options={targets.products}
-          selected={form.productIds}
-          onToggle={toggleId}
-          describedBy={errors.productIds ? 'targets-error' : undefined}
-        />
-        <TargetFieldset
-          legend="Categories"
-          field="categoryIds"
-          options={targets.categories}
-          selected={form.categoryIds}
-          onToggle={toggleId}
-          describedBy={errors.productIds ? 'targets-error' : undefined}
-        />
-      </div>
-      {(errors.productIds || errors.categoryIds) && (
-        <p id="targets-error" className="field-error">
-          {errors.productIds || errors.categoryIds}
-        </p>
-      )}
+      </section>
 
       <div className="button-row form-actions">
         <button type="submit" className="button" disabled={submitting}>
@@ -215,29 +226,36 @@ export default function PromotionForm({
   );
 }
 
-function TargetFieldset({ legend, field, options, selected, onToggle, describedBy }) {
+function TargetSelect({ legend, placeholder, field, options, selected, onToggle, describedBy }) {
+  const count = selected.length;
+
   return (
     <fieldset className="checkbox-group" aria-describedby={describedBy}>
       <legend>{legend}</legend>
-      {options.length === 0 && <p className="muted">None available.</p>}
-      {options.map((option) => {
-        const id = `${field}-${option.id}`;
+      <details className="multi-select">
+        <summary>{count > 0 ? `${count} selected` : placeholder}</summary>
+        <div className="multi-select-menu">
+          {options.length === 0 && <p className="muted">None available.</p>}
+          {options.map((option) => {
+            const id = `${field}-${option.id}`;
 
-        return (
-          <div className="field-inline" key={option.id}>
-            <input
-              id={id}
-              type="checkbox"
-              checked={selected.includes(option.id)}
-              onChange={() => onToggle(field, option.id)}
-            />
-            <label htmlFor={id}>
-              {option.name}
-              {!option.isActive && <span className="muted"> (inactive)</span>}
-            </label>
-          </div>
-        );
-      })}
+            return (
+              <div className="field-inline" key={option.id}>
+                <input
+                  id={id}
+                  type="checkbox"
+                  checked={selected.includes(option.id)}
+                  onChange={() => onToggle(field, option.id)}
+                />
+                <label htmlFor={id}>
+                  {option.name}
+                  {!option.isActive && <span className="muted"> (inactive)</span>}
+                </label>
+              </div>
+            );
+          })}
+        </div>
+      </details>
     </fieldset>
   );
 }

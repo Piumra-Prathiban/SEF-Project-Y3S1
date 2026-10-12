@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { customRangeDefaults, describeRange, RANGE_PRESETS } from './analyticsUtils';
 
-// One filter row above the content it scopes: date range first, then refresh.
+// Compact period control for the page header: date range first, then refresh.
 export default function DateRangeFilter({ selection, apiRange, onChange, onRefresh, refreshing }) {
   const [custom, setCustom] = useState(() =>
     selection.from && selection.to
@@ -38,10 +38,10 @@ export default function DateRangeFilter({ selection, apiRange, onChange, onRefre
   }
 
   return (
-    <div className="filter-row" role="group" aria-label="Report period">
+    <div className="period-control" role="group" aria-label="Report period">
       <div className="field">
-        <label htmlFor="date-range">Period</label>
-        <select id="date-range" value={selection.range} onChange={(e) => handlePreset(e.target.value)}>
+        <label htmlFor="date-range" className="visually-hidden">Period</label>
+        <select id="date-range" title={`${describeRange(apiRange)} (UTC)`} value={selection.range} onChange={(e) => handlePreset(e.target.value)}>
           {RANGE_PRESETS.map((preset) => (
             <option key={preset.value} value={preset.value}>{preset.label}</option>
           ))}
@@ -78,7 +78,7 @@ export default function DateRangeFilter({ selection, apiRange, onChange, onRefre
         </form>
       )}
 
-      <p className="range-summary muted" aria-live="polite">
+      <p className="visually-hidden" aria-live="polite">
         {describeRange(apiRange)} (UTC)
       </p>
 

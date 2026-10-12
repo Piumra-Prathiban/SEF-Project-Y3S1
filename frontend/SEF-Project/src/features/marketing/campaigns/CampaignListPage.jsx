@@ -13,6 +13,7 @@ import {
   CAMPAIGN_STATUS_OPTIONS,
   PAGE_SIZE,
 } from '../marketingConstants';
+import { CampaignStats } from '../MarketingStats';
 import { campaignStatusLabel, campaignStatusTone, formatDate } from '../marketingUtils';
 
 const DEFAULT_QUERY = {
@@ -42,6 +43,8 @@ export default function CampaignListPage() {
         title="Campaigns"
         actions={<Link className="button" to="/marketing/campaigns/new">New campaign</Link>}
       />
+
+      <CampaignStats />
 
       <form
         className="filters"

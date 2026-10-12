@@ -62,7 +62,7 @@ describe('AnalyticsPage', () => {
   it('renders all six analytics sections from API data', async () => {
     renderPage();
 
-    const trend = await section('Revenue trend');
+    const trend = await section('Sales trend');
     expect(await within(trend).findByRole('img', { name: /Revenue over time/ })).toBeInTheDocument();
 
     const top = await section('Top selling products');

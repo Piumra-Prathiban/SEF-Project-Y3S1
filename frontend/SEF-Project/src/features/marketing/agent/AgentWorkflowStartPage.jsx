@@ -55,8 +55,11 @@ export default function AgentWorkflowStartPage() {
         backLabel="All workflows"
       />
 
-      <form className="form" onSubmit={handleSubmit} noValidate>
+      <form className="form form-wide" onSubmit={handleSubmit} noValidate>
         <Alert tone="danger">{formError}</Alert>
+
+        <section className="form-section" aria-labelledby="run-settings-heading">
+          <h2 id="run-settings-heading">Run settings</h2>
 
         <FormField id="objective" label="Objective" required error={errors.objective}>
           {(props) => (
@@ -70,7 +73,7 @@ export default function AgentWorkflowStartPage() {
           )}
         </FormField>
 
-        <div className="form-grid">
+        <div className="form-grid form-grid-4">
           <FormField id="focus" label="Focus" required>
             {(props) => (
               <select {...props} value={form.focus} onChange={(e) => update('focus', e.target.value)}>
@@ -85,7 +88,6 @@ export default function AgentWorkflowStartPage() {
             id="analysisDays"
             label="Analysis window (days)"
             required
-            hint="Compared with the same number of days before it."
             error={errors.analysisDays}
           >
             {(props) => (
@@ -136,6 +138,7 @@ export default function AgentWorkflowStartPage() {
             )}
           </FormField>
         </div>
+        </section>
 
         <div className="button-row form-actions">
           <button type="submit" className="button" disabled={submitting}>

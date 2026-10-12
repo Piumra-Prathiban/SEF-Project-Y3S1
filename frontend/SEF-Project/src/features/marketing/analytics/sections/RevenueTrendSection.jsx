@@ -38,7 +38,7 @@ export default function RevenueTrendSection({ token, range, refreshKey }) {
   return (
     <DashboardSection
       id="revenue-trend"
-      title="Revenue trend"
+      title="Sales trend"
       description="Confirmed, preparing, ready and completed orders by UTC period."
       loading={loading}
       error={error}

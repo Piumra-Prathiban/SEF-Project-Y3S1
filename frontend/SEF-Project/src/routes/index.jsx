@@ -1,4 +1,4 @@
-import { Outlet, Route, Routes } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { PlaceholderPage } from '../components/ui/PlaceholderPage';
 import LoginPage from '../features/auth/LoginPage';
@@ -15,7 +15,6 @@ import CampaignDetailPage from '../features/marketing/campaigns/CampaignDetailPa
 import CampaignFormPage from '../features/marketing/campaigns/CampaignFormPage';
 import CampaignListPage from '../features/marketing/campaigns/CampaignListPage';
 import MarketingLayout from '../features/marketing/MarketingLayout';
-import MarketingOverviewPage from '../features/marketing/MarketingOverviewPage';
 import PromotionDetailPage from '../features/marketing/promotions/PromotionDetailPage';
 import PromotionFormPage from '../features/marketing/promotions/PromotionFormPage';
 import PromotionListPage from '../features/marketing/promotions/PromotionListPage';
@@ -74,7 +73,7 @@ function AppRoutes() {
             </ProtectedRoute>
           )}
         >
-          <Route index element={<MarketingOverviewPage />} />
+          <Route index element={<Navigate to="/marketing/promotions" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="reports" element={<ReportsPage />} />
