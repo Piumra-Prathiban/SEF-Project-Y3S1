@@ -47,6 +47,10 @@ public class DeepSeekPersonalStylistModelTests
         Assert.Contains("recommendations", client.SystemInstruction);
         Assert.Contains("at most five", client.SystemInstruction);
         Assert.Contains("available quantity", client.SystemInstruction);
+        Assert.Contains("exact productId and variantId pair", client.SystemInstruction);
+        Assert.Contains("preferredSize", client.SystemInstruction);
+        Assert.Contains("preferredColours", client.SystemInstruction);
+        Assert.Contains("{\"recommendations\":[]}", client.SystemInstruction);
         Assert.Equal(cancellation.Token, client.CancellationToken);
 
         using var inputJson = JsonDocument.Parse(client.UserJsonInput);

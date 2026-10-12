@@ -101,6 +101,199 @@ public class PersonalStylistAgentTests
     }
 
     [Fact]
+    public async Task Agent_SuppliesOnlyVerifiedMBlackVariantToModel()
+    {
+        var fixture = AgentFixture.Create();
+        var productId = Guid.NewGuid();
+        var matching = new RecommendationCatalogVariant(
+            Guid.NewGuid(), "SHIRT-M-BLACK", "Medium / Black", 1800m, 9, "M", "Black");
+        var wrongSize = new RecommendationCatalogVariant(
+            Guid.NewGuid(), "SHIRT-L-BLACK", "Large / Black", 1600m, 5, "L", "Black");
+        var wrongColour = new RecommendationCatalogVariant(
+            Guid.NewGuid(), "SHIRT-M-RED", "Medium / Red", 1700m, 5, "M", "Red");
+        var unverified = new RecommendationCatalogVariant(
+            Guid.NewGuid(), "SHIRT-M-BLACK-2", "Medium / Black 2", 1500m, 5, "M", "Black");
+        var product = new RecommendationCatalogProduct(
+            productId,
+            "Casual Shirt",
+            "Relaxed cotton shirt",
+            1500m,
+            Array.Empty<RecommendationCatalogCategory>(),
+            new[] { matching, wrongSize, wrongColour, unverified });
+        var matchingAvailability = AvailabilityFor(
+            product,
+            matching,
+            authoritativePrice: 2000m,
+            authoritativeQuantity: 3);
+        ConfigureCandidates(
+            fixture,
+            new RecommendationContext(
+                "Casual Outing", 20000m, new[] { "Black" }, "M", null),
+            product,
+            matchingAvailability,
+            AvailabilityFor(product, wrongSize),
+            AvailabilityFor(product, wrongColour));
+        PersonalStylistModelInput? capturedInput = null;
+        var model = new DelegateModel((input, _) =>
+        {
+            capturedInput = input;
+            var selected = Assert.Single(input.AvailableVariants);
+            return Task.FromResult(new PersonalStylistModelOutput(new[]
+            {
+                DraftFor(selected)
+            }));
+        });
+
+        var result = await fixture.CreateAgent(model: model).RunAsync(7, fixture.Context);
+
+        var modelInput = Assert.IsType<PersonalStylistModelInput>(capturedInput);
+        var available = Assert.Single(modelInput.AvailableVariants);
+        var catalogueVariant = Assert.Single(
+            Assert.Single(modelInput.CatalogueProducts).AvailableVariants);
+        Assert.Equal(matching.Id, available.VariantId);
+        Assert.Equal(matching.Id, catalogueVariant.Id);
+        Assert.Equal(matchingAvailability.Price, catalogueVariant.Price);
+        Assert.Equal(matchingAvailability.AvailableQuantity, catalogueVariant.AvailableQuantity);
+        Assert.DoesNotContain(modelInput.AvailableVariants, item =>
+            item.VariantId == wrongSize.Id ||
+            item.VariantId == wrongColour.Id ||
+            item.VariantId == unverified.Id);
+        Assert.Equal(matching.Id, Assert.Single(result.Recommendations).VariantId);
+        Assert.True(result.Execution.OutputValidated);
+    }
+
+    [Fact]
+    public async Task Agent_ReturnsValidatedEmptyResultWithoutCallingModel_WhenNoVariantMatches()
+    {
+        var fixture = AgentFixture.Create();
+        var productId = Guid.NewGuid();
+        var wrongVariant = new RecommendationCatalogVariant(
+            Guid.NewGuid(), "SHIRT-L-RED", "Large / Red", 2500m, 4, "L", "Red");
+        var product = new RecommendationCatalogProduct(
+            productId,
+            "Casual Shirt",
+            "Relaxed cotton shirt",
+            wrongVariant.Price,
+            Array.Empty<RecommendationCatalogCategory>(),
+            new[] { wrongVariant });
+        ConfigureCandidates(
+            fixture,
+            new RecommendationContext(
+                "Casual Outing", 20000m, new[] { "Black" }, "M", null),
+            product,
+            AvailabilityFor(product, wrongVariant));
+        var modelCalled = false;
+        var model = new DelegateModel((_, _) =>
+        {
+            modelCalled = true;
+            throw new InvalidOperationException("The model must not be called.");
+        });
+
+        var result = await fixture.CreateAgent(model: model).RunAsync(7, fixture.Context);
+
+        Assert.False(modelCalled);
+        Assert.Empty(result.Recommendations);
+        Assert.Equal("completed", result.Execution.Status);
+        Assert.True(result.Execution.OutputValidated);
+        Assert.True(fixture.Recorder.Completed);
+        Assert.False(fixture.Recorder.Failed);
+    }
+
+    [Fact]
+    public async Task Agent_RemovesUnavailableInvalidPriceAndOverBudgetVariants()
+    {
+        var fixture = AgentFixture.Create();
+        var productId = Guid.NewGuid();
+        var noStock = new RecommendationCatalogVariant(
+            Guid.NewGuid(), "NO-STOCK", "No stock", 1000m, 1, "M", "Black");
+        var invalidPrice = new RecommendationCatalogVariant(
+            Guid.NewGuid(), "INVALID-PRICE", "Invalid price", 1000m, 1, "M", "Black");
+        var overBudget = new RecommendationCatalogVariant(
+            Guid.NewGuid(), "OVER-BUDGET", "Over budget", 1000m, 1, "M", "Black");
+        var product = new RecommendationCatalogProduct(
+            productId,
+            "Filtered Shirt",
+            null,
+            1000m,
+            Array.Empty<RecommendationCatalogCategory>(),
+            new[] { noStock, invalidPrice, overBudget });
+        ConfigureCandidates(
+            fixture,
+            new RecommendationContext(
+                "Casual Outing", 2000m, new[] { "Black" }, "M", null),
+            product,
+            AvailabilityFor(product, noStock, authoritativeQuantity: 0),
+            AvailabilityFor(product, invalidPrice, authoritativePrice: 0m),
+            AvailabilityFor(product, overBudget, authoritativePrice: 2001m));
+        var modelCalled = false;
+        var model = new DelegateModel((_, _) =>
+        {
+            modelCalled = true;
+            return Task.FromResult(new PersonalStylistModelOutput(
+                Array.Empty<PersonalStylistDraftRecommendation>()));
+        });
+
+        var result = await fixture.CreateAgent(model: model).RunAsync(7, fixture.Context);
+
+        Assert.False(modelCalled);
+        Assert.Empty(result.Recommendations);
+        Assert.True(result.Execution.OutputValidated);
+    }
+
+    [Fact]
+    public async Task Agent_DoesNotExposeVariantBeyondFirstFiftyAvailabilityCandidates()
+    {
+        var fixture = AgentFixture.Create();
+        var productId = Guid.NewGuid();
+        var variants = Enumerable.Range(1, 51)
+            .Select(index => new RecommendationCatalogVariant(
+                Guid.NewGuid(),
+                $"SHIRT-{index}",
+                $"Variant {index}",
+                1000m + index,
+                2,
+                index == 51 ? "M" : "L",
+                index == 51 ? "Black" : "Red"))
+            .ToList();
+        var product = new RecommendationCatalogProduct(
+            productId,
+            "Many Variant Shirt",
+            null,
+            variants.Min(item => item.Price),
+            Array.Empty<RecommendationCatalogCategory>(),
+            variants);
+        var verifiedFirstFifty = variants
+            .Take(50)
+            .Select(variant => AvailabilityFor(product, variant))
+            .ToArray();
+        ConfigureCandidates(
+            fixture,
+            new RecommendationContext(
+                "Casual Outing", 20000m, new[] { "Black" }, "M", null),
+            product,
+            verifiedFirstFifty);
+        var modelCalled = false;
+        var model = new DelegateModel((_, _) =>
+        {
+            modelCalled = true;
+            return Task.FromResult(new PersonalStylistModelOutput(
+                Array.Empty<PersonalStylistDraftRecommendation>()));
+        });
+
+        var result = await fixture.CreateAgent(model: model).RunAsync(7, fixture.Context);
+
+        Assert.False(modelCalled);
+        Assert.Equal(
+            PersonalStylistAgentContract.MaximumCandidateVariants,
+            fixture.AvailabilityTool.LastInput?.Items.Count);
+        Assert.DoesNotContain(
+            fixture.AvailabilityTool.LastInput!.Items,
+            item => item.VariantId == variants[50].Id);
+        Assert.Empty(result.Recommendations);
+        Assert.True(result.Execution.OutputValidated);
+    }
+
+    [Fact]
     [Trait("TestSuite", "PersonalStylistGolden")]
     public async Task Agent_RejectsMalformedModelOutputAndFailsSafely()
     {
@@ -384,13 +577,54 @@ public class PersonalStylistAgentTests
         return context;
     }
 
+    private static void ConfigureCandidates(
+        AgentFixture fixture,
+        RecommendationContext context,
+        RecommendationCatalogProduct product,
+        params VerifiedProductAvailability[] availability)
+    {
+        fixture.Context = context;
+        fixture.Search = new FakeProductSearchTool(new ProductSearchToolOutput(
+            new[] { product },
+            new RecommendationCatalogCapabilities(true, true)));
+        fixture.AvailabilityTool = new FakeAvailabilityTool(
+            new ProductAvailabilityToolOutput(availability));
+    }
+
+    private static VerifiedProductAvailability AvailabilityFor(
+        RecommendationCatalogProduct product,
+        RecommendationCatalogVariant variant,
+        decimal? authoritativePrice = null,
+        int? authoritativeQuantity = null) =>
+        new(
+            product.ProductId,
+            variant.Id,
+            product.Name,
+            variant.Name,
+            variant.Sku,
+            authoritativePrice ?? variant.Price,
+            authoritativeQuantity ?? variant.AvailableQuantity,
+            variant.Size,
+            variant.Colour);
+
+    private static PersonalStylistDraftRecommendation DraftFor(
+        VerifiedProductAvailability availability) =>
+        new(
+            availability.ProductId,
+            availability.VariantId,
+            availability.Price,
+            1,
+            availability.Size,
+            availability.Colour,
+            "Matches the requested preferences.");
+
     private sealed class AgentFixture
     {
         private AgentFixture()
         {
         }
 
-        public RecommendationContext Context { get; } = new(
+        public RecommendationContext Context { get; set; } = new(
             "Wedding",
             20000m,
             new[] { "Navy" },
@@ -407,9 +641,9 @@ public class PersonalStylistAgentTests
 
         public FakeWishlistTool Wishlist { get; private init; } = null!;
 
-        public FakeProductSearchTool Search { get; private init; } = null!;
+        public FakeProductSearchTool Search { get; set; } = null!;
 
-        public FakeAvailabilityTool AvailabilityTool { get; private init; } = null!;
+        public FakeAvailabilityTool AvailabilityTool { get; set; } = null!;
 
         public RecordingWorkflowRecorder Recorder { get; } = new();
 
@@ -556,10 +790,15 @@ public class PersonalStylistAgentTests
             _output = output;
         }
 
+        public ProductAvailabilityToolInput? LastInput { get; private set; }
+
         public Task<ProductAvailabilityToolOutput> ExecuteAsync(
             ProductAvailabilityToolInput input,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(_output);
+            CancellationToken cancellationToken = default)
+        {
+            LastInput = input;
+            return Task.FromResult(_output);
+        }
     }
 
     private sealed class DelegateModel : IPersonalStylistRecommendationModel

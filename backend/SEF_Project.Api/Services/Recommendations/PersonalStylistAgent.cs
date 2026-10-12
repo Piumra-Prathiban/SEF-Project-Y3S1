@@ -172,16 +172,19 @@ public class PersonalStylistAgent : IPersonalStylistAgent
                     productSearch.Products,
                     counters,
                     executionCancellation.Token);
-            var modelInput = new PersonalStylistModelInput(
+            var modelInput = BuildEligibleModelInput(
                 customer,
                 preferenceOutput.Preferences,
                 wishlist.Items,
                 productSearch.Products,
                 availability.AvailableVariants,
                 relaxedCriteria);
-            var modelOutput = await GenerateModelOutputAsync(
-                modelInput,
-                executionCancellation.Token);
+            var modelOutput = modelInput.AvailableVariants.Count == 0
+                ? new PersonalStylistModelOutput(
+                    Array.Empty<PersonalStylistDraftRecommendation>())
+                : await GenerateModelOutputAsync(
+                    modelInput,
+                    executionCancellation.Token);
             var validation = _outputValidator.Validate(modelOutput, modelInput);
             validationChecks = validation.Checks;
 
@@ -327,6 +330,96 @@ public class PersonalStylistAgent : IPersonalStylistAgent
             counters,
             cancellationToken);
     }
+
+    private static PersonalStylistModelInput BuildEligibleModelInput(
+        RecommendationCustomerContext customer,
+        RecommendationContext preferences,
+        IReadOnlyList<WishlistToolItem> wishlistItems,
+        IReadOnlyList<RecommendationCatalogProduct> catalogueProducts,
+        IReadOnlyList<VerifiedProductAvailability> verifiedAvailability,
+        IReadOnlyList<string> relaxedCriteria)
+    {
+        var cataloguePairs = catalogueProducts
+            .SelectMany(product => product.AvailableVariants.Select(variant =>
+                (product.ProductId, VariantId: variant.Id)))
+            .ToHashSet();
+        var eligibleAvailability = verifiedAvailability
+            .Where(item => cataloguePairs.Contains(
+                (item.ProductId, item.VariantId)))
+            .Where(item =>
+                item.AvailableQuantity > 0 &&
+                item.Price > 0 &&
+                (!preferences.Budget.HasValue ||
+                 item.Price <= preferences.Budget.Value) &&
+                MatchesRequestedSize(item, preferences.PreferredSize) &&
+                MatchesRequestedColour(item, preferences.PreferredColours))
+            .GroupBy(item => (item.ProductId, item.VariantId))
+            .Select(group => group.First())
+            .ToList();
+        var availabilityByProduct = eligibleAvailability
+            .GroupBy(item => item.ProductId)
+            .ToDictionary(group => group.Key, group => group.ToList());
+        var eligibleProducts = catalogueProducts
+            .Where(product => availabilityByProduct.ContainsKey(product.ProductId))
+            .Select(product =>
+            {
+                var variants = availabilityByProduct[product.ProductId]
+                    .Select(item => new RecommendationCatalogVariant(
+                        item.VariantId,
+                        item.Sku,
+                        item.VariantName,
+                        item.Price,
+                        item.AvailableQuantity,
+                        item.Size,
+                        item.Colour))
+                    .ToList();
+
+                return new RecommendationCatalogProduct(
+                    product.ProductId,
+                    product.Name,
+                    product.Description,
+                    variants.Min(variant => variant.Price),
+                    product.Categories,
+                    variants);
+            })
+            .ToList();
+        var eligibleProductIds = eligibleProducts
+            .Select(product => product.ProductId)
+            .ToHashSet();
+        var eligibleWishlistItems = wishlistItems
+            .Where(item => eligibleProductIds.Contains(item.ProductId))
+            .ToList();
+
+        return new PersonalStylistModelInput(
+            customer,
+            preferences,
+            eligibleWishlistItems,
+            eligibleProducts,
+            eligibleAvailability,
+            relaxedCriteria);
+    }
+
+    private static bool MatchesRequestedSize(
+        VerifiedProductAvailability variant,
+        string? requestedSize) =>
+        requestedSize == null || SameOptional(requestedSize, variant.Size);
+
+    private static bool MatchesRequestedColour(
+        VerifiedProductAvailability variant,
+        IReadOnlyList<string> requestedColours) =>
+        requestedColours.Count == 0 ||
+        requestedColours.Contains(
+            variant.Colour ?? string.Empty,
+            StringComparer.OrdinalIgnoreCase);
+
+    private static bool SameOptional(string? left, string? right) =>
+        string.Equals(
+            NormalizeOptional(left),
+            NormalizeOptional(right),
+            StringComparison.OrdinalIgnoreCase);
+
+    private static string? NormalizeOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private async Task<TOutput> ExecuteToolAsync<TOutput>(
         AgentWorkflowHandle workflow,
