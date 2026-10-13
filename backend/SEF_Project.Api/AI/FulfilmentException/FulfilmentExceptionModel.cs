@@ -17,7 +17,8 @@ public sealed record FulfilmentExceptionContext(
     JsonNode Payments,
     JsonNode Shipments,
     JsonNode History,
-    JsonNode PermittedTransitions);
+    JsonNode PermittedTransitions,
+    FulfilmentExceptionDiagnosis Diagnosis);
 
 /// <summary>
 /// Replaceable model boundary. Implementations return raw text that must be a
@@ -69,7 +70,8 @@ public sealed class LocalFulfilmentExceptionModel : IFulfilmentExceptionModel
                 ReadGuid(order, "orderId"),
                 orderAllowed[0],
                 orderStatus,
-                $"The order is '{orderStatus}' and can advance to '{orderAllowed[0]}'.");
+                $"The order is '{orderStatus}' and can advance to '{orderAllowed[0]}'.",
+                context.Diagnosis);
         }
 
         foreach (var payment in AsArray(transitions, "payments"))
@@ -86,7 +88,8 @@ public sealed class LocalFulfilmentExceptionModel : IFulfilmentExceptionModel
                 ReadGuid(payment, "paymentId"),
                 allowed[0],
                 status,
-                $"A payment is stuck in '{status}' and can advance to '{allowed[0]}'.");
+                $"A payment is stuck in '{status}' and can advance to '{allowed[0]}'.",
+                context.Diagnosis);
         }
 
         foreach (var shipment in AsArray(transitions, "shipments"))
@@ -103,7 +106,8 @@ public sealed class LocalFulfilmentExceptionModel : IFulfilmentExceptionModel
                 ReadGuid(shipment, "shipmentId"),
                 allowed[0],
                 status,
-                $"A shipment is stuck in '{status}' and can advance to '{allowed[0]}'.");
+                $"A shipment is stuck in '{status}' and can advance to '{allowed[0]}'.",
+                context.Diagnosis);
         }
 
         return CreateDocument(
@@ -111,7 +115,8 @@ public sealed class LocalFulfilmentExceptionModel : IFulfilmentExceptionModel
             null,
             "NoAction",
             orderStatus,
-            "The order, payments and shipments have no permitted transition; nothing is stalled.");
+            "The order, payments and shipments have no permitted transition; nothing is stalled.",
+            context.Diagnosis);
     }
 
     private static FulfilmentExceptionDocument CreateDocument(
@@ -119,7 +124,8 @@ public sealed class LocalFulfilmentExceptionModel : IFulfilmentExceptionModel
         Guid? targetId,
         string action,
         string? currentStatus,
-        string rationale) =>
+        string rationale,
+        FulfilmentExceptionDiagnosis diagnosis) =>
         new()
         {
             SchemaVersion = FulfilmentExceptionAgentConstants.SchemaVersion,
@@ -133,7 +139,8 @@ public sealed class LocalFulfilmentExceptionModel : IFulfilmentExceptionModel
                 Evidence = new FulfilmentResolutionEvidence
                 {
                     CurrentStatus = currentStatus
-                }
+                },
+                Diagnosis = diagnosis
             }
         };
 

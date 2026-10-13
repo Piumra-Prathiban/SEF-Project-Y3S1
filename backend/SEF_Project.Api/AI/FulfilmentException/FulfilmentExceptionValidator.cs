@@ -108,6 +108,41 @@ public static class FulfilmentExceptionValidator
                 ? $"Target type '{resolution.TargetType}' is recognised."
                 : $"Target type '{resolution.TargetType}' is not recognised."));
 
+        var recognizedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            FulfilmentExceptionDiagnosisTypes.PaymentFailed,
+            FulfilmentExceptionDiagnosisTypes.PaymentPending,
+            FulfilmentExceptionDiagnosisTypes.ShipmentStalled,
+            FulfilmentExceptionDiagnosisTypes.AddressIssue,
+            FulfilmentExceptionDiagnosisTypes.OrderStuck,
+            FulfilmentExceptionDiagnosisTypes.NoException
+        };
+        var recognizedSeverities = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            FulfilmentExceptionSeverities.Critical,
+            FulfilmentExceptionSeverities.High,
+            FulfilmentExceptionSeverities.Medium,
+            FulfilmentExceptionSeverities.Low
+        };
+
+        var diagnosisType = resolution.Diagnosis?.Type ?? string.Empty;
+        var diagnosisTypeValid = recognizedTypes.Contains(diagnosisType);
+        results.Add(Outcome(
+            "DiagnosisType",
+            diagnosisTypeValid,
+            diagnosisTypeValid
+                ? $"Diagnosis type '{diagnosisType}' is recognised."
+                : $"Diagnosis type '{diagnosisType}' is not recognised."));
+
+        var diagnosisSeverity = resolution.Diagnosis?.Severity ?? string.Empty;
+        var diagnosisSeverityValid = recognizedSeverities.Contains(diagnosisSeverity);
+        results.Add(Outcome(
+            "DiagnosisSeverity",
+            diagnosisSeverityValid,
+            diagnosisSeverityValid
+                ? $"Diagnosis severity '{diagnosisSeverity}' is recognised."
+                : $"Diagnosis severity '{diagnosisSeverity}' is not recognised."));
+
         if (string.Equals(resolution.TargetType, "None", StringComparison.OrdinalIgnoreCase))
         {
             var noAction = string.Equals(

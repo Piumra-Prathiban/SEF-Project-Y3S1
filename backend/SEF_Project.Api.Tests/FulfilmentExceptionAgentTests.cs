@@ -128,6 +128,7 @@ public class FulfilmentExceptionAgentTests
 
         Assert.Equal(AgentWorkflowStatus.AwaitingApproval, response.Status);
         Assert.NotNull(response.Resolution);
+        Assert.NotNull(response.Diagnosis);
         Assert.Equal("Order", response.Resolution!.Resolution.TargetType);
         Assert.Equal("Confirmed", response.Resolution.Resolution.Action);
     }
@@ -175,6 +176,50 @@ public class FulfilmentExceptionAgentTests
         Assert.Equal(OrderStatus.Confirmed, order.Status);
     }
 
+    [Fact]
+    public void Diagnoser_ShouldClassifyAFailedPaymentAsCritical()
+    {
+        var diagnosis = FulfilmentExceptionDiagnoser.Diagnose(
+            JsonNode.Parse("""{ "order": { "status": "Confirmed", "deliveryAddress": { "line1": "1 St", "city": "Colombo", "postalCode": "00100" } } }""")!,
+            JsonNode.Parse("""{ "payments": [ { "status": "Failed" } ] }""")!,
+            JsonNode.Parse("""{ "shipments": [] }""")!,
+            JsonNode.Parse("""{ "history": [] }""")!);
+
+        Assert.Equal(FulfilmentExceptionDiagnosisTypes.PaymentFailed, diagnosis.Type);
+        Assert.Equal(FulfilmentExceptionSeverities.Critical, diagnosis.Severity);
+    }
+
+    [Fact]
+    public void Diagnoser_ShouldClassifyAnIncompleteAddress()
+    {
+        var diagnosis = FulfilmentExceptionDiagnoser.Diagnose(
+            JsonNode.Parse("""{ "order": { "status": "Confirmed", "deliveryAddress": null } }""")!,
+            JsonNode.Parse("""{ "payments": [] }""")!,
+            JsonNode.Parse("""{ "shipments": [] }""")!,
+            JsonNode.Parse("""{ "history": [] }""")!);
+
+        Assert.Equal(FulfilmentExceptionDiagnosisTypes.AddressIssue, diagnosis.Type);
+        Assert.Equal(FulfilmentExceptionSeverities.High, diagnosis.Severity);
+    }
+
+    [Fact]
+    public void Validator_ShouldRejectAnUnrecognisedDiagnosisType()
+    {
+        var orderId = Guid.NewGuid();
+        var transitions = Transitions(
+            ("order", orderId, "Pending", new[] { "Confirmed" }),
+            Array.Empty<(string, Guid, string, string[])>());
+
+        var document = Document("Order", orderId, "Confirmed", "Pending");
+        document.Resolution.Diagnosis = Diagnosis(
+            type: "SomethingElse",
+            severity: FulfilmentExceptionSeverities.Low);
+
+        var outcomes = FulfilmentExceptionValidator.Validate(document, transitions);
+
+        Assert.Contains(outcomes, o => o.Rule == "DiagnosisType" && !o.IsValid);
+    }
+
     private static FulfilmentExceptionDocument Document(string targetType, Guid? targetId, string action, string currentStatus) =>
         new()
         {
@@ -186,9 +231,15 @@ public class FulfilmentExceptionAgentTests
                 TargetId = targetId,
                 Action = action,
                 Rationale = "A rationale that is long enough.",
-                Evidence = new FulfilmentResolutionEvidence { CurrentStatus = currentStatus }
+                Evidence = new FulfilmentResolutionEvidence { CurrentStatus = currentStatus },
+                Diagnosis = Diagnosis()
             }
         };
+
+    private static FulfilmentExceptionDiagnosis Diagnosis(
+        string type = FulfilmentExceptionDiagnosisTypes.NoException,
+        string severity = FulfilmentExceptionSeverities.Low) =>
+        new() { Type = type, Severity = severity, Reason = "A test diagnosis." };
 
     private static FulfilmentExceptionContext Context(Guid orderId, JsonNode transitions) =>
         new(
@@ -199,7 +250,8 @@ public class FulfilmentExceptionAgentTests
             JsonNode.Parse("{}")!,
             JsonNode.Parse("{}")!,
             JsonNode.Parse("{}")!,
-            transitions);
+            transitions,
+            Diagnosis());
 
     private static JsonNode Transitions(
         (string, Guid, string, string[]) order,

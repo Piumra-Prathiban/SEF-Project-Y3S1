@@ -17,6 +17,8 @@ import { toErrorMessage } from '../../utils/apiErrors';
 import {
   approvalStatusInfo,
   buildRevisionPayload,
+  diagnosisSeverityInfo,
+  diagnosisTypeLabel,
   EMPTY_REVISION_FORM,
   formatTimestamp,
   getPendingApproval,
@@ -116,6 +118,8 @@ export default function FulfilmentAgentDetailPage() {
   const status = workflowStatusInfo(workflow.status);
   const resolution = resolutionOf(workflow);
   const pendingApproval = getPendingApproval(workflow);
+  const diagnosis = workflow.diagnosis;
+  const severityInfo = diagnosisSeverityInfo(diagnosis?.severity);
 
   return (
     <>
@@ -133,6 +137,17 @@ export default function FulfilmentAgentDetailPage() {
       <div className="button-row" data-testid="workflow-status" style={{ marginBottom: '1rem' }}>
         <Badge tone={status.tone}>{status.label}</Badge>
       </div>
+
+      {diagnosis && (
+        <section className="panel" aria-labelledby="agent-diagnosis" style={{ marginBottom: '1rem', padding: '18px 20px' }}>
+          <h2 id="agent-diagnosis">Exception diagnosis</h2>
+          <div className="button-row">
+            <Badge tone={severityInfo.tone}>{severityInfo.label} severity</Badge>
+            <strong>{diagnosisTypeLabel(diagnosis.type)}</strong>
+          </div>
+          {diagnosis.reason && <p className="muted">{diagnosis.reason}</p>}
+        </section>
+      )}
 
       <dl className="details">
         <dt>Workflow ID</dt>

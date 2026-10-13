@@ -29,11 +29,22 @@ public class FulfilmentResolution
     public string Rationale { get; set; } = string.Empty;
 
     public FulfilmentResolutionEvidence Evidence { get; set; } = new();
+
+    public FulfilmentExceptionDiagnosis Diagnosis { get; set; } = new();
 }
 
 public class FulfilmentResolutionEvidence
 {
     public string? CurrentStatus { get; set; }
+}
+
+public class FulfilmentExceptionDiagnosis
+{
+    public string Type { get; set; } = string.Empty;
+
+    public string Severity { get; set; } = string.Empty;
+
+    public string Reason { get; set; } = string.Empty;
 }
 
 // ---- Structured input contracts ------------------------------------------------
@@ -76,6 +87,8 @@ public class FulfilmentExceptionWorkflowResponse
     public List<string> Plan { get; set; } = new();
 
     public FulfilmentExceptionDocument? Resolution { get; set; }
+
+    public FulfilmentExceptionDiagnosis? Diagnosis { get; set; }
 
     public List<WorkflowStepResponse> Steps { get; set; } = new();
 

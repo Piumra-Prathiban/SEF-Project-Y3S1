@@ -33,6 +33,24 @@ public static class FulfilmentExceptionAgentConstants
         };
 }
 
+public static class FulfilmentExceptionDiagnosisTypes
+{
+    public const string PaymentFailed = "PaymentFailed";
+    public const string PaymentPending = "PaymentPending";
+    public const string ShipmentStalled = "ShipmentStalled";
+    public const string AddressIssue = "AddressIssue";
+    public const string OrderStuck = "OrderStuck";
+    public const string NoException = "NoException";
+}
+
+public static class FulfilmentExceptionSeverities
+{
+    public const string Critical = "Critical";
+    public const string High = "High";
+    public const string Medium = "Medium";
+    public const string Low = "Low";
+}
+
 public class FulfilmentExceptionAgentOptions
 {
     public const string SectionName = "FulfilmentExceptionAgent";

@@ -138,9 +138,15 @@ public sealed class FulfilmentExceptionAgentService : IFulfilmentExceptionAgent
             step = await BeginStepAsync(workflow, FulfilmentExceptionAgentConstants.AgentName,
                 "Gather order facts", cancellationToken);
             var data = await GatherAsync(step, orderId, cancellationToken);
+            var diagnosis = FulfilmentExceptionDiagnoser.Diagnose(
+                data.Order, data.Payments, data.Shipments, data.History);
             await CompleteStepAsync(step,
                 "Retrieved the order, payments, shipments, status history and permitted transitions.",
                 cancellationToken);
+
+            _logger.LogInformation(
+                "Workflow {WorkflowId} diagnosed '{Type}' ({Severity}).",
+                workflow.Id, diagnosis.Type, diagnosis.Severity);
 
             step = await BeginStepAsync(workflow, FulfilmentExceptionAgentConstants.AgentName,
                 "Draft a structured resolution", cancellationToken);
@@ -152,7 +158,8 @@ public sealed class FulfilmentExceptionAgentService : IFulfilmentExceptionAgent
                 data.Payments,
                 data.Shipments,
                 data.History,
-                data.PermittedTransitions);
+                data.PermittedTransitions,
+                diagnosis);
             var document = await GenerateResolutionAsync(step, context, cancellationToken);
             await CompleteStepAsync(step, document.Summary, cancellationToken);
 
@@ -718,6 +725,7 @@ public sealed class FulfilmentExceptionAgentService : IFulfilmentExceptionAgent
     private FulfilmentExceptionWorkflowResponse ToResponse(AgentWorkflow workflow)
     {
         var steps = workflow.Steps.OrderBy(s => s.StepOrder).ToList();
+        var resolution = LatestResolution(workflow);
 
         return new FulfilmentExceptionWorkflowResponse
         {
@@ -725,7 +733,8 @@ public sealed class FulfilmentExceptionAgentService : IFulfilmentExceptionAgent
             Objective = workflow.Objective,
             Status = workflow.Status,
             Plan = ReadPlan(workflow)?.Plan ?? new List<string>(),
-            Resolution = LatestResolution(workflow),
+            Resolution = resolution,
+            Diagnosis = resolution?.Resolution?.Diagnosis,
             Steps = steps.Select(s => new WorkflowStepResponse
             {
                 StepOrder = s.StepOrder,

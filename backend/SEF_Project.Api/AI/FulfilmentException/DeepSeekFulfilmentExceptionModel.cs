@@ -23,11 +23,13 @@ public sealed class DeepSeekFulfilmentExceptionModel : IFulfilmentExceptionModel
             "targetId": "string GUID or null",
             "action": "string",
             "rationale": "string",
-            "evidence": { "currentStatus": "string or null" }
+            "evidence": { "currentStatus": "string or null" },
+            "diagnosis": { "type": "string", "severity": "string", "reason": "string" }
           }
         }
         Propose only an action that appears in the supplied permitted transitions for the chosen target.
         Use only identifiers and statuses present in the supplied data; never invent an order, payment, shipment, status or transition.
+        Copy the diagnosis object exactly from the supplied diagnosis field; do not invent a type, severity or reason.
         targetType must be exactly one of Order, Payment, Shipment, or None.
         When targetType is None, targetId must be null and action must be NoAction.
         Return JSON only, with no markdown or explanatory text outside the JSON object.
@@ -58,7 +60,8 @@ public sealed class DeepSeekFulfilmentExceptionModel : IFulfilmentExceptionModel
             payments = context.Payments,
             shipments = context.Shipments,
             history = context.History,
-            permittedTransitions = context.PermittedTransitions
+            permittedTransitions = context.PermittedTransitions,
+            diagnosis = context.Diagnosis
         }, JsonOptions);
 
         return _client.CompleteJsonAsync(SystemInstruction, inputJson, cancellationToken);

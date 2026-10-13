@@ -86,6 +86,32 @@ export function targetLabel(resolution) {
   return `${resolution?.targetType ?? '—'}${id}`;
 }
 
+// ---- Exception diagnosis -------------------------------------------------------
+
+const DIAGNOSIS_SEVERITY_INFO = {
+  Critical: { label: 'Critical', tone: 'danger' },
+  High: { label: 'High', tone: 'warning' },
+  Medium: { label: 'Medium', tone: 'info' },
+  Low: { label: 'Low', tone: 'muted' },
+};
+
+const DIAGNOSIS_TYPE_LABELS = {
+  PaymentFailed: 'Payment failed',
+  PaymentPending: 'Payment pending',
+  ShipmentStalled: 'Shipment stalled',
+  AddressIssue: 'Address issue',
+  OrderStuck: 'Order stuck',
+  NoException: 'No exception detected',
+};
+
+export function diagnosisSeverityInfo(severity) {
+  return DIAGNOSIS_SEVERITY_INFO[severity] ?? { label: severity ?? 'Unknown', tone: 'muted' };
+}
+
+export function diagnosisTypeLabel(type) {
+  return DIAGNOSIS_TYPE_LABELS[type] ?? type ?? 'Unknown';
+}
+
 // ---- Start workflow form ------------------------------------------------------
 
 export const EMPTY_START_FORM = {
