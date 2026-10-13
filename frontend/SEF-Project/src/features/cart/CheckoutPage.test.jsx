@@ -178,4 +178,28 @@ describe('CheckoutPage', () => {
     ).toBeInTheDocument();
     expect(createOrder).not.toHaveBeenCalled();
   });
+
+  it('accepts only digits in the postal code', async () => {
+    const user = userEvent.setup();
+    renderCheckout();
+
+    await screen.findByRole('heading', { name: 'Checkout' });
+    const postalCode = screen.getByLabelText('Postal code');
+
+    await user.type(postalCode, '12ab3');
+
+    expect(postalCode).toHaveValue('123');
+  });
+
+  it('accepts only digits, spaces and + in the phone number', async () => {
+    const user = userEvent.setup();
+    renderCheckout();
+
+    await screen.findByRole('heading', { name: 'Checkout' });
+    const phone = screen.getByLabelText('Phone');
+
+    await user.type(phone, '07ab12cd');
+
+    expect(phone).toHaveValue('0712');
+  });
 });

@@ -255,8 +255,13 @@ export function CheckoutPage() {
               <label>
                 Postal code
                 <input
-                  onChange={(event) => updateAddress('postalCode', event.target.value)}
+                  autoComplete="postal-code"
+                  inputMode="numeric"
+                  maxLength={5}
+                  onChange={(event) => updateAddress('postalCode', event.target.value.replace(/\D/g, '').slice(0, 5))}
+                  pattern="[0-9]{5}"
                   required
+                  title="Enter the 5-digit postal code"
                   value={address.postalCode}
                 />
               </label>
@@ -270,7 +275,11 @@ export function CheckoutPage() {
               <label>
                 Phone
                 <input
-                  onChange={(event) => updateAddress('phone', event.target.value)}
+                  autoComplete="tel"
+                  inputMode="tel"
+                  maxLength={15}
+                  onChange={(event) => updateAddress('phone', event.target.value.replace(/[^\d+ ]/g, '').slice(0, 15))}
+                  type="tel"
                   value={address.phone}
                 />
               </label>
